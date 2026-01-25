@@ -1,270 +1,175 @@
-/**
- * tv_player.js - Refactored for PeakDecline Better Base
- * Fully robust version: Handles all data types for Favorites/Live status
- */
-
 const socket = io();
-const video = document.getElementById('video-player');
-const overlay = document.getElementById('loading-overlay');
-const statusText = document.getElementById('status-text');
-const statusDot = document.getElementById('status-dot');
-const onlineCountSpan = document.getElementById('online-count');
-const userListContainer = document.getElementById('user-list');
-const channelsContainer = document.getElementById('channels-container');
-const favoritesContainer = document.getElementById('favorites-container');
-
+const video = document.getElementById('videoPlayer');
 let hls = null;
-let channels = [];
 let currentChannelId = null;
-let isPlayerInitialized = false;
 
-const STREAM_URL = '/stream/stream.m3u8';
-
-// --- Initialization ---
-
-// Clear any old service workers to prevent stream caching issues
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) { registration.unregister(); }
+// --- INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', () => {
+    loadChannels();
+    setupChat();
+    
+    // Check if we were already playing something (on refresh)
+    fetch('/api/status').then(r => r.json()).then(data => {
+        if(data.is_streaming && data.current_channel_id) {
+            currentChannelId = data.current_channel_id;
+            loadChannels(); // Refresh UI to show active channel
+            initPlayer();
+        }
     });
-}
 
-// Start the app
-loadChannels();
-
-// --- Socket Events ---
-socket.on('connect', () => {
-    fetch('/api/status').then(r=>r.json()).then(data => handleStatusUpdate(data));
+    // Start Heartbeat Loop
+    setInterval(() => {
+        fetch('/api/heartbeat', { method: 'POST' });
+    }, 5000); // Every 5 seconds
 });
 
-socket.on('channel_changed', (data) => {
-    currentChannelId = data.channel_id;
-    updateUI();
-    setLoading(true, `Switching to ${getChannelName(currentChannelId)}...`);
-    // Delay slightly to let the backend start the new ffmpeg process
-    setTimeout(() => initPlayer(), 1500);
-});
+// --- CHANNEL LIST & UI ---
+function loadChannels() {
+    fetch('/api/channels')
+        .then(r => r.json())
+        .then(channels => {
+            const listContainer = document.getElementById('channelList');
+            const favContainer = document.getElementById('favoritesRow');
+            
+            listContainer.innerHTML = '';
+            favContainer.innerHTML = '';
 
-socket.on('stream_stopped', () => {
-    currentChannelId = null;
-    updateUI();
-    setLoading(true, "Stream Stopped");
-    if (hls) { hls.destroy(); hls = null; }
-    video.removeAttribute('src');
-    video.load();
-});
+            channels.forEach(ch => {
+                // 1. Create Main List Item
+                const item = document.createElement('div');
+                item.className = 'channel-item';
+                item.setAttribute('data-name', ch.name.toLowerCase());
+                item.onclick = () => playChannel(ch.id);
+                
+                // Add active class if playing
+                if (currentChannelId && ch.id == currentChannelId) {
+                    item.classList.add('active');
+                    document.getElementById('currentProgramTitle').innerText = ch.name;
+                }
 
-socket.on('status', (data) => handleStatusUpdate(data));
+                item.innerHTML = `
+                    <img src="${ch.logo || '/static/img/default_channel.png'}" class="ch-logo" onerror="this.src='/static/img/default_channel.png'">
+                    <span>${ch.name}</span>
+                `;
+                listContainer.appendChild(item);
 
-// --- Core Functions ---
-async function loadChannels() {
-    try {
-        const res = await fetch('/api/channels');
-        channels = await res.json();
-        renderChannels();
-    } catch(e) { console.error("Load Error:", e); }
+                // 2. Create Favorite Item (if favorite)
+                if(ch.Favorites) {
+                    const fav = document.createElement('div');
+                    fav.className = 'fav-card';
+                    fav.onclick = () => playChannel(ch.id);
+                    fav.innerHTML = `
+                        <img src="${ch.logo || '/static/img/default_channel.png'}" class="fav-icon" onerror="this.src='/static/img/default_channel.png'">
+                        <span class="fav-name">${ch.name}</span>
+                    `;
+                    favContainer.appendChild(fav);
+                }
+            });
+        });
 }
 
-function renderChannels() {
-    const searchEl = document.getElementById('search');
-    const term = searchEl ? searchEl.value.toLowerCase() : '';
+// --- PLAYBACK LOGIC ---
+function playChannel(id) {
+    if (currentChannelId === id) return; // Already playing
 
-    // Safety check: Don't crash if HTML elements aren't ready
-    if (!channelsContainer || !favoritesContainer) return;
+    // Update UI immediately for responsiveness
+    currentChannelId = id;
+    loadChannels(); 
+    
+    // Show Loading
+    document.getElementById('currentProgramTitle').innerText = "Starting Stream...";
 
-    const filtered = channels.filter(c => c.name.toLowerCase().includes(term));
-
-    // Robust check: handles '1' (string), 1 (int), or true (boolean)
-    const favorites = filtered.filter(c => c.Favorites == '1' || c.Favorites == 1 || c.Favorites === true);
-
-    // 1. Render Favorites (Left Sidebar - Compact List)
-    if(favorites.length > 0) {
-        favoritesContainer.innerHTML = favorites.map(c => `
-            <div class="channel-card sidebar-card ${c.id == currentChannelId ? 'playing' : ''}" onclick="playChannel(${c.id})">
-                <h3>${c.name}</h3>
-                <button class="fav-star" onclick="event.stopPropagation(); toggleFavorite(${c.id})">⭐</button>
-            </div>
-        `).join('');
-    } else {
-        favoritesContainer.innerHTML = '<div class="empty-msg" style="padding:10px; opacity:0.6; font-style:italic;">No favorites yet</div>';
-    }
-
-    // 2. Render Main Grid (Center - Full Cards)
-    if(filtered.length > 0) {
-        channelsContainer.innerHTML = filtered.map(c => {
-            // Check Live status (robust)
-            const isLive = c.is_playing == '1' || c.is_playing === true;
-            // Check Favorite status (robust)
-            const isFav = c.Favorites == '1' || c.Favorites == 1 || c.Favorites === true;
-
-            return `
-            <div class="channel-card ${c.id == currentChannelId ? 'playing' : ''}" onclick="playChannel(${c.id})">
-                <div class="card-body">
-                    <h3>${c.name}</h3>
-                    <small>${c.url}</small>
-                </div>
-                ${isLive ? '<div class="live-indicator">LIVE</div>' : ''}
-                <button class="fav-star" onclick="event.stopPropagation(); toggleFavorite(${c.id})">
-                    ${isFav ? '⭐' : '☆'}
-                </button>
-            </div>
-            `;
-        }).join('');
-    } else {
-        channelsContainer.innerHTML = '<div class="empty-msg" style="text-align:center; padding:20px;">No channels found</div>';
-    }
-}
-
-async function playChannel(id) {
-    if (id === currentChannelId) {
-        // Just unmute if clicking current channel
-        video.muted = false;
-        return;
-    }
-    setLoading(true, "Requesting Stream...");
-    try {
-        await fetch(`/api/play/${id}`, { method: 'POST' });
-    } catch(e) {
-        console.error(e);
-        notify("Failed to change channel");
-        setLoading(false);
-    }
+    // Call API
+    fetch(`/api/play/${id}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            console.log(data.message);
+            // The socket event 'channel_changed' will actually trigger the video player
+        });
 }
 
 function initPlayer() {
-    isPlayerInitialized = true;
-    if (hls) { hls.destroy(); hls = null; }
-
-    // Add timestamp to prevent caching old segments
-    const uniqueSrc = `${STREAM_URL}?session=${Date.now()}`;
+    const streamUrl = `/stream/stream.m3u8?session=${Date.now()}`;
 
     if (Hls.isSupported()) {
+        if(hls) hls.destroy();
+        
         hls = new Hls({
-            manifestLoadingTimeOut: 10000,
-            enableWorker: false
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60
         });
-        hls.loadSource(uniqueSrc);
+        
+        hls.loadSource(streamUrl);
         hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            setLoading(false);
-            video.play().catch(() => showClickToPlay());
-            const name = getChannelName(currentChannelId);
-            setStatus('active', `Streaming: ${name}`);
-        });
-        hls.on(Hls.Events.ERROR, (event, data) => {
-            if (data.fatal) {
-                 if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                    console.log("Network error, trying to recover...");
-                    hls.startLoad();
-                 } else {
-                    hls.destroy();
-                 }
-            }
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            video.play().catch(e => console.log("Autoplay blocked:", e));
         });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native HLS support (Safari)
-        video.src = uniqueSrc;
-        video.addEventListener('loadedmetadata', () => {
-            setLoading(false);
-            video.play().catch(() => showClickToPlay());
-        }, { once: true });
-    }
-}
-
-// --- Utilities ---
-function handleStatusUpdate(data) {
-    if (data.is_streaming && data.current_channel_id) {
-        currentChannelId = data.current_channel_id;
-        updateUI();
-        const name = getChannelName(currentChannelId);
-        setStatus('active', `Streaming: ${name}`);
-
-        if (!isPlayerInitialized) {
-            setLoading(true, `Joining ${name}...`);
-            initPlayer();
-        }
-    } else {
-        setStatus('idle', 'Ready');
-    }
-}
-
-function setLoading(isLoading, msg) {
-    if (!overlay) return;
-    if (isLoading) {
-        overlay.classList.remove('hidden');
-        overlay.innerHTML = `<div class="spinner"></div><h3>${msg}</h3>`;
-        // disable click-to-play while loading
-        overlay.onclick = null;
-    } else {
-        overlay.classList.add('hidden');
-    }
-}
-
-function showClickToPlay() {
-    if(!overlay) return;
-    overlay.classList.remove('hidden');
-    overlay.innerHTML = `<h2>Stream Ready</h2><p>Click to Watch</p>`;
-    overlay.onclick = () => {
+        video.src = streamUrl;
         video.play();
-        video.muted = false;
-        overlay.classList.add('hidden');
-    };
-}
-
-function setStatus(state, text) {
-    if(statusText) statusText.innerText = text;
-    if(statusDot) statusDot.className = `live-dot ${state}`;
-}
-
-function notify(msg) {
-    const n = document.getElementById('notification');
-    if(!n) return;
-    n.innerText = msg; n.classList.add('show');
-    setTimeout(() => n.classList.remove('show'), 3000);
-}
-
-function updateUI() { renderChannels(); }
-
-window.filterChannels = () => renderChannels();
-window.toggleFullscreen = () => {
-    if (video.requestFullscreen) video.requestFullscreen();
-    else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
-};
-
-window.toggleFavorite = async (id) => {
-    const chan = channels.find(c => c.id === id);
-    if(chan) {
-        // Toggle the value (works for boolean, converts 0/1 to boolean)
-        chan.Favorites = !chan.Favorites;
-        renderChannels();
-        // Future: Add fetch call here to save to database
     }
-};
-
-function getChannelName(id) {
-    if (!channels.length) return "Loading...";
-    const found = channels.find(c => c.id === id);
-    return found ? found.name : 'Unknown Channel';
 }
 
-// --- Polling Loops ---
-setInterval(() => {
-    // Heartbeat to keep session alive
-    fetch('/api/heartbeat', {method:'POST'}).catch(()=>{});
+// --- SEARCH FILTER ---
+document.getElementById('channelSearch').addEventListener('keyup', (e) => {
+    const term = e.target.value.toLowerCase();
+    document.querySelectorAll('.channel-item').forEach(item => {
+        const name = item.getAttribute('data-name');
+        item.style.display = name.includes(term) ? 'flex' : 'none';
+    });
+});
 
-    // Update Online Users
-    fetch('/api/online_users')
-        .then(r => r.json())
-        .then(users => {
-            if (onlineCountSpan) onlineCountSpan.innerText = users.length;
-            if (userListContainer) {
-                userListContainer.innerHTML = users.map(u => `
-                    <div class="user-item">
-                        <span class="user-avatar">👤</span>
-                        <span>${u}</span>
-                    </div>
-                `).join('');
-            }
-        })
-        .catch(e => console.error("User fetch error:", e));
-}, 5000);
+// --- CHAT & USERS LOGIC ---
+function setupChat() {
+    const chatInput = document.getElementById('chatInput');
+    
+    window.sendMessage = function() {
+        const text = chatInput.value.trim();
+        if(!text) return;
+        socket.emit('chat_message', text);
+        chatInput.value = '';
+    }
+    
+    chatInput.addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') sendMessage();
+    });
+
+    // Listen for Messages
+    socket.on('chat_message', (data) => {
+        const box = document.getElementById('chatMessages');
+        const div = document.createElement('div');
+        div.className = 'msg';
+        div.innerHTML = `<span class="msg-user">${data.user}</span>${data.text}`;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    });
+
+    // Listen for User Updates
+    socket.on('update_users', (users) => {
+        const list = document.getElementById('usersList');
+        document.getElementById('userCount').innerText = users.length;
+        list.innerHTML = '';
+        users.forEach(u => {
+            const initial = u.charAt(0).toUpperCase();
+            const html = `
+                <div class="user-row">
+                    <div class="user-avatar">${initial}</div>
+                    <div class="user-name">${u}</div>
+                    <div class="status-dot"></div>
+                </div>
+            `;
+            list.innerHTML += html;
+        });
+    });
+
+    // Listen for Channel Changes (from other users or self)
+    socket.on('channel_changed', (data) => {
+        console.log("Channel changed:", data);
+        currentChannelId = data.channel_id;
+        document.getElementById('currentProgramTitle').innerText = data.name;
+        loadChannels(); // Updates highlight
+        
+        // Wait 5 seconds (Safety Buffer) before asking for video
+        setTimeout(() => initPlayer(), 5000);
+    });
+}

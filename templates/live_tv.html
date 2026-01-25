@@ -1,65 +1,65 @@
 {% extends "base.html" %}
 
-{% block title %}Live TV - Peak Decline{% endblock %}
-
 {% block content %}
-<div class="app-layout">
-    <aside class="sidebar">
-        <h2>Favorites</h2>
-        <div id="favorites-container">
-            <div class="empty-msg" style="padding:10px; opacity:0.6; font-style:italic;">
-                No favorites yet...
-            </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/live_tv.css') }}">
+
+<div class="dashboard-container">
+
+    <div class="sidebar-left">
+        <div class="brand-header">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PD" style="height: 40px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div style="display:none; width:40px; height:40px; background:#e50914; border-radius:8px;"></div>
         </div>
-    </aside>
 
-    <main class="main-content">
-        <header class="top-header">
-            <a href="{{ url_for('auth.logout') }}" class="logout-btn">
-                <span>🚪</span> Logout
-            </a>
-            <div class="brand-title">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" class="brand-logo" alt="Logo">
+        <input type="text" id="channelSearch" class="search-box" placeholder="Search Channels...">
+
+        <div class="scrollable-area channel-list" id="channelList">
             </div>
-            <div></div>
-        </header>
+    </div>
 
-        <div class="now-playing-bar">
-            <div id="status-dot" class="live-dot"></div>
-            <span id="status-text">Ready</span>
+    <div class="main-stage">
+
+        <div class="favorites-section">
+            <div class="panel-header">Favorites</div>
+            <div class="favorites-row" id="favoritesRow">
+                </div>
         </div>
 
         <div class="video-wrapper">
-            <div id="loading-overlay" class="overlay">
-                <h2>Select a Channel</h2>
-            </div>
-            <video id="video-player" controls autoplay muted playsinline></video>
+            <video id="videoPlayer" controls></video>
         </div>
 
-        <div class="controls-bar">
-            <button class="btn-primary" style="width: auto; padding: 10px 20px;" onclick="toggleFullscreen()">⛶ Fullscreen</button>
-            <input type="text" class="search-input" id="search" placeholder="Search channels..." oninput="filterChannels()">
-            <a href="/plex-watch-together" class="btn-primary" style="width: auto; padding: 10px 20px; text-decoration:none;">Plex Party</a>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div id="currentProgramTitle" style="font-size: 1.2rem; font-weight: bold;">Select a Channel</div>
+            <div id="connectionStatus" style="color: #2ecc71; font-size: 0.9rem;">● Connected</div>
+        </div>
+    </div>
+
+    <div class="sidebar-right">
+
+        <div class="social-box chat-box-container">
+            <div class="panel-header">Chat Box</div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="msg"><span class="msg-user">System</span>Welcome to PeakDecline TV!</div>
+            </div>
+            <div class="chat-input-row">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Type message...">
+                <button class="send-btn" onclick="sendMessage()">Send</button>
+            </div>
         </div>
 
-        <h3 class="section-title">All Channels</h3>
-        <div id="channels-container"></div>
-    </main>
-
-    <aside class="user-sidebar">
-        <h2 style="display:flex; justify-content:space-between;">
-            Users Online <span id="online-count" style="color:white; font-size:0.9rem;">0</span>
-        </h2>
-        <div id="user-list">
+        <div class="social-box users-box-container">
+            <div class="panel-header">
+                Users Online <span style="background:var(--accent-color); padding: 2px 8px; border-radius: 10px; font-size: 0.8rem;" id="userCount">0</span>
             </div>
-    </aside>
+            <div class="scrollable-area" id="usersList" style="flex:1;">
+                </div>
+        </div>
+    </div>
+
 </div>
 
-<div id="notification" class="notification"></div>
-{% endblock %}
-
-{% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
+<script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="{{ url_for('static', filename='js/tv_player.js') }}"></script>
 {% endblock %}

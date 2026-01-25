@@ -35,3 +35,4 @@ class Channel(db.Model):
     url = db.Column(db.String(255), nullable=False)
     favorites = db.Column('Favorites', db.String(255), nullable=True)
     is_playing = db.Column(db.String(255), nullable=True)
+    logo = db.Column(db.String(500))

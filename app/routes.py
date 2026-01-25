@@ -44,14 +44,17 @@ def games():
 def get_channels():
     channels = Channel.query.all()
     channel_list = []
-
+    if channels:
+        print(f"DEBUG: First Channel Name: {channels[0].name}")
+        print(f"DEBUG: First Channel Logo: {getattr(channels[0], 'logo', 'ATTRIBUTE MISSING')}")
     for channel in channels:
         channel_list.append({
             'id': channel.id,
             'name': channel.name,
             'url': channel.url,
             'Favorites': str(channel.favorites).lower() in ['1', 'true', 'yes'],
-            'is_playing': str(channel.is_playing).lower() in ['1', 'true', 'yes']
+            'is_playing': str(channel.is_playing).lower() in ['1', 'true', 'yes'],
+            'logo': channel.logo
         })
 
     return jsonify(channel_list)
@@ -143,3 +146,18 @@ def serve_stream(filename):
         mimetype=mimetype,
         max_age=0
     )
+
+
+import os
+from flask import send_from_directory, current_app
+
+
+@main_bp.route('/static/<path:filename>')
+def custom_static_handler(filename):
+    # This forces Flask to look in the exact folder we want
+    static_dir = os.path.join(current_app.root_path, 'static')
+
+    # DEBUG: Print exactly what file is being requested to your console
+    print(f" DEBUG: Looking for -> {static_dir}/{filename}")
+
+    return send_from_directory(static_dir, filename)
