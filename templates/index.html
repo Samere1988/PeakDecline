@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Peak Decline - Home{% endblock %}
+
+{% block content %}
+<div class="landing-container">
+    <div class="brand-title">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" class="brand-logo" alt="Peak Decline">
+    </div>
+
+    <div class="menu-grid">
+        <a href="{{ url_for('main.live_tv') }}" class="menu-card">
+            Live TV
+        </a>
+
+        <a href="/plex-watch-together" class="menu-card">
+            Plex Watch Together
+        </a>
+
+        <a href="/games" class="menu-card">
+            Games
+        </a>
+
+        {# Show Login card only if user is not logged in #}
+        {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('auth.login') }}" class="menu-card login-highlight">
+            Login
+        </a>
+        {% else %}
+        <a href="{{ url_for('auth.logout') }}" class="menu-card">
+            Logout ({{ current_user.username }})
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

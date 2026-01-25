@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Live TV - Peak Decline{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+    <aside class="sidebar">
+        <h2>Favorites</h2>
+        <div id="favorites-container">
+            <div class="empty-msg" style="padding:10px; opacity:0.6; font-style:italic;">
+                No favorites yet...
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn">
+                <span>🚪</span> Logout
+            </a>
+            <div class="brand-title">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" class="brand-logo" alt="Logo">
+            </div>
+            <div></div>
+        </header>
+
+        <div class="now-playing-bar">
+            <div id="status-dot" class="live-dot"></div>
+            <span id="status-text">Ready</span>
+        </div>
+
+        <div class="video-wrapper">
+            <div id="loading-overlay" class="overlay">
+                <h2>Select a Channel</h2>
+            </div>
+            <video id="video-player" controls autoplay muted playsinline></video>
+        </div>
+
+        <div class="controls-bar">
+            <button class="btn-primary" style="width: auto; padding: 10px 20px;" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+            <input type="text" class="search-input" id="search" placeholder="Search channels..." oninput="filterChannels()">
+            <a href="/plex-watch-together" class="btn-primary" style="width: auto; padding: 10px 20px; text-decoration:none;">Plex Party</a>
+        </div>
+
+        <h3 class="section-title">All Channels</h3>
+        <div id="channels-container"></div>
+    </main>
+
+    <aside class="user-sidebar">
+        <h2 style="display:flex; justify-content:space-between;">
+            Users Online <span id="online-count" style="color:white; font-size:0.9rem;">0</span>
+        </h2>
+        <div id="user-list">
+            </div>
+    </aside>
+</div>
+
+<div id="notification" class="notification"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
+<script src="{{ url_for('static', filename='js/tv_player.js') }}"></script>
+{% endblock %}
