@@ -1,62 +1,81 @@
 {% extends "base.html" %}
 
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/live_tv.css') }}">
+{% block title %}Live TV - PeakDecline{% endblock %}
 
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/live_tv.css') }}?v=3">
+{% endblock %}
+
+{% block content %}
 <div class="dashboard-container">
 
     <div class="sidebar-left">
         <div class="brand-header">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PD" style="height: 40px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-            <div style="display:none; width:40px; height:40px; background:#e50914; border-radius:8px;"></div>
+            <span class="brand-text">PeakDecline</span>
         </div>
 
-        <input type="text" id="channelSearch" class="search-box" placeholder="Search Channels...">
+        <input type="text" id="search-box" class="search-box" placeholder="Search Channels..." onkeyup="filterChannels()">
 
-        <div class="scrollable-area channel-list" id="channelList">
+        <div id="channel-list" class="channel-list custom-scroll">
             </div>
     </div>
 
     <div class="main-stage">
 
         <div class="favorites-section">
-            <div class="panel-header">Favorites</div>
-            <div class="favorites-row" id="favoritesRow">
+            <div class="section-title">Favorites</div>
+            <div id="favorites-list" class="favorites-row custom-scroll-x">
                 </div>
         </div>
 
         <div class="video-wrapper">
-            <video id="videoPlayer" controls></video>
+            <video id="video-player" controls preload="auto" poster="{{ url_for('static', filename='img/logo.png') }}"></video>
+
+            <div id="status-overlay" class="status-overlay">
+                <h3 id="status-text">Ready to Watch</h3>
+            </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div id="currentProgramTitle" style="font-size: 1.2rem; font-weight: bold;">Select a Channel</div>
-            <div id="connectionStatus" style="color: #2ecc71; font-size: 0.9rem;">● Connected</div>
+        <div class="video-info-bar">
+             <div class="info-left">
+                 <h2 id="current-channel-name">Select a Channel</h2>
+                 <div class="live-indicator">
+                    <span id="current-status-dot" class="status-dot-red"></span>
+                    <span id="current-status-text">Idle</span>
+                 </div>
+             </div>
         </div>
     </div>
 
     <div class="sidebar-right">
 
         <div class="social-box chat-box-container">
-            <div class="panel-header">Chat Box</div>
-            <div class="chat-messages" id="chatMessages">
-                <div class="msg"><span class="msg-user">System</span>Welcome to PeakDecline TV!</div>
+            <div class="panel-header">
+                <span>Chat Room</span>
+                <span class="icon-btn">•••</span>
             </div>
+
+            <div id="chat-messages" class="chat-messages custom-scroll">
+                </div>
+
             <div class="chat-input-row">
-                <input type="text" id="chatInput" class="chat-input" placeholder="Type message...">
-                <button class="send-btn" onclick="sendMessage()">Send</button>
+                <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." autocomplete="off">
+                <button onclick="sendMessage()" class="send-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
             </div>
         </div>
 
         <div class="social-box users-box-container">
             <div class="panel-header">
-                Users Online <span style="background:var(--accent-color); padding: 2px 8px; border-radius: 10px; font-size: 0.8rem;" id="userCount">0</span>
+                <span>Users Online</span>
+                <span id="user-count" class="badge">0</span>
             </div>
-            <div class="scrollable-area" id="usersList" style="flex:1;">
+            <div id="users-list" class="users-list custom-scroll">
                 </div>
         </div>
-    </div>
 
+    </div>
 </div>
 
 <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
