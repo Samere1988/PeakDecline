@@ -1,138 +1,151 @@
 import os
 import subprocess
 import uuid
-import threading
 import time
+import glob
 
 
 class StreamService:
     def __init__(self):
         self.process = None
         self.current_channel_id = None
+        self.current_channel_dir = None
 
+        # ─── Resolve project root safely ───────────────────────────────
         current_file = os.path.abspath(__file__)
-        services_dir = os.path.dirname(current_file)
-        app_dir = os.path.dirname(services_dir)
+        services_dir = os.path.dirname(current_file)     # app/services
+        app_dir = os.path.dirname(services_dir)          # app
+        project_root = os.path.dirname(app_dir)          # PeakDecline
 
-        # 3. Build the path to app/static/stream
-        self.stream_dir = os.path.join(app_dir, 'static', 'stream')
+        # ─── STATIC STREAM ROOT ───────────────────────────────────────
+        self.stream_root = os.path.join(project_root, "static", "stream")
+        os.makedirs(self.stream_root, exist_ok=True)
 
-        # Debug print to confirm it matches what you expect
-        print(f"STREAMER PATH SET TO: {self.stream_dir}")
+        print(f"[STREAM] Root: {self.stream_root}")
 
-        self._ensure_dir()
-
-    def _ensure_dir(self):
-        if not os.path.exists(self.stream_dir):
-            os.makedirs(self.stream_dir)
-
-    def _ensure_dir(self):
-        if not os.path.exists(self.stream_dir):
-            os.makedirs(self.stream_dir)
+    # ────────────────────────────────────────────────────────────────
 
     def get_ffmpeg_path(self):
-        known_paths = [
+        for p in (
             r"C:\ffmpeg\bin\ffmpeg.exe",
-            r"C:\Program Files\ffmpeg\bin\ffmpeg.exe"
-        ]
-        for p in known_paths:
-            if os.path.exists(p): return p
+            r"C:\Program Files\ffmpeg\bin\ffmpeg.exe",
+        ):
+            if os.path.exists(p):
+                return p
         return "ffmpeg"
+
+    # ────────────────────────────────────────────────────────────────
 
     def stop_stream(self):
         if self.process:
             try:
                 self.process.terminate()
-                self.process.wait(timeout=2)
-            except:
+                self.process.wait(timeout=3)
+            except Exception:
                 try:
                     self.process.kill()
-                except:
+                except Exception:
                     pass
-            self.process = None
-        self.current_channel_id = None
-        self._cleanup_files()
 
-    def _cleanup_files(self):
-        for f in os.listdir(self.stream_dir):
-            if f.endswith(".ts") or f.endswith(".m3u8"):
-                try:
-                    os.remove(os.path.join(self.stream_dir, f))
-                except:
-                    pass
+        self.process = None
+        self._cleanup_channel()
+        self.current_channel_id = None
+        self.current_channel_dir = None
+
+    # ────────────────────────────────────────────────────────────────
+
+    def _cleanup_channel(self):
+        if not self.current_channel_dir:
+            return
+
+        try:
+            for f in glob.glob(os.path.join(self.current_channel_dir, "*")):
+                if f.endswith(".ts") or f.endswith(".m3u8"):
+                    os.remove(f)
+        except Exception as e:
+            print(f"[STREAM] Cleanup warning: {e}")
+
+    # ────────────────────────────────────────────────────────────────
 
     def start_stream(self, channel_id, channel_url, channel_name):
         self.stop_stream()
 
         session_id = str(uuid.uuid4())[:8]
-        output_path = os.path.join(self.stream_dir, "stream.m3u8")
 
-        print(f"DEBUG: Output Path -> {output_path}")
-        print(f"DEBUG: Stream URL -> {channel_url}")
+        # ─── Per-channel directory ────────────────────────────────────
+        channel_dir = os.path.join(self.stream_root, str(channel_id))
+        os.makedirs(channel_dir, exist_ok=True)
+        self.current_channel_dir = channel_dir
 
-        # 1. Construct the command
-        ffmpeg_exe = self.get_ffmpeg_path()
-        print(f"DEBUG: Using FFmpeg at -> {ffmpeg_exe}")
+        playlist_path = os.path.join(channel_dir, "index.m3u8")
+        segment_pattern = os.path.join(channel_dir, f"seg_{session_id}_%03d.ts")
+
+        print(f"[STREAM] Channel {channel_id}: {channel_name}")
+        print(f"[STREAM] URL: {channel_url}")
+
+        ffmpeg = self.get_ffmpeg_path()
 
         cmd = [
-            ffmpeg_exe,
-            '-hide_banner', '-loglevel', 'info',  # Changed to 'info' for more detail
-            '-i', channel_url,
-            '-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'zerolatency',
-            '-crf', '15', '-maxrate', '15M', '-bufsize', '30M',
-            '-force_key_frames', 'expr:gte(t,n_forced*2)', '-sc_threshold', '0',
-            '-pix_fmt', 'yuv420p',
-            '-c:a', 'aac', '-ar', '48000', '-b:a', '320k',
-            '-f', 'hls', '-hls_time', '2', '-hls_list_size', '6',
-            '-hls_flags', 'delete_segments',
-            '-hls_segment_filename', os.path.join(self.stream_dir, f'seg_{session_id}_%03d.ts'),
-            '-y', output_path
+            ffmpeg,
+            "-hide_banner",
+            "-loglevel", "warning",
+            "-i", channel_url,
+
+            # ─── VIDEO ────────────────────────────────────────────────
+            "-c:v", "libx264",
+            "-preset", "veryfast",
+            "-tune", "zerolatency",
+            "-pix_fmt", "yuv420p",
+            "-profile:v", "baseline",
+            "-level", "3.0",
+            "-g", "60",
+            "-keyint_min", "60",
+            "-sc_threshold", "0",
+
+            # ─── AUDIO ────────────────────────────────────────────────
+            "-c:a", "aac",
+            "-ar", "48000",
+            "-b:a", "192k",
+
+            # ─── HLS ──────────────────────────────────────────────────
+            "-f", "hls",
+            "-hls_time", "2",
+            "-hls_list_size", "12",
+            "-hls_flags", "delete_segments+append_list",
+            "-hls_allow_cache", "0",
+            "-hls_segment_filename", segment_pattern,
+
+            "-y", playlist_path
         ]
 
         try:
-            # 2. Start Process with PIPES so we can read the error
+            # 🔥 CRITICAL FIX: DO NOT PIPE STDERR
             self.process = subprocess.Popen(
                 cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True  # This makes the output readable text instead of bytes
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
             )
 
-            # 3. IMMEDIATE DEATH CHECK
-            # Wait 0.5 seconds and see if it's already dead
-            time.sleep(0.5)
-            if self.process.poll() is not None:
-                # IT DIED! Get the error message
-                stdout, stderr = self.process.communicate()
-                print("\n" + "=" * 40)
-                print("CRITICAL: FFmpeg Crashed Immediately!")
-                print(f"STDOUT: {stdout}")
-                print(f"STDERR: {stderr}")  # <--- THIS IS THE SMOKING GUN
-                print("=" * 40 + "\n")
-                return False, f"FFmpeg crashed: {stderr[:100]}..."
+            # ─── Wait for playlist ─────────────────────────────────────
+            for i in range(20):
+                time.sleep(0.5)
 
-            # 4. If it survived the first 0.5s, wait for the file
-            print("FFmpeg started successfully... waiting for file.")
-            for i in range(15):
-                time.sleep(1)
-                # Check if it died while we were waiting
                 if self.process.poll() is not None:
-                    _, stderr = self.process.communicate()
-                    print(f"FFmpeg died during wait loop: {stderr}")
-                    return False, "Stream crashed during startup"
+                    self.stop_stream()
+                    return False, "FFmpeg exited during startup"
 
-                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                    print(f"Stream ready after {i + 1} seconds!")
+                if os.path.exists(playlist_path) and os.path.getsize(playlist_path) > 0:
                     self.current_channel_id = channel_id
+                    print(f"[STREAM] Ready in {i * 0.5:.1f}s")
                     return True, f"Playing {channel_name}"
 
             self.stop_stream()
-            return False, "Timed out waiting for file generation"
+            return False, "Timed out waiting for stream"
 
         except Exception as e:
-            print(f"Python Error: {e}")
+            self.stop_stream()
             return False, str(e)
 
 
-# Create a singleton instance to be used by routes
+# ─── Singleton ────────────────────────────────────────────────────────
 streamer = StreamService()

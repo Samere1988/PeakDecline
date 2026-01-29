@@ -3,76 +3,89 @@
 {% block title %}Live TV - PeakDecline{% endblock %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/live_tv.css') }}?v=3">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/live_tv.css') }}">
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
 
+    <!-- LEFT SIDEBAR -->
     <div class="sidebar-left">
         <div class="brand-header">
             <span class="brand-text">PeakDecline</span>
         </div>
 
-        <input type="text" id="search-box" class="search-box" placeholder="Search Channels..." onkeyup="filterChannels()">
+        <input
+            type="text"
+            id="search-box"
+            class="search-box"
+            placeholder="Search Channels..."
+        >
 
-        <div id="channel-list" class="channel-list custom-scroll">
-            </div>
+        <div id="channel-list" class="channel-list custom-scroll"></div>
     </div>
 
+    <!-- MAIN STAGE -->
     <div class="main-stage">
 
+        <!-- FAVORITES -->
         <div class="favorites-section">
             <div class="section-title">Favorites</div>
-            <div id="favorites-list" class="favorites-row custom-scroll-x">
-                </div>
+            <div id="favorites-list" class="favorites-row custom-scroll-x"></div>
         </div>
 
+        <!-- VIDEO -->
         <div class="video-wrapper">
-            <video id="video-player" controls preload="auto" poster="{{ url_for('static', filename='img/logo.png') }}"></video>
+            <video
+                id="video-player"
+                autoplay
+                muted
+                playsinline
+                preload="auto"
+                controls
+            ></video>
+        </div>
 
-            <div id="status-overlay" class="status-overlay">
-                <h3 id="status-text">Ready to Watch</h3>
+        <!-- INFO BAR (TEXT ONLY, NOT OVER VIDEO) -->
+        <div class="video-info-bar">
+            <h2 id="current-channel-name">Select a Channel</h2>
+            <div class="live-indicator">
+                <span class="status-dot-red"></span>
+                <span id="current-status-text">Live</span>
             </div>
         </div>
 
-        <div class="video-info-bar">
-             <div class="info-left">
-                 <h2 id="current-channel-name">Select a Channel</h2>
-                 <div class="live-indicator">
-                    <span id="current-status-dot" class="status-dot-red"></span>
-                    <span id="current-status-text">Idle</span>
-                 </div>
-             </div>
-        </div>
     </div>
 
+    <!-- RIGHT SIDEBAR -->
     <div class="sidebar-right">
 
+        <!-- CHAT -->
         <div class="social-box chat-box-container">
             <div class="panel-header">
                 <span>Chat Room</span>
-                <span class="icon-btn">•••</span>
             </div>
 
-            <div id="chat-messages" class="chat-messages custom-scroll">
-                </div>
+            <div id="chat-messages" class="chat-messages custom-scroll"></div>
 
             <div class="chat-input-row">
-                <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." autocomplete="off">
-                <button onclick="sendMessage()" class="send-btn">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                </button>
+                <input
+                    type="text"
+                    id="chat-input"
+                    class="chat-input"
+                    placeholder="Type a message..."
+                >
+                <button id="send-btn" class="send-btn">Send</button>
             </div>
         </div>
 
+        <!-- USERS -->
         <div class="social-box users-box-container">
             <div class="panel-header">
                 <span>Users Online</span>
                 <span id="user-count" class="badge">0</span>
             </div>
-            <div id="users-list" class="users-list custom-scroll">
-                </div>
+            <div id="users-list" class="users-list custom-scroll"></div>
         </div>
 
     </div>

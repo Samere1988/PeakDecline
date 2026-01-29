@@ -176,12 +176,14 @@ video {
 
 .status-overlay {
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    display: flex; align-items: center; justify-content: center;
-    pointer-events: none;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     z-index: 10;
+    pointer-events: auto; /* FIX */
 }
-#status-text {
+#overlay-text {
     background: rgba(0,0,0,0.6);
     padding: 8px 16px;
     border-radius: 20px;
@@ -301,4 +303,25 @@ video {
     border-radius: 50%;
     box-shadow: 0 0 6px var(--accent-green);
     margin-left: auto;
+}
+
+/* ===========================
+   HERO / BACKGROUND LOGOS
+   =========================== */
+
+/* Any image inside the video area that is NOT the video itself */
+.video-wrapper img {
+    position: absolute;
+    max-width: 50%;
+    max-height: 60%;
+    object-fit: contain;
+    opacity: 0.08;
+    pointer-events: none;
+}
+
+/* Center it nicely */
+.video-wrapper img {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
