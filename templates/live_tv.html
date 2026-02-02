@@ -12,7 +12,11 @@
     <!-- LEFT SIDEBAR -->
     <div class="sidebar-left">
         <div class="brand-header">
-            <span class="brand-text">PeakDecline</span>
+            <img
+                class="brand-logo"
+                src="{{ url_for('static', filename='img/logo.png') }}"
+                alt="PeakDecline"
+            >
         </div>
 
         <input
@@ -22,13 +26,14 @@
             placeholder="Search Channels..."
         >
 
+        <!-- IMPORTANT: JS renders into this -->
         <div id="channel-list" class="channel-list custom-scroll"></div>
     </div>
 
     <!-- MAIN STAGE -->
     <div class="main-stage">
 
-        <!-- FAVORITES -->
+        <!-- FAVORITES (IMPORTANT: JS renders into #favorites-list) -->
         <div class="favorites-section">
             <div class="section-title">Favorites</div>
             <div id="favorites-list" class="favorites-row custom-scroll-x"></div>
@@ -46,12 +51,25 @@
             ></video>
         </div>
 
-        <!-- INFO BAR (TEXT ONLY, NOT OVER VIDEO) -->
-        <div class="video-info-bar">
-            <h2 id="current-channel-name">Select a Channel</h2>
-            <div class="live-indicator">
+        <!-- NOW PLAYING BAR (keeps same IDs your JS expects) -->
+        <div class="video-info-bar" style="display:flex; justify-content:center;">
+            <div
+                class="now-playing-bar"
+                style="display:flex; align-items:center; gap:10px; padding:8px 14px; border-radius:14px; background:rgba(20,20,23,0.8); border:1px solid #222; backdrop-filter: blur(6px);"
+            >
                 <span class="status-dot-red"></span>
-                <span id="current-status-text">Live</span>
+                <span id="current-status-text" style="font-weight:800; letter-spacing:0.5px;">LIVE</span>
+                <span style="opacity:0.7;">·</span>
+                <span style="opacity:0.85;">Now Playing:</span>
+
+                <img
+                    id="current-channel-logo"
+                    class="now-playing-logo"
+                    src="{{ url_for('static', filename='img/default_channel.png') }}"
+                    alt=""
+                />
+
+                <span id="current-channel-name" style="font-weight:900;">Select a Channel</span>
             </div>
         </div>
 
@@ -90,7 +108,9 @@
 
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="{{ url_for('static', filename='js/tv_player.js') }}"></script>

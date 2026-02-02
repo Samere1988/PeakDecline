@@ -2,6 +2,7 @@ import os
 import time
 from flask import Blueprint, render_template, jsonify, request, send_from_directory, current_app
 from flask_login import login_required, current_user
+from flask_socketio import emit
 from . import db, socketio
 from .models import Channel
 from app.services.streamer import streamer
@@ -12,6 +13,47 @@ main_bp = Blueprint('main', __name__)
 # In a production app, use Redis or a Database for this
 online_users = set()
 online_last_seen = {}
+
+connected_sids = {}  # sid -> username
+
+@socketio.on("connect")
+def sio_connect():
+    username = current_user.username if current_user.is_authenticated else "Guest"
+    connected_sids[request.sid] = username
+
+    online_users.add(username)
+    online_last_seen[username] = time.time()
+
+    socketio.emit("update_users", sorted(list(online_users)))
+
+@socketio.on("disconnect")
+def sio_disconnect():
+    username = connected_sids.pop(request.sid, None)
+    if not username:
+        return
+
+    # only remove user if they have no other active sockets (multiple tabs/devices)
+    if username not in connected_sids.values():
+        online_users.discard(username)
+        online_last_seen.pop(username, None)
+
+    socketio.emit("update_users", sorted(list(online_users)))
+
+@socketio.on("chat_message")
+def sio_chat_message(message):
+    username = connected_sids.get(request.sid) or (
+        current_user.username if current_user.is_authenticated else "Guest"
+    )
+
+    text = (str(message) if message is not None else "").strip()
+    if not text:
+        return
+
+    socketio.emit("chat_message", {"user": username, "text": text[:500]})
+
+@socketio.on("request_users")
+def sio_request_users():
+    emit("update_users", sorted(list(online_users)))
 
 
 @main_bp.route('/')
@@ -94,7 +136,8 @@ def api_status():
 
     return jsonify({
         "is_streaming": active_channel is not None,
-        "current_channel_id": active_channel.id if active_channel else None
+        "current_channel_id": active_channel.id if active_channel else None,
+        "current_channel_name": active_channel.name if active_channel else None
     })
 
 

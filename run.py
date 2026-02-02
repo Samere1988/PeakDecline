@@ -1,5 +1,5 @@
 import os
-from app import create_app, db
+from app import create_app, db, socketio
 
 # Initialize the app using the Factory Pattern
 app = create_app()
@@ -24,4 +24,4 @@ if __name__ == "__main__":
     print(f"Access your site at http://localhost:{port}")
 
     # 4. Run the application
-    app.run(host="0.0.0.0", port=port, debug=debug_mode)
+    socketio.run(app, host="0.0.0.0", port=port, debug=debug_mode, allow_unsafe_werkzeug=True)

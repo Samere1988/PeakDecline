@@ -10,7 +10,7 @@ from flask_socketio import SocketIO
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
-socketio = SocketIO()
+socketio = SocketIO(async_mode="threading", cors_allowed_origins="*")
 
 
 def create_app():
@@ -55,7 +55,7 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
-    socketio.init_app(app)
+    socketio.init_app(app, cors_allowed_origins="*")
 
     # Configure Flask-Login
     login_manager.login_view = 'auth.login'
