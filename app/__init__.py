@@ -5,13 +5,11 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_socketio import SocketIO
 
-
-# Initialize extensions at the top level so they can be imported by models/routes
+# Initialize extensions
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
 socketio = SocketIO(async_mode="threading", cors_allowed_origins="*")
-
 
 def create_app():
     app = Flask(__name__,
@@ -21,21 +19,19 @@ def create_app():
     # Environment Configuration
     env = os.getenv('FLASK_ENV', 'production')
 
-    # Ensure the instance folder exists for your .db files
     try:
         os.makedirs(app.instance_path)
     except OSError:
         pass
 
-    # Define Database Paths
-    # users.db is the default; channels.db is the bind
+    # Database Paths
     users_db = 'sqlite:///' + os.path.join(app.instance_path, 'users.db')
     channels_db = 'sqlite:///' + os.path.join(app.instance_path, 'channels.db')
 
-    # 1. Main Database Configuration (for Users)
+    # 1. Main Database Configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = users_db
 
-    # 2. Secondary Database Configuration (for Channels)
+    # 2. Secondary Database Configuration
     app.config['SQLALCHEMY_BINDS'] = {
         'channels_db': channels_db
     }
@@ -51,7 +47,11 @@ def create_app():
     app.config['MAIL_PASSWORD'] = 'aspt mifz vjux izdw '
     app.config['MAIL_DEFAULT_SENDER'] = 'Peak Decline'
 
-    # Initialize extensions with app context
+    # --- PLEX CONFIGURATION (NEW) ---
+    app.config['PLEX_URL'] = 'http://127.0.0.1:32400'
+    app.config['PLEX_TOKEN'] = 'uHmJsmLp1jo-BxJKWQGU'
+
+    # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
@@ -60,7 +60,6 @@ def create_app():
     # Configure Flask-Login
     login_manager.login_view = 'auth.login'
     login_manager.login_message_category = 'info'
-
 
     from .routes import main_bp
     from .auth import auth_bp

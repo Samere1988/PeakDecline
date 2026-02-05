@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Watch Together - PeakDecline{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/plex.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="plex-container">
+
+    <div class="plex-header">
+        <div class="header-title">
+            <h1>Active Rooms</h1>
+            <span>Join a session or start your own</span>
+        </div>
+        <button id="openCreateBtn" class="create-btn">
+            + Create Room
+        </button>
+    </div>
+
+    <div class="rooms-grid">
+        
+        {% for room in rooms %}
+        <a href="/plex-watch-together/room/{{ room.id }}" class="card-link">
+            <div class="room-card">
+                <div class="room-poster">
+                    <img src="{{ room.media_backdrop if room.media_backdrop else url_for('static', filename='img/default_channel.png') }}" alt="Backdrop">
+                    {% if room.is_playing %}
+                    <div class="live-badge">Playing</div>
+                    {% endif %}
+                </div>
+                
+                <div class="room-info">
+                    <div class="room-name">{{ room.name }}</div>
+                    
+                    <div class="now-playing">
+                        {% if room.media_title %}
+                            <span>📺 {{ room.media_title }}</span>
+                        {% else %}
+                            <span>💤 Nothing playing</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="room-users">
+                        <div class="user-avatars">
+                            <div class="user-avatar" title="Host: {{ room.host.username }}" style="background: #e5a00d; color: black;">
+                                {{ room.host.username[0]|upper }}
+                            </div>
+                        </div>
+                        <span>Hosted by {{ room.host.username }}</span>
+                    </div>
+                        
+                        {% if room.users|length > 0 %}
+                            <span>{{ room.users|length }} Watching</span>
+                        {% else %}
+                            <span>Empty</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </a>
+        {% else %}
+            <div class="no-rooms">
+                <h2>No active rooms</h2>
+                <p>Click "Create Room" to start a watch party.</p>
+            </div>
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<div id="createRoomModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>Start a Party</h2>
+        <input type="text" class="modal-input" placeholder="Enter Room Name...">
+        
+        <div class="modal-actions">
+            <button id="cancelCreateBtn" class="btn-cancel">Cancel</button>
+            <button class="btn-submit">Create</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/plex_landing.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}{{ room.name }} - Watch Party{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/room.css') }}">
+{% endblock %}
+
+{% block content %}
+<div id="room-app"
+     class="room-container"
+     data-room-id="{{ room.id }}"
+     data-is-host="{{ 'true' if current_user.id == room.host_id else 'false' }}"
+     data-username="{{ current_user.username }}"
+     data-current-key="{{ room.current_media_key if room.current_media_key else '' }}"
+     data-initial-media-url="{{ room.current_media_url | safe if room.current_media_url else '' }}"
+     data-media-title="{{ room.current_media_title if room.current_media_title else '' }}">
+
+    <div class="room-sidebar-left">
+        <div class="sidebar-header">Viewers</div>
+        <div id="users-list" class="user-list custom-scroll">
+            </div>
+    </div>
+
+    <div class="room-main">
+
+        <div class="host-controls">
+            <div class="media-info">
+                <h3 id="media-title">{{ room.current_media_title or 'Waiting for Host...' }}</h3>
+            </div>
+
+            {% if current_user.id == room.host_id %}
+            <button id="btn-open-search" class="btn-choose-media">Select Media</button>
+            {% endif %}
+        </div>
+
+        <div class="video-wrapper">
+            <video id="video-player" controls playsinline></video>
+
+            <div class="video-controls-bar">
+                <button id="btn-stream-settings" class="btn-settings">
+                    <span>⚙️</span> Audio & Subs
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="room-sidebar-right">
+        <div class="sidebar-header">Chat</div>
+        <div id="chat-box" class="chat-messages custom-scroll"></div>
+
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message...">
+            <button id="btn-send-chat" class="btn-send">Send</button>
+        </div>
+    </div>
+
+</div>
+
+<div id="searchModal" class="search-modal">
+    <div class="search-content">
+        <div class="sidebar-header" style="background:transparent; border:none; display:flex; justify-content:space-between;">
+            <h2>Select Media from Plex</h2>
+            <button id="btn-close-search" style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">&times;</button>
+        </div>
+
+        <div class="search-bar-row">
+            <input type="text" id="plex-search-input" class="chat-input" placeholder="Search for a movie...">
+            <button id="btn-search-plex" class="btn-choose-media">Search</button>
+        </div>
+
+        <div id="search-results" class="search-results custom-scroll">
+            <p style="color:#777; width:100%; text-align:center; margin-top:50px;">
+                Type a movie name to search your library.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div id="optionsModal" class="search-modal">
+    <div class="search-content" style="max-width: 400px;">
+        <div class="sidebar-header" style="background:transparent; border:none; display:flex; justify-content:space-between;">
+            <h2>Playback Options</h2>
+            <button id="btn-close-options" style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">&times;</button>
+        </div>
+
+        <div style="padding: 20px;">
+            <h3 id="options-media-title" style="margin-bottom: 15px; color: #e50914; font-size: 1.2em;">Movie Title</h3>
+
+            <label style="display:block; margin-bottom:5px; color:#ccc; font-size:0.9em;">Audio Track:</label>
+            <select id="audio-select" class="chat-input" style="width:100%; margin-bottom:15px; background:#222; color:white; border:1px solid #444;">
+                <option>Loading...</option>
+            </select>
+
+            <label style="display:block; margin-bottom:5px; color:#ccc; font-size:0.9em;">Subtitle:</label>
+            <select id="subtitle-select" class="chat-input" style="width:100%; margin-bottom:25px; background:#222; color:white; border:1px solid #444;">
+                <option>Loading...</option>
+            </select>
+
+            <button id="btn-confirm-play" class="btn-choose-media" style="width:100%; padding: 12px;">Play Now</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+
+<script src="{{ url_for('static', filename='js/room_player.js') }}"></script>
+{% endblock %}

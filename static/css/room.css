@@ -1,0 +1,366 @@
+/* static/css/room.css */
+
+/* =========================================
+   1. RESET & BASICS
+   ========================================= */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #121212; /* Deep dark background */
+    color: #e0e0e0;            /* Light gray text */
+    font-family: 'Inter', "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow: hidden;          /* Prevent full page scroll */
+}
+
+/* Custom Scrollbars */
+.custom-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* =========================================
+   2. MAIN LAYOUT
+   ========================================= */
+.room-container {
+    display: flex;
+    height: calc(100vh - 60px); /* Adjust based on your Navbar height */
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Sidebars (Left & Right) */
+.room-sidebar-left,
+.room-sidebar-right {
+    width: 260px;
+    background-color: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #333;
+    border-right: 1px solid #333;
+    flex-shrink: 0;
+}
+
+.room-sidebar-left {
+    border-right: none;
+}
+
+.sidebar-header {
+    padding: 15px;
+    background-color: #222;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #333;
+    text-align: center;
+    color: #aaa;
+}
+
+/* Main Center Area */
+.room-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #000;
+    position: relative;
+    justify-content: flex-start;
+}
+
+/* =========================================
+   3. VIDEO PLAYER & CONTROLS
+   ========================================= */
+.host-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: #1a1a1a;
+    border-bottom: 1px solid #333;
+    min-height: 60px;
+}
+
+.media-info h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #fff;
+    font-weight: 500;
+}
+
+/* Wrapper to center video */
+.video-wrapper {
+    width: 100%;
+    max-width: 1280px;
+    margin: 40px auto; /* Centers it vertically/horizontally */
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+video {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 8px 8px 0 0;
+    display: block;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* --- SETTINGS BAR (Audio/Subs) --- */
+.video-controls-bar {
+    background: #222;
+    padding: 8px 15px;
+    display: flex;
+    justify-content: flex-end; /* Push button to right */
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border: 1px solid #333;
+    border-top: none;
+    margin-top: -1px; /* Remove gap */
+}
+
+.btn-settings {
+    background: #333;
+    color: #ddd;
+    border: 1px solid #444;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-settings:hover {
+    background: #444;
+    color: #fff;
+    border-color: #666;
+}
+
+/* =========================================
+   4. CHAT AREA (FIXED LAYOUT)
+   ========================================= */
+.chat-messages {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #161616;
+}
+
+.chat-msg {
+    font-size: 0.95rem;
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+.chat-msg strong {
+    color: #e50914; /* Netflix Red for Usernames */
+    margin-right: 5px;
+}
+
+/* FLEXBOX FIX FOR CHAT INPUT */
+.chat-input-area {
+    display: flex;       /* Aligns items in a row */
+    align-items: center; /* Centers them vertically */
+    padding: 10px;
+    gap: 8px;            /* Adds space between input and button */
+    width: 100%;         /* Ensures it fits the container */
+    box-sizing: border-box; /* Includes padding in width calculation */
+    background: #1a1a1a;
+    border-top: 1px solid #333;
+}
+
+.chat-input {
+    flex: 1;             /* Tells input to take up all AVAILABLE space */
+    min-width: 0;        /* Prevents it from forcing the container wider */
+    background: #333;
+    border: 1px solid #444;
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.chat-input:focus {
+    outline: none;
+    border-color: #e50914;
+}
+
+/* =========================================
+   5. BUTTONS (FIXED SYNTAX)
+   ========================================= */
+.btn-send,
+.btn-choose-media {
+    flex-shrink: 0;      /* Prevents the button from being squished */
+    white-space: nowrap; /* Keeps text on one line */
+    background: #e50914;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-weight: bold;
+} /* <--- THIS CLOSING BRACE WAS MISSING */
+
+.btn-send:hover,
+.btn-choose-media:hover {
+    background: #b20710;
+}
+
+/* =========================================
+   6. MODALS (Search & Options)
+   ========================================= */
+.search-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 2000; /* High Z-Index to cover video */
+    display: none; /* Hidden by default */
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+/* This class is added by JS to show the modal */
+.search-modal.active {
+    display: flex !important;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.search-content {
+    background: #1a1a1a;
+    width: 90%;
+    max-width: 900px;
+    max-height: 85vh;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #333;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+/* Specific Tweak for the smaller Options popup */
+#optionsModal .search-content {
+    max-width: 450px;
+}
+
+.search-bar-row {
+    padding: 20px;
+    display: flex;
+    gap: 10px;
+    background: #222;
+    border-bottom: 1px solid #333;
+}
+
+.search-results {
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    align-content: flex-start;
+}
+
+/* =========================================
+   7. MOVIE CARDS
+   ========================================= */
+.movie-card {
+    background: #252525;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    border: 1px solid #333;
+}
+
+.movie-card:hover {
+    transform: scale(1.05);
+    z-index: 10;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    border-color: #eee;
+}
+
+/* Poster Style (Movies/Shows) */
+.poster-style {
+    width: 160px;
+}
+
+.poster-style .movie-card-image img {
+    width: 160px;
+    height: 240px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Episode Style (Wide) */
+.episode-style {
+    width: 300px;
+}
+
+.episode-style .movie-card-image img {
+    width: 300px;
+    height: 169px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Back Button */
+.back-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #333;
+    color: #fff;
+    border: 2px dashed #555;
+    height: 240px; /* Match poster height */
+}
+.episode-style.back-card {
+    height: 169px; /* Match episode height */
+}
+
+.back-icon { font-size: 2rem; margin-bottom: 10px; }
+.back-text { font-weight: bold; letter-spacing: 1px; }
+
+/* Info Text below image */
+.movie-info {
+    padding: 10px;
+}
+
+.movie-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+
+.movie-meta {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
