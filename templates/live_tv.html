@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Live TV - PeakDecline{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/live_tv.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar-left">
+        <div class="brand-header">
+            <img
+                class="brand-logo"
+                src="{{ url_for('static', filename='img/logo.png') }}"
+                alt="PeakDecline"
+            >
+        </div>
+
+        <input
+            type="text"
+            id="search-box"
+            class="search-box"
+            placeholder="Search Channels..."
+        >
+
+        <!-- IMPORTANT: JS renders into this -->
+        <div id="channel-list" class="channel-list custom-scroll"></div>
+    </div>
+
+    <!-- MAIN STAGE -->
+    <div class="main-stage">
+
+        <!-- FAVORITES (IMPORTANT: JS renders into #favorites-list) -->
+        <div class="favorites-section">
+            <div class="section-title">Favorites</div>
+            <div id="favorites-list" class="favorites-row custom-scroll-x"></div>
+        </div>
+
+        <!-- VIDEO -->
+        <div class="video-wrapper">
+            <video
+                id="video-player"
+                autoplay
+                muted
+                playsinline
+                preload="auto"
+                controls
+            ></video>
+        </div>
+
+        <!-- NOW PLAYING BAR (keeps same IDs your JS expects) -->
+        <div class="video-info-bar" style="display:flex; justify-content:center;">
+            <div
+                class="now-playing-bar"
+                style="display:flex; align-items:center; gap:10px; padding:8px 14px; border-radius:14px; background:rgba(20,20,23,0.8); border:1px solid #222; backdrop-filter: blur(6px);"
+            >
+                <span class="status-dot-red"></span>
+                <span id="current-status-text" style="font-weight:800; letter-spacing:0.5px;">LIVE</span>
+                <span style="opacity:0.7;">·</span>
+                <span style="opacity:0.85;">Now Playing:</span>
+
+                <img
+                    id="current-channel-logo"
+                    class="now-playing-logo"
+                    src="{{ url_for('static', filename='img/default_channel.png') }}"
+                    alt=""
+                />
+
+                <span id="current-channel-name" style="font-weight:900;">Select a Channel</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="sidebar-right">
+
+        <!-- CHAT -->
+        <div class="social-box chat-box-container">
+            <div class="panel-header">
+                <span>Chat Room</span>
+            </div>
+
+            <div id="chat-messages" class="chat-messages custom-scroll"></div>
+
+            <div class="chat-input-row">
+                <input
+                    type="text"
+                    id="chat-input"
+                    class="chat-input"
+                    placeholder="Type a message..."
+                >
+                <button id="send-btn" class="send-btn">Send</button>
+            </div>
+        </div>
+
+        <!-- USERS -->
+        <div class="social-box users-box-container">
+            <div class="panel-header">
+                <span>Users Online</span>
+                <span id="user-count" class="badge">0</span>
+            </div>
+            <div id="users-list" class="users-list custom-scroll"></div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="{{ url_for('static', filename='js/tv_player.js') }}"></script>
+{% endblock %}

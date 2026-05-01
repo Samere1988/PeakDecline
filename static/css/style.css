@@ -1,0 +1,275 @@
+:root {
+    --bg-main: #141414;       /* Deep Black/Grey */
+    --bg-card: #1f1f1f;       /* Slightly lighter for cards */
+    --accent: #e50914;        /* Netflix Red */
+    --accent-hover: #f40612;
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --border: #333333;
+    --input-bg: #333333;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- LINKS --- */
+a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: 0.2s;
+}
+a:hover {
+    color: var(--text-secondary);
+}
+
+/* --- NAVBAR (For pages outside Live TV) --- */
+.navbar {
+    background-color: transparent; /* Transparent background */
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: absolute; /* Overlays on top of hero images */
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+}
+
+.nav-brand img {
+    height: 40px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+/* --- BUTTONS --- */
+.btn {
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    font-size: 1rem;
+    transition: background 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--accent);
+    color: white;
+}
+.btn-primary:hover {
+    background-color: var(--accent-hover);
+}
+
+.btn-secondary {
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.5);
+}
+.btn-secondary:hover {
+    background-color: rgba(255,255,255,0.2);
+}
+
+/* --- AUTH PAGES (Login / Register) --- */
+.auth-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('../img/background.jpg'); /* Optional bg image */
+    background-size: cover;
+    background-position: center;
+}
+
+.auth-card {
+    background-color: rgba(0, 0, 0, 0.75); /* Semi-transparent black */
+    padding: 60px 68px 40px;
+    border-radius: 4px;
+    width: 100%;
+    max-width: 450px;
+    min-height: 500px;
+}
+
+.auth-card h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 28px;
+}
+
+/* --- FORMS --- */
+.form-group {
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.form-control {
+    width: 100%;
+    background: #333;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    height: 50px;
+    line-height: 50px;
+    padding: 16px 20px 0; /* Space for floating label if used */
+    font-size: 1rem;
+}
+
+.form-control::placeholder {
+    color: #8c8c8c;
+}
+
+.form-control:focus {
+    background: #454545;
+    outline: none;
+}
+
+.submit-btn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 16px;
+    font-size: 1rem;
+    border-radius: 4px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.auth-footer {
+    margin-top: 16px;
+    color: #737373;
+    font-size: 1rem;
+}
+.auth-footer a {
+    color: white;
+}
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+/* --- FLASH MESSAGES (Alerts) --- */
+.alert-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    z-index: 1000;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alert-error, .alert-danger {
+    background-color: #e87c03; /* Orange/Red warning */
+}
+
+.alert-success {
+    background-color: #2ecc71;
+}
+
+.alert-info {
+    background-color: #3498db;
+}
+
+/* --- FOOTER --- */
+.site-footer {
+    background: rgba(0,0,0,0.75);
+    padding: 30px;
+    margin-top: auto;
+    color: #737373;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+/* --- HOME PAGE (Index) STYLES --- */
+
+.landing-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh; /* Centers content vertically */
+    text-align: center;
+    padding: 20px;
+}
+
+.brand-title {
+    margin-bottom: 50px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.brand-logo {
+    max-width: 800px; /* Limits logo size on big screens */
+    width: 90%;       /* Responsive on mobile */
+    height: auto;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 1000px; /* Keeps buttons from getting too wide */
+    padding: 0 20px;
+}
+
+.menu-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-card); /* Dark Grey */
+    padding: 30px;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    text-decoration: none; /* Removes underline */
+}
+
+.menu-card:hover {
+    background-color: var(--accent); /* Red on hover */
+    color: white;
+    transform: translateY(-5px); /* Pops up slightly */
+    box-shadow: 0 10px 20px rgba(229, 9, 20, 0.4); /* Red glow */
+    border-color: var(--accent);
+}
+
+/* Optional: Make the Login button distinct */
+.login-highlight {
+    border: 1px solid var(--accent);
+}
+

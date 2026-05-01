@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}PeakDecline | Emulator Hub{% endblock %}
+
+{% block head %}
+<!-- Link to your new CSS file -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/emulator.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="emulator-container">
+
+    <!-- Left Sidebar: Dynamic File Explorer -->
+    <div class="game-library">
+
+        <!-- Explorer Header -->
+        <div class="library-header">
+            <h3 id="explorer-title" class="library-title">Game Library</h3>
+            <button id="back-btn" class="back-btn" onclick="showFolders()">Back</button>
+        </div>
+
+        <input type="text" id="rom-search" class="search-box" placeholder="Search games...">
+        <!-- Root View: The Console Folders -->
+        <div id="view-folders" class="folder-view">
+            <button class="lib-btn" onclick="openFolder('snes')">
+                Super Nintendo
+                <span class="file-count">{{ library.snes|length }}</span>
+            </button>
+            <button class="lib-btn" onclick="openFolder('n64')">
+                Nintendo 64
+                <span class="file-count">{{ library.n64|length }}</span>
+            </button>
+            <button class="lib-btn" onclick="openFolder('psx')">
+                PlayStation 1
+                <span class="file-count">{{ library.psx|length }}</span>
+            </button>
+        </div>
+
+        <!-- The SNES Files -->
+        <div id="view-snes" class="file-view">
+            {% for game in library.snes %}
+            <button class="file-btn" onclick="loadGame('snes', '{{ game.path }}')">
+                {{ game.name }}
+            </button>
+            {% else %}
+            <p class="empty-text">No files found.</p>
+            {% endfor %}
+        </div>
+
+        <!-- The N64 Files -->
+        <div id="view-n64" class="file-view">
+            {% for game in library.n64 %}
+            <button class="file-btn" onclick="loadGame('n64', '{{ game.path }}')">
+                {{ game.name }}
+            </button>
+            {% else %}
+            <p class="empty-text">No files found.</p>
+            {% endfor %}
+        </div>
+
+        <!-- The PS1 Files -->
+        <div id="view-psx" class="file-view">
+            {% for game in library.psx %}
+            <button class="file-btn" onclick="loadGame('psx', '{{ game.path }}')">
+                {{ game.name }}
+            </button>
+            {% else %}
+            <p class="empty-text">No files found.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Netplay Tip -->
+        <div class="netplay-tip">
+            <p><strong>Tip:</strong> Hover over the game screen to access the Netplay menu. Controllers are supported natively.</p>
+        </div>
+    </div>
+
+    <!-- Right Area: The TV Screen -->
+    <div class="tv-screen">
+        <div id="game-wrapper" class="game-wrapper">
+
+            <!-- This text hides when a game starts -->
+            <div id="placeholder-text" class="placeholder-text">
+                <h2>SYSTEM STANDBY</h2>
+                <p>Select a game from the library to boot.</p>
+            </div>
+
+            <!-- EmulatorJS injects here -->
+            <div id="game"></div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/emulator.js') }}"></script>
+{% endblock %}

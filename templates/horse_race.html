@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}PeakDecline Derby Pro{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/derby.css') }}">
+{% endblock %}
+
+{% block content %}
+{% set racers = [
+    {'id': 1, 'horse': '#4A3018', 'jockey': '#E50914', 'name': 'Red'},
+    {'id': 2, 'horse': '#222222', 'jockey': '#0078D7', 'name': 'Blue'},
+    {'id': 3, 'horse': '#B0B0B0', 'jockey': '#107C10', 'name': 'Green'},
+    {'id': 4, 'horse': '#8B4513', 'jockey': '#FFB900', 'name': 'Yellow'},
+    {'id': 5, 'horse': '#A0522D', 'jockey': '#6B238E', 'name': 'Purple'},
+    {'id': 6, 'horse': '#FFFFFF', 'jockey': '#FF8C00', 'name': 'Orange'},
+    {'id': 7, 'horse': '#D2B48C', 'jockey': '#FF69B4', 'name': 'Pink'},
+    {'id': 8, 'horse': '#3E2723', 'jockey': '#00BCD4', 'name': 'Cyan'},
+    {'id': 9, 'horse': '#9E9E9E', 'jockey': '#8BC34A', 'name': 'Lime'},
+    {'id': 10, 'horse': '#FFCC80', 'jockey': '#FFFFFF', 'name': 'White'}
+] %}
+
+<div class="game-container">
+    <a href="{{ url_for('main.games') }}" class="hub-link">← Back to Arcade</a>
+    <h2 style="margin-top: 0;">🏆 PeakDecline Derby (10-Horse Pro)</h2>
+
+    <div class="betting-dashboard">
+        <div class="bet-group">
+            <label>Current Bankroll</label>
+            <div class="bankroll-display" id="bankroll-display">$1000</div>
+        </div>
+
+        <div class="bet-group">
+            <label>Select Horse to Win (9x Payout)</label>
+            <select id="horse-select" class="bet-input">
+                {% for r in racers %}
+                <option value="{{ r.id }}">Horse #{{ r.id }} ({{ r.name }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="bet-group">
+            <label>Wager Amount ($)</label>
+            <input type="number" id="bet-amount" class="bet-input" value="100" min="10" step="10" style="width: 120px;">
+        </div>
+    </div>
+
+    <div id="race-announcer">Place your bets!</div>
+
+    <div class="race-track-wrapper">
+        <div class="finish-line"></div>
+
+        {% for r in racers %}
+        <div class="lane">
+            <div class="horse" id="horse-{{ r.id }}" style="width: 50px; height: 50px; --horse-color: {{ r.horse }}; --jockey-color: {{ r.jockey }};">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+
+                    <g transform="translate(100, 0) scale(-1, 1)">
+
+                        <path d="M 75 50 L 80 75 L 85 75" stroke="var(--horse-color)" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.6"/>
+                        <path d="M 40 50 L 35 75 L 30 75" stroke="var(--horse-color)" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.6"/>
+                        <path d="M 80 40 Q 95 40 90 60" stroke="#222" stroke-width="4" fill="none"/>
+
+                        <rect x="30" y="35" width="50" height="25" rx="12" fill="var(--horse-color)"/>
+                        <path d="M 40 45 L 25 20 L 10 25 L 15 35 L 30 50 Z" fill="var(--horse-color)"/>
+                        <circle cx="18" cy="24" r="2" fill="#fff"/><circle cx="17" cy="24" r="1" fill="#000"/>
+                        <path d="M 30 20 L 40 35" stroke="#222" stroke-width="5"/>
+
+                        <path d="M 70 50 L 75 80 L 80 80" stroke="var(--horse-color)" stroke-width="6" stroke-linecap="round" fill="none"/>
+                        <path d="M 35 50 L 30 80 L 25 80" stroke="var(--horse-color)" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+                        <path d="M 55 45 L 65 20 L 50 20 Z" fill="var(--jockey-color)"/>
+                        <circle cx="55" cy="15" r="7" fill="var(--jockey-color)"/>
+                        <circle cx="51" cy="17" r="3" fill="#fcdbb6"/>
+                        <path d="M 55 25 L 45 35 L 25 30" stroke="var(--jockey-color)" stroke-width="2" fill="none"/>
+                        <path d="M 50 45 L 45 60 L 52 60" stroke="#fff" stroke-width="4" fill="none" stroke-linejoin="round"/>
+                        <rect x="42" y="38" width="16" height="16" fill="#fff" rx="2" stroke="#333" stroke-width="1"/>
+
+                    </g> <text x="50" y="50" font-family="Arial, sans-serif" font-weight="900" font-size="12" text-anchor="middle" fill="#000">{{ r.id }}</text>
+                </svg>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="game-ui">
+        <button id="btn-start" class="btn-play">🏁 Lock Bet & Start Race</button>
+        <button id="btn-reset" class="btn-play" style="background: #444; display: none;">🔄 Next Race</button>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/derby.js') }}"></script>
+{% endblock %}

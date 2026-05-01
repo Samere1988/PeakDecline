@@ -1,0 +1,20 @@
+# Virtual Environments
+venv/
+.venv/
+env/
+
+
+# Ignore the stream folder contents but keep the folder
+app/static/stream/*
+!app/static/stream/.gitkeep
+
+# Ignore Emulator ROMs
+static/roms/
+
+# ignore logos
+static/img/logos
+
+# Ignore PyCharm settings and Python cache
+.idea/
+__pycache__/
+*.pyc

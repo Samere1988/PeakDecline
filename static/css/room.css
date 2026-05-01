@@ -1,0 +1,375 @@
+/* static/css/room.css */
+
+/* --- CINEMATIC UI OVERHAUL --- */
+body { margin: 0; overflow: hidden; }
+
+.room-container {
+    display: flex;
+    height: 100vh;
+    background-color: #0f1115;
+    color: #ececec;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Sidebars (Discord/Twitch Vibe) */
+.room-sidebar-left, .room-sidebar-right {
+    width: 280px;
+    background: #15181e;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #222630;
+    border-right: 1px solid #222630;
+    z-index: 5;
+}
+
+.sidebar-header {
+    padding: 18px;
+    font-weight: 800;
+    font-size: 0.9em;
+    background: #1a1d24;
+    border-bottom: 1px solid #222630;
+    text-align: center;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #8892b0;
+}
+
+/* Center Video Area */
+.room-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    position: relative;
+}
+
+.host-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+    position: absolute;
+    top: 0;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 10;
+    pointer-events: none; /* Lets clicks pass through to video */
+}
+
+.media-info h3 {
+    margin: 0;
+    font-size: 1.4em;
+    font-weight: 600;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+    color: white;
+}
+
+.btn-choose-media {
+    pointer-events: auto; /* Re-enable clicks for the button */
+    background-color: #e50914;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+}
+.btn-choose-media:hover { background-color: #f6121d; transform: scale(1.02); }
+
+.video-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    outline: none;
+}
+
+.video-controls-bar {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    z-index: 10;
+}
+
+.btn-settings {
+    background: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(4px);
+    color: white;
+    border: 1px solid #444;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.btn-settings:hover { background: rgba(60, 60, 60, 0.9); border-color: #777; }
+
+/* Chat Styling */
+.chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    font-size: 0.95em;
+}
+
+.chat-msg {
+    margin-bottom: 12px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+.chat-msg strong {
+    color: #e50914;
+    margin-right: 6px;
+}
+
+.chat-input-area {
+    padding: 15px;
+    background: #1a1d24;
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid #222630;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background: #0f1115;
+    color: white;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.chat-input:focus { border-color: #e50914; }
+
+.btn-send {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-send:hover { background-color: #444; }
+
+/* Glass Modals */
+.search-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+}
+
+.search-modal.active {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+}
+
+.search-content {
+    background: #15181e;
+    border: 1px solid #222630;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    width: 90%;
+    max-width: 800px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+}
+
+.user-list { padding: 15px; }
+
+/* Custom Scrollbar for sidebars */
+.custom-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+    background-color: #333;
+    border-radius: 10px;
+}
+/* =========================================
+   7. MOVIE CARDS (Restored Sizing)
+   ========================================= */
+.movie-card {
+    background: #252525;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    border: 1px solid #333;
+}
+
+.movie-card:hover {
+    transform: scale(1.05);
+    z-index: 10;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    border-color: #eee;
+}
+
+/* Poster Style (Movies/Shows/Seasons) */
+.poster-style {
+    width: 160px;
+}
+
+.poster-style .movie-card-image img {
+    width: 160px;
+    height: 240px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Episode Style (Wide) */
+.episode-style {
+    width: 300px;
+}
+
+.episode-style .movie-card-image img {
+    width: 300px;
+    height: 169px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Back Button */
+.back-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #333;
+    color: #fff;
+    border: 2px dashed #555;
+    height: 240px; /* Match poster height */
+}
+.episode-style.back-card {
+    height: 169px; /* Match episode height */
+}
+
+.back-icon { font-size: 2rem; margin-bottom: 10px; }
+.back-text { font-weight: bold; letter-spacing: 1px; }
+
+/* Info Text below image */
+.movie-info {
+    padding: 10px;
+}
+
+.movie-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+
+.movie-meta {
+    font-size: 0.8rem;
+    color: #888;
+}
+/* =========================================
+   8. SEARCH RESULTS GRID
+   ========================================= */
+.search-results {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    align-content: flex-start;
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
+}
+/* =========================================
+   9. MOBILE RESPONSIVENESS
+   ========================================= */
+@media (max-width: 768px) {
+    /* Stack the whole app vertically */
+    .room-container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto; /* Allow scrolling on mobile */
+    }
+
+    /* Video takes up the top half of the phone */
+    .room-main {
+        flex: none;
+        height: 40vh; /* Adjust this percentage if you want the video taller */
+        min-height: 250px;
+    }
+
+    /* Sidebars stretch to full width and stack below */
+    .room-sidebar-left, .room-sidebar-right {
+        width: 100%;
+        height: 400px; /* Give the chat and users list a set height so they can scroll */
+        border-left: none;
+        border-right: none;
+        border-top: 1px solid #222630;
+    }
+
+    /* Host controls need to shrink and stack */
+    .host-controls {
+        padding: 10px 15px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .media-info h3 {
+        font-size: 1.1em; /* Smaller title */
+    }
+
+    .btn-choose-media {
+        padding: 8px 12px;
+        font-size: 0.9em;
+    }
+
+    /* Make the video controls tighter */
+    .video-controls-bar {
+        bottom: 10px;
+        right: 10px;
+    }
+
+    .btn-settings {
+        padding: 8px 10px;
+        font-size: 0.8em;
+    }
+
+    /* Ensure modals don't overflow the screen */
+    .search-content {
+        width: 95%;
+        padding: 15px;
+        max-height: 90vh;
+    }
+
+    .poster-style {
+        width: 120px; /* Shrink movie posters slightly for smaller screens */
+    }
+    .poster-style .movie-card-image img {
+        width: 120px;
+        height: 180px;
+    }
+}

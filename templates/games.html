@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}PeakDecline Games{% endblock %}
+
+{% block head %}
+<!-- You can rename this file to games.css later, keeping it arcade.css for now so your styles don't break! -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/arcade.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="arcade-container">
+    <div class="arcade-header">
+        <h1>PeakDecline Games</h1>
+        <p>Pick a game to play while hanging out in the watch party.</p>
+    </div>
+
+    <div class="games-grid">
+
+        <!-- NEW: The Emulator Hub -->
+        <a href="{{ url_for('main.emulator') }}" class="game-card">
+            <div class="game-icon">RETRO</div>
+            <div class="game-title">Emulator Hub</div>
+            <div class="play-btn">Play Now</div>
+        </a>
+
+        <!-- UPDATED: The Derby -->
+        <a href="{{ url_for('main.peakdecline_derby') }}" class="game-card">
+            <div class="game-icon">RACE</div>
+            <div class="game-title">PeakDecline Derby</div>
+            <div class="play-btn">Play Now</div>
+        </a>
+
+        <!-- Disabled: Poker -->
+        <div class="game-card disabled">
+            <div class="game-icon">CARDS</div>
+            <div class="game-title">Texas Hold'em</div>
+            <div class="play-btn">Coming Soon</div>
+        </div>
+
+        <!-- Disabled: Darts -->
+        <div class="game-card disabled">
+            <div class="game-icon">DARTS</div>
+            <div class="game-title">Dart Board</div>
+            <div class="play-btn">Coming Soon</div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
