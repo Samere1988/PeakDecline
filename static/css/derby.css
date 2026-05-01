@@ -1,0 +1,81 @@
+/* --- NEW: 10-LANE & BETTING STYLES --- */
+
+.lane {
+    position: relative;
+    height: 48px; /* Slimmer lanes to fit 10 horses */
+    border-bottom: 2px dashed rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+}
+
+.horse {
+    position: absolute;
+    left: 10px; /* Starting gate is now on the left */
+    z-index: 2;
+    transition: left 0.05s linear; /* Animate the left property */
+    filter: drop-shadow(-2px 2px 3px rgba(0,0,0,0.8)); /* Flipped shadow direction */
+}
+
+.betting-dashboard {
+    background: #222630;
+    padding: 15px 25px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border: 1px solid #333;
+}
+
+.bet-group {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    gap: 5px;
+}
+
+.bet-group label {
+    font-size: 0.85em;
+    color: #aaa;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.bet-input {
+    background: #111;
+    color: white;
+    border: 1px solid #444;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 1.1em;
+}
+
+.bankroll-display {
+    font-size: 2.2em;
+    color: #4CAF50;
+    font-weight: 800;
+    margin: 0;
+}
+.finish-line {
+    position: absolute;
+    right: 60px; /* Moved to the right side */
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: repeating-linear-gradient(0deg, #fff, #fff 10px, #000 10px, #000 20px);
+    z-index: 1;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.5); /* Flipped shadow direction */
+}
+
+/* The mathematical animation loop */
+@keyframes gallop {
+    0% { transform: translateY(0) rotate(0deg); }
+    /* -8deg makes them rear UP while running left-to-right */
+    50% { transform: translateY(-4px) rotate(-8deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
+/* This applies the animation when the JS adds the 'racing' class */
+.horse.racing {
+    animation: gallop 0.25s infinite linear;
+}

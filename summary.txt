@@ -1,0 +1,4 @@
+Total brands processed: 1297
+Logos found: 1290
+Logos missing: 7
+Saved to: C:/Users/Plex/PycharmProjects/PeakDecline/static/img/logos
