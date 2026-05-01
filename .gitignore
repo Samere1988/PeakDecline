@@ -9,10 +9,10 @@ app/static/stream/*
 !app/static/stream/.gitkeep
 
 # Ignore Emulator ROMs
-static/roms/
+static/roms/*
 
 # ignore logos
-static/img/logos
+static/img/logos*
 
 # Ignore PyCharm settings and Python cache
 .idea/
