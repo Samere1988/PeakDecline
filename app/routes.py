@@ -339,8 +339,13 @@ def get_plex_children():
     results = []
     for item in children:
         title = item.title
-        if item.type == 'season': title = f"Season {item.index}"
-        if item.type == 'episode': title = f"S{item.seasonNumber}:E{item.index} - {item.title}"
+        if item.type == 'season':
+            title = f"Season {item.index}"
+        if item.type == 'episode':
+            # Grab the show name from the Season's parent
+            show_title = getattr(parent, 'parentTitle', 'Unknown Show')
+            title = f"{show_title}, S{item.seasonNumber}:E{item.index} - {item.title}"
+
         results.append({
             'title': title,
             'year': getattr(item, 'year', ''),
@@ -453,7 +458,9 @@ def set_room_media(room_id):
         full_url = f"{base_url}{endpoint}?{query_string}"
 
         if item.type == 'episode':
-            title_str = f"S{item.seasonNumber}:E{item.index} - {item.title}"
+            # Grab the show name (grandparentTitle) for TV episodes
+            show_title = getattr(item, 'grandparentTitle', 'Unknown Show')
+            title_str = f"{show_title}, S{item.seasonNumber}:E{item.index} - {item.title}"
         else:
             title_str = f"{item.title} ({item.year})"
 
@@ -647,3 +654,20 @@ def emulator():
                         library['psx'].append({'name': filename, 'path': filepath})
 
     return render_template('emulator.html', library=library)
+
+
+@main_bp.route('/api/roms/<system>')
+@login_required
+def api_get_roms(system):
+    static_dir = current_app.static_folder
+    roms_dir = os.path.join(static_dir, 'roms')
+    games = []
+
+    if os.path.exists(roms_dir):
+        for root, dirs, files in os.walk(roms_dir):
+            for filename in files:
+                if filename.startswith('.'): continue
+                rel_path = os.path.relpath(os.path.join(root, filename), static_dir).replace('\\', '/')
+                if system.lower() in rel_path.lower():
+                    games.append({'name': filename, 'path': rel_path, 'core': system})
+    return jsonify(games)
