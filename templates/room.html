@@ -10,39 +10,63 @@
 <div id="room-app"
      class="room-container"
      data-room-id="{{ room.id }}"
-     data-is-host="{{ 'true' if current_user.id == room.host_id else 'false' }}"
+     data-is-host="{{ 'true' if current_user.id|string == room.host_id|string else 'false' }}"
      data-username="{{ current_user.username }}"
-     data-host-username="{{ room.host.username }}"  data-current-key="{{ room.current_media_key if room.current_media_key else '' }}"
+     data-host-username="{{ room.host.username }}"
+     data-current-key="{{ room.current_media_key if room.current_media_key else '' }}"
      data-initial-media-url="{{ room.current_media_url | safe if room.current_media_url else '' }}"
      data-media-title="{{ room.current_media_title if room.current_media_title else '' }}">
 
+    <!-- LEFT SIDEBAR: Viewers -->
     <div class="room-sidebar-left">
         <div class="sidebar-header">Viewers</div>
         <div id="users-list" class="user-list custom-scroll">
-            </div>
+        </div>
     </div>
 
-    <div class="room-main">
+    <!-- MIDDLE: Main Stage -->
+    <div class="room-main" style="display: flex; flex-direction: column; height: 100%; padding: 0 20px;">
 
-        <div class="host-controls">
+        <!-- Top Header (Cleaned up, just the title now) -->
+        <div class="host-controls" style="padding: 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
             <div class="media-info">
-                <h3 id="media-title">{{ room.current_media_title or 'Waiting for Host...' }}</h3>
-            </div>
-
-            <button id="btn-open-search" class="btn-choose-media" style="display: none;">Select Media</button>
-        </div>
-
-        <div class="video-wrapper">
-            <video id="video-player" controls playsinline></video>
-
-            <div class="video-controls-bar">
-                <button id="btn-stream-settings" class="btn-settings">
-                    <span>⚙️</span> Audio & Subs
-                </button>
+                <h3 id="media-title" style="margin: 0; font-size: 1.3em; font-weight: 600; letter-spacing: 0.5px;">{{ room.current_media_title or 'Waiting for Host...' }}</h3>
             </div>
         </div>
-    </div>
 
+        <!-- The "Ambient Theater" Stage -->
+        <div class="video-wrapper" id="main-video-wrapper" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 60%); border-radius: 16px; padding-bottom: 20px;">
+
+            <!-- 1. Plex Video Player (Host & Viewers) -->
+            <video id="video-player" controls playsinline style="width: 100%; max-height: calc(100vh - 250px); border-radius: 12px; background: #000; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 80px rgba(255,255,255,0.03); z-index: 10;"></video>
+
+            <!-- 2. Emulator Container (Host Only) -->
+            <div id="game-container" style="display: none; width: 100%; max-height: calc(100vh - 250px); background: #000; border-radius: 12px; overflow: hidden; aspect-ratio: 4/3; margin: 0 auto; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 80px rgba(255,255,255,0.03); z-index: 10;">
+                <div id="game" style="width:100%; height:100%;"></div>
+            </div>
+
+            <!-- 3. WebRTC Remote Video Player (Viewers Only) -->
+            <video id="remote-video" autoplay playsinline style="display:none; width: 100%; max-height: calc(100vh - 250px); background: #000; border-radius: 12px; object-fit: contain; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 80px rgba(255,255,255,0.03); z-index: 10;"></video>
+
+            <!-- NEW: Bottom Host Controls -->
+            <div class="bottom-host-controls" style="width: 100%; display: flex; justify-content: space-between; margin-top: 25px; padding: 0 5px;">
+                <!-- Left Side: Load Media / Stop Game -->
+                <div style="display: flex; gap: 10px;">
+                    <button id="btn-open-search" class="btn-choose-media" style="display: none; background: #e50914; box-shadow: 0 4px 12px rgba(229,9,20,0.3); border: none;">Load Media</button>
+                    <button id="btn-stop-game" class="btn-choose-media" style="display: none; background: #e50914; box-shadow: 0 4px 12px rgba(229,9,20,0.3); border: none;">⏹️ Stop Game</button>
+                </div>
+
+                <!-- Right Side: Games / Start Broadcast -->
+                <div style="display: flex; gap: 10px;">
+                    <button id="btn-start-broadcast" class="btn-choose-media" style="display: none; background: #4CAF50; box-shadow: 0 4px 12px rgba(76,175,80,0.3); border: none;">🟢 Start Broadcast</button>
+                    <button id="btn-open-games" class="btn-choose-media" style="display: none; background: #007BFF; box-shadow: 0 4px 12px rgba(0,123,255,0.3); border: none;">Games</button>
+                </div>
+            </div>
+
+        </div>
+    </div> <!-- /room-main -->
+
+    <!-- RIGHT SIDEBAR: Chat -->
     <div class="room-sidebar-right">
         <div class="sidebar-header">Chat</div>
         <div id="chat-box" class="chat-messages custom-scroll"></div>
@@ -55,6 +79,7 @@
 
 </div>
 
+<!-- Plex Search Modal -->
 <div id="searchModal" class="search-modal">
     <div class="search-content">
         <div class="sidebar-header" style="background:transparent; border:none; display:flex; justify-content:space-between;">
@@ -75,27 +100,25 @@
     </div>
 </div>
 
-<div id="optionsModal" class="search-modal">
-    <div class="search-content" style="max-width: 400px;">
+<!-- Game Selection Modal -->
+<div id="gameModal" class="search-modal">
+    <div class="search-content">
         <div class="sidebar-header" style="background:transparent; border:none; display:flex; justify-content:space-between;">
-            <h2>Playback Options</h2>
-            <button id="btn-close-options" style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">&times;</button>
+            <h2>Select a Game</h2>
+            <button id="btn-close-games" style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">&times;</button>
         </div>
 
-        <div style="padding: 20px;">
-            <h3 id="options-media-title" style="margin-bottom: 15px; color: #e50914; font-size: 1.2em;">Movie Title</h3>
+        <!-- Quick System Filters -->
+        <div style="display: flex; gap: 10px; padding: 0 20px 20px 20px; justify-content: center;">
+            <button class="btn-choose-media" onclick="fetchGames('snes')">SNES</button>
+            <button class="btn-choose-media" onclick="fetchGames('n64')">N64</button>
+            <button class="btn-choose-media" onclick="fetchGames('psx')">PS1</button>
+        </div>
 
-            <label style="display:block; margin-bottom:5px; color:#ccc; font-size:0.9em;">Audio Track:</label>
-            <select id="audio-select" class="chat-input" style="width:100%; margin-bottom:15px; background:#222; color:white; border:1px solid #444;">
-                <option>Loading...</option>
-            </select>
-
-            <label style="display:block; margin-bottom:5px; color:#ccc; font-size:0.9em;">Subtitle:</label>
-            <select id="subtitle-select" class="chat-input" style="width:100%; margin-bottom:25px; background:#222; color:white; border:1px solid #444;">
-                <option>Loading...</option>
-            </select>
-
-            <button id="btn-confirm-play" class="btn-choose-media" style="width:100%; padding: 12px;">Play Now</button>
+        <div id="game-results" class="search-results custom-scroll" style="display: grid; grid-template-columns: 1fr; gap: 10px; padding: 0 20px 20px 20px;">
+            <p style="color:#777; width:100%; text-align:center; margin-top:20px;">
+                Select a console above to view games.
+            </p>
         </div>
     </div>
 </div>
