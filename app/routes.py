@@ -1,17 +1,34 @@
 import os
 import time
 import requests
-from urllib.parse import urlencode, unquote, quote
+from datetime import datetime
+from urllib.parse import urlencode, unquote
+
 from flask import Blueprint, render_template, jsonify, send_from_directory, current_app, url_for, Response, request
 from flask_login import login_required, current_user
-from flask_socketio import emit, join_room, leave_room
+from flask_socketio import emit, join_room
+
 from . import db, socketio
 from .models import Channel, Room
 from app.utils import get_plex_server
 from app.services.streamer import streamer
 
 main_bp = Blueprint('main', __name__)
-room_states = {}  # e.g., { "room_id": {"start_time": 168000000.0, "offset": 0, "status": "playing"} }
+
+# In-memory live state used for fast Socket.IO sync.
+# The Room database row is also updated on important state changes so refresh/rejoin works.
+room_states = {}
+
+# Grace periods prevent rooms/host ownership from changing during a normal browser refresh.
+ROOM_EMPTY_GRACE_SECONDS = 60
+HOST_TRANSFER_GRACE_SECONDS = 25
+
+# --- Global User Tracking ---
+online_users = set()
+online_last_seen = {}
+connected_sids = {}
+room_occupancy = {}  # room_id -> {sid: username}
+sid_to_room = {}
 
 
 # --- HELPER: Get Public IP ---
@@ -23,44 +40,217 @@ def get_public_ip():
         return None
 
 
-# --- Global User Tracking ---
-online_users = set()
-online_last_seen = {}
-connected_sids = {}
-room_occupancy = {}  # Fixed: Will map room_id -> {sid: username}
-sid_to_room = {}
+# --- WATCH ROOM HELPERS ---
+def _now():
+    return time.time()
 
 
+def _room_key(room_id):
+    return str(room_id)
+
+
+def _unique_room_users(room_id):
+    """Return unique usernames in join order for a room."""
+    users = []
+    seen = set()
+    for username in room_occupancy.get(_room_key(room_id), {}).values():
+        if username not in seen:
+            users.append(username)
+            seen.add(username)
+    return users
+
+
+def _emit_room_users(room_id):
+    socketio.emit(
+        "room_users_update",
+        _unique_room_users(room_id),
+        to=f"room_{_room_key(room_id)}"
+    )
+
+
+def _get_room_state_payload(room):
+    """Build a reconnect-safe state payload for the current room."""
+    if not room or not room.current_media_url:
+        return None
+
+    room_id = _room_key(room.id)
+    state = room_states.get(room_id, {})
+    if state.get("status") == "game":
+        return None
+
+    status = state.get("status")
+    if not status:
+        status = "playing" if room.is_playing else "paused"
+
+    offset = float(state.get("offset", room.current_time or 0.0) or 0.0)
+    start_time = float(state.get("start_time", _now()) or _now())
+
+    if status == "playing":
+        current_time = max(0.0, offset + (_now() - start_time))
+    else:
+        current_time = max(0.0, offset)
+
+    return {
+        "room_id": room.id,
+        "url": room.current_media_url,
+        "title": room.current_media_title,
+        "rating_key": room.current_media_key,
+        "status": status,
+        "is_playing": status == "playing",
+        "current_time": current_time,
+        "start_time": start_time,
+        "offset": offset,
+        "server_epoch": _now(),
+    }
+
+
+def _save_room_playback_state(room_id, status, offset=None, start_time=None):
+    """Keep memory and database playback state aligned."""
+    room_id = _room_key(room_id)
+    start_time = float(start_time if start_time is not None else _now())
+    offset = float(offset or 0.0)
+
+    room_states[room_id] = {
+        "start_time": start_time,
+        "offset": offset,
+        "status": status,
+    }
+
+    room = Room.query.get(int(room_id))
+    if room:
+        room.is_playing = status == "playing"
+        room.current_time = offset
+        room.last_updated = datetime.utcnow()
+        db.session.commit()
+
+    return room_states[room_id]
+
+
+def _is_current_user_room_host(room_id):
+    if not current_user.is_authenticated:
+        return False
+
+    room = Room.query.get(int(room_id))
+    if not room:
+        return False
+
+    return str(room.host_id) == str(current_user.id)
+
+
+def _schedule_empty_room_cleanup(room_id):
+    room_id = _room_key(room_id)
+    app = current_app._get_current_object()
+
+    def cleanup_after_grace(target_room_id):
+        socketio.sleep(ROOM_EMPTY_GRACE_SECONDS)
+
+        # Someone rejoined during the grace period.
+        if room_occupancy.get(target_room_id):
+            return
+
+        with app.app_context():
+            # Check one more time inside the app context before deleting.
+            if room_occupancy.get(target_room_id):
+                return
+
+            room_occupancy.pop(target_room_id, None)
+            room_states.pop(target_room_id, None)
+
+            room_to_delete = Room.query.get(int(target_room_id))
+            if room_to_delete:
+                db.session.delete(room_to_delete)
+                db.session.commit()
+
+    socketio.start_background_task(cleanup_after_grace, room_id)
+
+
+def _schedule_host_transfer(room_id, leaving_username):
+    room_id = _room_key(room_id)
+    app = current_app._get_current_object()
+
+    def transfer_after_grace(target_room_id, old_host_username):
+        socketio.sleep(HOST_TRANSFER_GRACE_SECONDS)
+
+        # Host came back during the grace period.
+        if old_host_username in _unique_room_users(target_room_id):
+            return
+
+        users = _unique_room_users(target_room_id)
+        if not users:
+            with app.app_context():
+                room_occupancy.pop(target_room_id, None)
+                room_states.pop(target_room_id, None)
+                room_to_delete = Room.query.get(int(target_room_id))
+                if room_to_delete:
+                    db.session.delete(room_to_delete)
+                    db.session.commit()
+            return
+
+        with app.app_context():
+            room = Room.query.get(int(target_room_id))
+            if not room:
+                return
+
+            from app.models import User
+
+            new_host_username = users[0]
+            new_host_user = User.query.filter_by(username=new_host_username).first()
+            if not new_host_user:
+                return
+
+            room.host_id = new_host_user.id
+            db.session.commit()
+
+        socketio.emit("host_changed", {"new_host": new_host_username}, to=f"room_{target_room_id}")
+        _emit_room_users(target_room_id)
+
+    socketio.start_background_task(transfer_after_grace, room_id, leaving_username)
+
+
+# --- SOCKET.IO: CONNECTION / USER TRACKING ---
 @socketio.on("connect")
 def sio_connect():
     username = current_user.username if current_user.is_authenticated else "Guest"
     connected_sids[request.sid] = username
     online_users.add(username)
-    online_last_seen[username] = time.time()
+    online_last_seen[username] = _now()
     socketio.emit("update_users", sorted(list(online_users)))
 
 
 @socketio.on("join_watch_room")
 def on_join_watch_room(data):
-    room_id = str(data.get('room_id'))
-    if not room_id: return
+    room_id = _room_key(data.get('room_id'))
+    if not room_id:
+        return
 
-    # Put the socket in a dedicated broadcast room
+    room = Room.query.get(int(room_id))
+    if not room:
+        emit("room_missing", {"room_id": room_id, "message": "Room no longer exists."}, to=request.sid)
+        return
+
     join_room(f"room_{room_id}")
 
-    # Track the username for the viewer list
     username = current_user.username if current_user.is_authenticated else "Guest"
-
-    # Track the occupancy using a dictionary mapping sid -> username
     sid_to_room[request.sid] = room_id
+
     if room_id not in room_occupancy:
         room_occupancy[room_id] = {}
     room_occupancy[room_id][request.sid] = username
 
-    # Broadcast the updated viewer list to this specific room
-    socketio.emit("room_users_update", list(room_occupancy[room_id].values()), to=f"room_{room_id}")
+    _emit_room_users(room_id)
 
+    game_state = room_states.get(room_id, {})
+    if game_state.get("status") == "game":
+        emit("host_started_game", {
+            "room_id": room_id,
+            "game_name": game_state.get("game_name", "A Game")
+        }, to=request.sid)
+        return
 
+    # Otherwise send current Plex playback state.
+    state_payload = _get_room_state_payload(room)
+    if state_payload:
+        emit("room_state", state_payload, to=request.sid)
 @socketio.on("disconnect")
 def sio_disconnect():
     # 1. Standard User Tracking Cleanup
@@ -72,52 +262,41 @@ def sio_disconnect():
 
     # 2. Room Occupancy Cleanup
     room_id = sid_to_room.pop(request.sid, None)
-    if room_id and room_id in room_occupancy:
-        leaving_username = room_occupancy[room_id].pop(request.sid, None)
+    if not room_id or room_id not in room_occupancy:
+        return
 
-        # 3. IF THE ROOM IS EMPTY -> DELETE IT
-        if len(room_occupancy[room_id]) == 0:
-            del room_occupancy[room_id]
-            room_to_delete = Room.query.get(int(room_id))
-            if room_to_delete:
-                db.session.delete(room_to_delete)
-                db.session.commit()
-        else:
-            # 4. IF THE HOST LEFT -> TRANSFER TO NEXT OLDEST VIEWER
-            room = Room.query.get(int(room_id))
-            if room and room.host.username == leaving_username:
-                from app.models import User  # Import here to avoid circular dependencies
+    leaving_username = room_occupancy[room_id].pop(request.sid, None)
 
-                # Because dictionaries preserve order, the 1st person in the list is the oldest remaining!
-                new_host_username = list(room_occupancy[room_id].values())[0]
-                new_host_user = User.query.filter_by(username=new_host_username).first()
+    # 3. If room is empty, wait before deleting. This avoids deleting during refresh.
+    if len(room_occupancy[room_id]) == 0:
+        _emit_room_users(room_id)
+        _schedule_empty_room_cleanup(room_id)
+        return
 
-                if new_host_user:
-                    room.host_id = new_host_user.id
-                    db.session.commit()
-                    socketio.emit("host_changed", {"new_host": new_host_username}, to=f"room_{room_id}")
+    # 4. If the host disconnected, wait before transferring. This avoids transfer during refresh.
+    room = Room.query.get(int(room_id))
+    if room and room.host and room.host.username == leaving_username:
+        _schedule_host_transfer(room_id, leaving_username)
 
-            # Broadcast the updated viewer list
-            socketio.emit("room_users_update", list(room_occupancy[room_id].values()), to=f"room_{room_id}")
+    _emit_room_users(room_id)
 
 
 @socketio.on("transfer_host")
 def handle_transfer_host(data):
-    room_id = str(data.get('room_id'))
+    room_id = _room_key(data.get('room_id'))
     new_host_username = data.get('new_host')
 
     room = Room.query.get(int(room_id))
-    # Security Check: Ensure the person asking is the actual host
-    if room and current_user.is_authenticated and room.host_id == current_user.id:
+    if room and current_user.is_authenticated and str(room.host_id) == str(current_user.id):
         from app.models import User
+
         new_user = User.query.filter_by(username=new_host_username).first()
         if new_user:
             room.host_id = new_user.id
             db.session.commit()
 
-            # Announce the new host and force a viewer list refresh to move the Crown
             socketio.emit("host_changed", {"new_host": new_host_username}, to=f"room_{room_id}")
-            socketio.emit("room_users_update", list(room_occupancy[room_id].values()), to=f"room_{room_id}")
+            _emit_room_users(room_id)
 
 
 @socketio.on("chat_message")
@@ -126,7 +305,6 @@ def sio_chat_message(message):
         current_user.username if current_user.is_authenticated else "Guest"
     )
 
-    # Handle the JSON dictionary properly instead of stringifying the whole object
     if isinstance(message, dict):
         text = message.get("text", "").strip()
         room_id = message.get("room_id")
@@ -134,11 +312,11 @@ def sio_chat_message(message):
         text = str(message).strip()
         room_id = None
 
-    if not text: return
+    if not text:
+        return
 
-    # Send the chat ONLY to the room they are in
     if room_id:
-        socketio.emit("chat_message", {"user": username, "text": text[:500]}, to=f"room_{room_id}")
+        socketio.emit("chat_message", {"user": username, "text": text[:500]}, to=f"room_{_room_key(room_id)}")
     else:
         socketio.emit("chat_message", {"user": username, "text": text[:500]})
 
@@ -149,7 +327,6 @@ def sio_request_users():
 
 
 # --- STANDARD ROUTES ---
-
 @main_bp.route('/')
 def index():
     return render_template('index.html')
@@ -161,15 +338,14 @@ def live_tv():
     return render_template('live_tv.html')
 
 
-
 @main_bp.route('/plex-watch-together')
+@login_required
 def plex_landing():
     rooms = Room.query.order_by(Room.id.desc()).all()
     return render_template('plex_landing.html', rooms=rooms)
 
 
 # --- API: CHANNELS & PLAYBACK ---
-
 @main_bp.route('/api/channels')
 @login_required
 def get_channels():
@@ -194,10 +370,12 @@ def play_channel(channel_id):
     Channel.query.update({Channel.is_playing: '0'})
     channel.is_playing = '1'
     db.session.commit()
+
     success, msg = streamer.start_stream(channel.id, channel.url, channel.name)
     if success:
         socketio.emit('channel_changed', {'channel_id': channel.id, 'name': channel.name})
         return jsonify({'status': 'success', 'message': msg})
+
     return jsonify({'error': msg}), 500
 
 
@@ -207,43 +385,45 @@ def api_status():
     active_channel = Channel.query.filter(
         (Channel.is_playing == '1') | (Channel.is_playing == 'true')
     ).first()
+
     return jsonify({
         "is_streaming": active_channel is not None,
         "current_channel_id": active_channel.id if active_channel else None,
-        "current_channel_name": active_channel.name if active_channel else None
+        "current_channel_name": active_channel.name if active_channel else None,
+        "current_channel_logo": active_channel.logo if active_channel else None,
     })
 
 
 # --- API: USER TRACKING ---
-
 @main_bp.route('/api/heartbeat', methods=['POST'])
 def heartbeat():
     if current_user.is_authenticated:
         username = current_user.username
         online_users.add(username)
-        online_last_seen[username] = time.time()
+        online_last_seen[username] = _now()
     return jsonify({'status': 'alive'})
 
 
 @main_bp.route('/api/online_users')
 def get_online_users():
-    now = time.time()
+    now = _now()
     cutoff = now - 15
     to_remove = [u for u, ts in online_last_seen.items() if ts < cutoff]
+
     for user in to_remove:
-        if user in online_users:
-            online_users.remove(user)
-        del online_last_seen[user]
+        online_users.discard(user)
+        online_last_seen.pop(user, None)
+
     return jsonify(sorted(list(online_users)))
 
 
 # --- STATIC & STREAM SERVING ---
-
 @main_bp.route('/stream/<path:filename>')
 def serve_stream(filename):
     stream_directory = os.path.join(current_app.root_path, 'static', 'stream')
     mimetype = 'video/mp2t'
-    if filename.endswith('.m3u8'): mimetype = 'application/vnd.apple.mpegurl'
+    if filename.endswith('.m3u8'):
+        mimetype = 'application/vnd.apple.mpegurl'
     return send_from_directory(stream_directory, filename, mimetype=mimetype, max_age=0)
 
 
@@ -254,16 +434,19 @@ def custom_static_handler(filename):
 
 
 # --- PLEX WATCH PARTY ROUTES ---
-
 @main_bp.route('/create-room', methods=['POST'])
 @login_required
 def create_room():
-    data = request.get_json()
+    data = request.get_json() or {}
     room_name = data.get('name')
-    if not room_name: return jsonify({'error': 'Room name is required'}), 400
+
+    if not room_name:
+        return jsonify({'error': 'Room name is required'}), 400
+
     new_room = Room(name=room_name, host_id=current_user.id)
     db.session.add(new_room)
     db.session.commit()
+
     return jsonify({'success': True, 'redirect_url': url_for('main.room_view', room_id=new_room.id)})
 
 
@@ -278,9 +461,12 @@ def room_view(room_id):
 @login_required
 def search_plex_library():
     query = request.args.get('q', '').strip()
-    if not query: return jsonify([])
+    if not query:
+        return jsonify([])
+
     plex = get_plex_server()
-    if not plex: return jsonify({'error': 'Could not connect to Plex Server'}), 500
+    if not plex:
+        return jsonify({'error': 'Could not connect to Plex Server'}), 500
 
     rating_key = None
     if 'key=' in query:
@@ -290,7 +476,7 @@ def search_plex_library():
             end = clean.find('&', start)
             val = clean[start:] if end == -1 else clean[start:end]
             rating_key = val.split('/')[-1] if '/' in val else val
-        except:
+        except Exception:
             pass
     elif query.isdigit():
         rating_key = query
@@ -299,16 +485,18 @@ def search_plex_library():
         if rating_key:
             try:
                 results = [plex.fetchItem(int(rating_key))]
-            except:
+            except Exception:
                 results = plex.search(query)
         else:
             results = plex.search(query)
-    except:
+    except Exception:
         return jsonify({'error': 'Search failed'}), 500
 
     output = []
     for item in results:
-        if item.type not in ['movie', 'show', 'season', 'episode']: continue
+        if item.type not in ['movie', 'show', 'season', 'episode']:
+            continue
+
         output.append({
             'title': item.title,
             'year': item.year,
@@ -316,6 +504,7 @@ def search_plex_library():
             'key': item.ratingKey,
             'type': item.type.capitalize()
         })
+
     return jsonify(output)
 
 
@@ -323,7 +512,9 @@ def search_plex_library():
 @login_required
 def get_plex_children():
     rating_key = request.args.get('key')
-    if not rating_key: return jsonify([])
+    if not rating_key:
+        return jsonify([])
+
     plex = get_plex_server()
     try:
         parent = plex.fetchItem(int(rating_key))
@@ -342,7 +533,6 @@ def get_plex_children():
         if item.type == 'season':
             title = f"Season {item.index}"
         if item.type == 'episode':
-            # Grab the show name from the Season's parent
             show_title = getattr(parent, 'parentTitle', 'Unknown Show')
             title = f"{show_title}, S{item.seasonNumber}:E{item.index} - {item.title}"
 
@@ -354,6 +544,7 @@ def get_plex_children():
             'type': item.type.capitalize(),
             'parent_title': parent.title
         })
+
     return jsonify(results)
 
 
@@ -361,41 +552,50 @@ def get_plex_children():
 @login_required
 def proxy_plex_image():
     thumb_path = request.args.get('path')
-    if not thumb_path: return "Missing path", 400
+    if not thumb_path:
+        return "Missing path", 400
+
     plex = get_plex_server()
     try:
         img_url = plex.transcodeImage(thumb_path, height=450, width=300, minSize=1, upscale=1)
         resp = requests.get(img_url, stream=True)
-        return Response(resp.content, status=resp.status_code,
-                        content_type=resp.headers.get('content-type', 'image/jpeg'))
-    except:
+        return Response(
+            resp.content,
+            status=resp.status_code,
+            content_type=resp.headers.get('content-type', 'image/jpeg')
+        )
+    except Exception:
         return "Error", 500
 
 
-# --- THE STABLE SET MEDIA ROUTE ---
 @main_bp.route('/api/room/<room_id>/set_media', methods=['POST'])
 @login_required
 def set_room_media(room_id):
-    data = request.json
+    data = request.json or {}
     rating_key = data.get('rating_key')
 
-    # Ensure view_offset is handled as a float for precision
-    view_offset = float(data.get('view_offset', 0))
+    if not rating_key:
+        return jsonify({'error': 'Missing rating_key'}), 400
+
+    room = Room.query.get(room_id)
+    if not room:
+        return jsonify({'error': 'Room not found'}), 404
+
+    if str(room.host_id) != str(current_user.id):
+        return jsonify({'error': 'Only the host can change media'}), 403
+
+    view_offset = float(data.get('view_offset', 0) or 0)
     audio_id = data.get('audio_stream_id')
     subtitle_id = data.get('subtitle_stream_id')
 
-    room = Room.query.get(room_id)
-    if not room: return jsonify({'error': 'Room not found'}), 404
-
     plex = get_plex_server()
-    if not plex: return jsonify({'error': 'Plex unavailable'}), 500
+    if not plex:
+        return jsonify({'error': 'Plex unavailable'}), 500
 
     try:
         item = plex.fetchItem(int(rating_key))
 
-        # Stream Switching (PlexAPI)
         changes_made = False
-
         for part in item.iterParts():
             if audio_id:
                 target_stream = next((s for s in part.audioStreams() if str(s.id) == str(audio_id)), None)
@@ -416,7 +616,7 @@ def set_room_media(room_id):
             time.sleep(0.5)
             item.reload()
 
-        unique_ts = int(time.time())
+        unique_ts = int(_now())
         session_id = f"room-{room_id}-{unique_ts}"
         client_id = f"peak-decline-room-{room_id}-{unique_ts}"
 
@@ -443,22 +643,18 @@ def set_room_media(room_id):
 
         if view_offset > 0:
             params['viewOffset'] = view_offset
-
-        if audio_id: params['audioStreamID'] = audio_id
+        if audio_id:
+            params['audioStreamID'] = audio_id
         if subtitle_id:
             params['subtitleStreamID'] = subtitle_id
         elif subtitle_id == "":
             params['subtitleStreamID'] = 0
 
-        query_string = urlencode(params)
-
         endpoint = "/video/:/transcode/universal/start.m3u8"
-        public_ip = get_public_ip()
-        base_url = f"http://{public_ip}:32400" if public_ip else plex._baseurl
-        full_url = f"{base_url}{endpoint}?{query_string}"
+        base_url = "/plex-transcode"
+        full_url = f"{base_url}{endpoint}?{urlencode(params)}"
 
         if item.type == 'episode':
-            # Grab the show name (grandparentTitle) for TV episodes
             show_title = getattr(item, 'grandparentTitle', 'Unknown Show')
             title_str = f"{show_title}, S{item.seasonNumber}:E{item.index} - {item.title}"
         else:
@@ -468,14 +664,12 @@ def set_room_media(room_id):
         room.current_media_url = full_url
         room.current_media_title = title_str
         room.is_playing = True
-
+        room.current_time = view_offset
+        room.last_updated = datetime.utcnow()
         db.session.commit()
 
-        # --- NEW ABSOLUTE TIME LOGIC ---
-        current_epoch = time.time()
-
-        # Track the room's playback state globally
-        room_states[str(room.id)] = {
+        current_epoch = _now()
+        room_states[_room_key(room.id)] = {
             'start_time': current_epoch,
             'offset': view_offset,
             'status': 'playing'
@@ -487,8 +681,11 @@ def set_room_media(room_id):
             'title': room.current_media_title,
             'rating_key': str(rating_key),
             'start_time': view_offset,
-            'server_epoch': current_epoch  # Pass the absolute time to the frontend
-        })
+            'offset': view_offset,
+            'status': 'playing',
+            'is_playing': True,
+            'server_epoch': current_epoch
+        }, to=f"room_{_room_key(room.id)}")
 
         return jsonify({'success': True, 'url': full_url})
 
@@ -511,8 +708,8 @@ def get_plex_metadata(rating_key):
                 'title': stream.title or stream.displayTitle or 'Unknown',
                 'selected': stream.selected
             })
-        subtitle_streams = []
-        subtitle_streams.append({'id': '', 'language': 'None', 'title': 'Off', 'selected': True})
+
+        subtitle_streams = [{'id': '', 'language': 'None', 'title': 'Off', 'selected': True}]
         for stream in item.subtitleStreams():
             subtitle_streams.append({
                 'id': stream.id,
@@ -520,98 +717,187 @@ def get_plex_metadata(rating_key):
                 'title': stream.title or stream.displayTitle or 'Unknown',
                 'selected': stream.selected
             })
+
         return jsonify({'audio': audio_streams, 'subtitles': subtitle_streams})
     except Exception as e:
         print(f"Error fetching metadata: {e}")
         return jsonify({'error': str(e)}), 500
 
 
+# --- WATCH PARTY PLAYBACK SOCKET EVENTS ---
 @socketio.on('user_buffering')
 def handle_user_buffering(data):
-    room_id = data.get('room_id')
+    room_id = _room_key(data.get('room_id'))
+    current_time = float(data.get('current_time', 0) or 0)
     username = current_user.username if current_user.is_authenticated else "Guest"
 
-    if room_id:
-        # Pause the whole room
-        room_states[room_id] = {'status': 'paused'}
-        socketio.emit('force_pause', {'user': username}, to=f"room_{room_id}")
+    # Current frontend only sends this from host. Keep backend protected too.
+    if not _is_current_user_room_host(room_id):
+        return
 
-        # CHAT SPAM COMMENTED OUT:
-        # socketio.emit('chat_message', {'user': 'System', 'text': f'Paused for {username} to buffer...'})
+    _save_room_playback_state(room_id, 'paused', current_time)
+    socketio.emit('force_pause', {'user': username, 'offset': current_time}, to=f"room_{room_id}")
 
 
 @socketio.on('buffer_resolved')
 def handle_buffer_resolved(data):
-    room_id = data.get('room_id')
-    current_time = data.get('current_time', 0)
+    room_id = _room_key(data.get('room_id'))
+    current_time = float(data.get('current_time', 0) or 0)
 
-    if room_id:
-        # Reset the absolute start time so the clock starts ticking from now!
-        room_states[room_id] = {
-            'start_time': time.time(),
-            'offset': current_time,
-            'status': 'playing'
-        }
-        # Tell everyone to play, giving them the new absolute time clock
-        socketio.emit('force_play', {
-            'start_time': room_states[room_id]['start_time'],
-            'offset': current_time
-        }, to=f"room_{room_id}")
+    if not _is_current_user_room_host(room_id):
+        return
+
+    state = _save_room_playback_state(room_id, 'playing', current_time)
+    socketio.emit('force_play', {
+        'start_time': state['start_time'],
+        'server_epoch': state['start_time'],
+        'offset': current_time
+    }, to=f"room_{room_id}")
 
 
 @socketio.on('user_pause')
 def handle_user_pause(data):
-    room_id = str(data.get('room_id'))
+    room_id = _room_key(data.get('room_id'))
     username = current_user.username if current_user.is_authenticated else "Guest"
+    current_time = float(data.get('current_time', 0) or 0)
 
-    if room_id:
-        # Mark the room as paused and tell everyone to stop
-        room_states[room_id] = {'status': 'paused'}
-        socketio.emit('force_pause', {'user': username}, to=f"room_{room_id}")
+    if not _is_current_user_room_host(room_id):
+        return
+
+    _save_room_playback_state(room_id, 'paused', current_time)
+    socketio.emit('force_pause', {
+        'user': username,
+        'offset': current_time
+    }, to=f"room_{room_id}")
 
 
 @socketio.on('user_play')
 def handle_user_play(data):
-    room_id = str(data.get('room_id'))
-    current_time = float(data.get('current_time', 0))
+    room_id = _room_key(data.get('room_id'))
+    current_time = float(data.get('current_time', 0) or 0)
 
-    if room_id:
-        # Reset the absolute start time clock and tell everyone to resume!
-        room_states[room_id] = {
-            'start_time': time.time(),
-            'offset': current_time,
-            'status': 'playing'
-        }
-        socketio.emit('force_play', {
-            'start_time': room_states[room_id]['start_time'],
-            'offset': current_time
-        }, to=f"room_{room_id}")
+    if not _is_current_user_room_host(room_id):
+        return
+
+    state = _save_room_playback_state(room_id, 'playing', current_time)
+    socketio.emit('force_play', {
+        'start_time': state['start_time'],
+        'server_epoch': state['start_time'],
+        'offset': current_time
+    }, to=f"room_{room_id}")
 
 
+@socketio.on('host_started_game')
+def handle_host_started_game(data):
+    room_id = _room_key(data.get('room_id'))
+    game_name = data.get('game_name', 'A Game')
+
+    if not _is_current_user_room_host(room_id):
+        return
+
+    room = Room.query.get(int(room_id))
+    if room:
+        room.is_playing = False
+        room.current_time = 0.0
+        room.last_updated = datetime.utcnow()
+        db.session.commit()
+
+    room_states[room_id] = {
+        'start_time': _now(),
+        'offset': 0.0,
+        'status': 'game',
+        'game_name': game_name
+    }
+
+    socketio.emit('host_started_game', {
+        'room_id': room_id,
+        'game_name': game_name
+    }, to=f"room_{room_id}", include_self=False)
+
+
+@socketio.on('host_stopped_game')
+def handle_host_stopped_game(data):
+    room_id = _room_key(data.get('room_id'))
+
+    if not _is_current_user_room_host(room_id):
+        return
+
+    # Clear game mode. Do not automatically reload stale Plex state.
+    room_states.pop(room_id, None)
+
+    room = Room.query.get(int(room_id))
+    if room:
+        room.is_playing = False
+        room.current_time = 0.0
+        room.last_updated = datetime.utcnow()
+        db.session.commit()
+
+    socketio.emit('game_stopped', {
+        'room_id': room_id
+    }, to=f"room_{room_id}")
+
+# --- WATCH PARTY WEBRTC RELAY EVENTS ---
+@socketio.on('viewer_joined')
+def handle_viewer_joined(room_id):
+    room_id = _room_key(room_id)
+    if sid_to_room.get(request.sid) != room_id:
+        return
+
+    socketio.emit('viewer_joined', request.sid, to=f"room_{room_id}", include_self=False)
+
+
+@socketio.on('webrtc_offer')
+def handle_webrtc_offer(data):
+    target = data.get('target')
+    room_id = _room_key(data.get('room_id'))
+
+    if not target or sid_to_room.get(request.sid) != room_id:
+        return
+
+    data['caller'] = request.sid
+    socketio.emit('webrtc_offer', data, to=target)
+
+
+@socketio.on('webrtc_answer')
+def handle_webrtc_answer(data):
+    target = data.get('target')
+    room_id = _room_key(data.get('room_id'))
+
+    if not target or sid_to_room.get(request.sid) != room_id:
+        return
+
+    data['caller'] = request.sid
+    socketio.emit('webrtc_answer', data, to=target)
+
+
+@socketio.on('webrtc_ice_candidate')
+def handle_webrtc_ice_candidate(data):
+    target = data.get('target')
+    room_id = _room_key(data.get('room_id'))
+
+    if not target or sid_to_room.get(request.sid) != room_id:
+        return
+
+    data['caller'] = request.sid
+    socketio.emit('webrtc_ice_candidate', data, to=target)
+
+
+# --- ARCADE / EMULATOR ROUTES ---
 @main_bp.route('/games')
 @login_required
 def games():
-    # This now serves the Arcade Landing Page
     return render_template('games.html')
+
 
 @main_bp.route('/games/derby')
 @login_required
 def peakdecline_derby():
-    # This serves the actual horse race game
     return render_template('horse_race.html')
-
-
-import os
-from flask import current_app, render_template
-
-import os
-from flask import current_app, render_template
 
 
 @main_bp.route('/arcade/emulator')
 @login_required
 def emulator():
-    # 1. Use Flask's built-in static folder locator
     static_dir = current_app.static_folder
     roms_dir = os.path.join(static_dir, 'roms')
 
@@ -621,21 +907,15 @@ def emulator():
         'psx': []
     }
 
-    # Check if the folder actually exists where Flask thinks it does
     if os.path.exists(roms_dir):
         for root, dirs, files in os.walk(roms_dir):
             for filename in files:
-
-                # Skip hidden system files
                 if filename.startswith('.'):
                     continue
 
                 full_file_path = os.path.join(root, filename)
-
-                # Create the clean relative path for the HTML to use (e.g., 'roms/N64/mario.z64')
                 rel_path = os.path.relpath(full_file_path, static_dir)
                 filepath = rel_path.replace('\\', '/')
-
                 lower_path = filepath.lower()
 
                 if 'snes' in lower_path:
@@ -666,8 +946,11 @@ def api_get_roms(system):
     if os.path.exists(roms_dir):
         for root, dirs, files in os.walk(roms_dir):
             for filename in files:
-                if filename.startswith('.'): continue
+                if filename.startswith('.'):
+                    continue
+
                 rel_path = os.path.relpath(os.path.join(root, filename), static_dir).replace('\\', '/')
                 if system.lower() in rel_path.lower():
                     games.append({'name': filename, 'path': rel_path, 'core': system})
+
     return jsonify(games)

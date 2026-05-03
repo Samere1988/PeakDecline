@@ -17,7 +17,7 @@ if __name__ == "__main__":
         db.create_all()
         print("Database initialized.")
 
-    port = int(os.environ.get("PORT", 9002))
+    port = int(os.environ.get("PORT", 8000))
     debug_mode = os.environ.get("FLASK_ENV") == "testing"
 
     print(f"Server starting in {'TESTING' if debug_mode else 'PRODUCTION'} mode...")

@@ -25,7 +25,7 @@
         <a href="/plex-watch-together/room/{{ room.id }}" class="card-link">
             <div class="room-card">
                 <div class="room-poster">
-                    <img src="{{ room.media_backdrop if room.media_backdrop else url_for('static', filename='img/default_channel.png') }}" alt="Backdrop">
+                    <img src="{{ url_for('static', filename='img/default_channel.png') }}" alt="Room thumbnail">
                     {% if room.is_playing %}
                     <div class="live-badge">Playing</div>
                     {% endif %}
