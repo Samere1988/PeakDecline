@@ -14,11 +14,12 @@ body { margin: 0; overflow: hidden; }
 /* Sidebars (Discord/Twitch Vibe) */
 .room-sidebar-left, .room-sidebar-right {
     width: 280px;
-    background: #15181e;
+    background: rgba(20, 20, 23, 0.72);
+    backdrop-filter: blur(10px);
     display: flex;
     flex-direction: column;
-    border-left: 1px solid #222630;
-    border-right: 1px solid #222630;
+    border-left: 1px solid rgba(255,255,255,0.10);
+    border-right: 1px solid rgba(255,255,255,0.10);
     z-index: 5;
 }
 
@@ -26,12 +27,12 @@ body { margin: 0; overflow: hidden; }
     padding: 18px;
     font-weight: 800;
     font-size: 0.9em;
-    background: #1a1d24;
-    border-bottom: 1px solid #222630;
+    background: rgba(0, 0, 0, 0.28);
+    border-bottom: 1px solid rgba(255,255,255,0.10);
     text-align: center;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #8892b0;
+    color: #c6c9d8;
 }
 
 /* Center Video Area */
@@ -67,7 +68,7 @@ body { margin: 0; overflow: hidden; }
 
 .btn-choose-media {
     pointer-events: auto; /* Re-enable clicks for the button */
-    background-color: #e50914;
+    background-color: #ff4444;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -75,9 +76,9 @@ body { margin: 0; overflow: hidden; }
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s, transform 0.1s;
-    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.35);
 }
-.btn-choose-media:hover { background-color: #f6121d; transform: scale(1.02); }
+.btn-choose-media:hover { background-color: #ff5f5f; transform: scale(1.02); }
 
 .video-wrapper {
     flex: 1;
@@ -102,7 +103,7 @@ video {
 }
 
 .btn-settings {
-    background: rgba(30, 30, 30, 0.8);
+    background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(4px);
     color: white;
     border: 1px solid #444;
@@ -112,7 +113,7 @@ video {
     font-weight: 600;
     transition: all 0.2s;
 }
-.btn-settings:hover { background: rgba(60, 60, 60, 0.9); border-color: #777; }
+.btn-settings:hover { background: rgba(255, 68, 68, 0.20); border-color: rgba(255, 68, 68, 0.55); }
 
 /* Chat Styling */
 .chat-messages {
@@ -128,32 +129,32 @@ video {
     word-wrap: break-word;
 }
 .chat-msg strong {
-    color: #e50914;
+    color: #ff4444;
     margin-right: 6px;
 }
 
 .chat-input-area {
     padding: 15px;
-    background: #1a1d24;
+    background: rgba(0, 0, 0, 0.28);
     display: flex;
     gap: 10px;
-    border-top: 1px solid #222630;
+    border-top: 1px solid rgba(255,255,255,0.10);
 }
 
 .chat-input {
     flex: 1;
     padding: 12px;
     border-radius: 6px;
-    border: 1px solid #333;
-    background: #0f1115;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0, 0, 0, 0.55);
     color: white;
     outline: none;
     transition: border-color 0.2s;
 }
-.chat-input:focus { border-color: #e50914; }
+.chat-input:focus { border-color: #ff4444; }
 
 .btn-send {
-    background-color: #333;
+    background-color: rgba(255,255,255,0.12);
     color: white;
     border: none;
     padding: 0 15px;
@@ -162,7 +163,7 @@ video {
     cursor: pointer;
     transition: background 0.2s;
 }
-.btn-send:hover { background-color: #444; }
+.btn-send:hover { background-color: rgba(255,68,68,0.26); }
 
 /* Glass Modals */
 .search-modal {
@@ -181,8 +182,9 @@ video {
 }
 
 .search-content {
-    background: #15181e;
-    border: 1px solid #222630;
+    background: rgba(20, 20, 23, 0.72);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.10);
     border-radius: 12px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.8);
     width: 90%;
@@ -203,20 +205,20 @@ video {
     background: transparent;
 }
 .custom-scroll::-webkit-scrollbar-thumb {
-    background-color: #333;
+    background-color: rgba(255,255,255,0.20);
     border-radius: 10px;
 }
 /* =========================================
    7. MOVIE CARDS (Restored Sizing)
    ========================================= */
 .movie-card {
-    background: #252525;
+    background: rgba(20, 20, 23, 0.72);
     border-radius: 4px;
     overflow: hidden;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
-    border: 1px solid #333;
+    border: 1px solid rgba(255,255,255,0.12);
 }
 
 .movie-card:hover {
@@ -256,9 +258,9 @@ video {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: #333;
+    background: rgba(255,255,255,0.12);
     color: #fff;
-    border: 2px dashed #555;
+    border: 2px dashed rgba(255,255,255,0.25);
     height: 240px; /* Match poster height */
 }
 .episode-style.back-card {
@@ -285,7 +287,7 @@ video {
 
 .movie-meta {
     font-size: 0.8rem;
-    color: #888;
+    color: rgba(255,255,255,0.55);
 }
 /* =========================================
    8. SEARCH RESULTS GRID
@@ -327,7 +329,7 @@ video {
         height: 400px; /* Give the chat and users list a set height so they can scroll */
         border-left: none;
         border-right: none;
-        border-top: 1px solid #222630;
+        border-top: 1px solid rgba(255,255,255,0.10);
     }
 
     /* Host controls need to shrink and stack */
