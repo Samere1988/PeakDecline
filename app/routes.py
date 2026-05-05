@@ -27,6 +27,11 @@ HOST_TRANSFER_GRACE_SECONDS = 25
 online_users = set()
 online_last_seen = {}
 connected_sids = {}
+
+# Live TV page-specific presence
+live_tv_occupancy = {}  # sid -> username
+
+# Watch Together room-specific presence
 room_occupancy = {}  # room_id -> {sid: username}
 sid_to_room = {}
 
@@ -47,6 +52,27 @@ def _now():
 
 def _room_key(room_id):
     return str(room_id)
+
+
+def _unique_live_tv_users():
+    users = []
+    seen = set()
+
+    for username in live_tv_occupancy.values():
+        if username not in seen:
+            users.append(username)
+            seen.add(username)
+
+    return users
+
+
+def _emit_live_tv_users():
+    socketio.emit(
+        "live_tv_users_update",
+        _unique_live_tv_users(),
+        to="live_tv"
+    )
+
 
 
 def _unique_room_users(room_id):
@@ -243,6 +269,20 @@ def sio_connect():
     socketio.emit("update_users", sorted(list(online_users)))
 
 
+@socketio.on("join_live_tv")
+def handle_join_live_tv():
+    join_room("live_tv")
+
+    username = current_user.username if current_user.is_authenticated else "Guest"
+    live_tv_occupancy[request.sid] = username
+
+    _emit_live_tv_users()
+
+
+@socketio.on("request_live_tv_users")
+def handle_request_live_tv_users():
+    emit("live_tv_users_update", _unique_live_tv_users())
+
 @socketio.on("join_watch_room")
 def on_join_watch_room(data):
     room_id = _room_key(data.get('room_id'))
@@ -279,17 +319,27 @@ def on_join_watch_room(data):
     state_payload = _get_room_state_payload(room)
     if state_payload:
         emit("room_state", state_payload, to=request.sid)
+
 @socketio.on("disconnect")
-def sio_disconnect():
+def sio_disconnect(reason=None):
     # 1. Standard User Tracking Cleanup
     username = connected_sids.pop(request.sid, None)
     if username and username not in connected_sids.values():
         online_users.discard(username)
         online_last_seen.pop(username, None)
+
     socketio.emit("update_users", sorted(list(online_users)))
 
-    # 2. Room Occupancy Cleanup
+    # 1B. Live TV Presence Cleanup
+    if request.sid in live_tv_occupancy:
+        live_tv_occupancy.pop(request.sid, None)
+        _emit_live_tv_users()
+
+    # 2. Watch Together Room Occupancy Cleanup
     room_id = sid_to_room.pop(request.sid, None)
+
+    # Important:
+    # If this socket was only on Live TV, it will not have a Watch Together room.
     if not room_id or room_id not in room_occupancy:
         return
 
