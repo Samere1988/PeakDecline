@@ -1,5 +1,10 @@
 /* static/css/emulator.css */
 
+body {
+    background: linear-gradient(135deg, #1a1c2c 0%, #4a192c 100%);
+    background-attachment: fixed;
+}
+
 .emulator-container {
     max-width: 1200px;
     margin: 40px auto;
@@ -11,10 +16,11 @@
 
 /* --- Left Sidebar: Game Library --- */
 .game-library {
-    background: #1a1c23;
+    background: rgba(20, 20, 23, 0.72);
+    backdrop-filter: blur(10px);
     padding: 25px;
     border-radius: 12px;
-    border: 1px solid #333;
+    border: 1px solid rgba(255,255,255,0.10);
     min-height: 450px;
 }
 
@@ -22,22 +28,22 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
     padding-bottom: 10px;
     margin-bottom: 20px;
 }
 
 .library-title {
-    color: #007BFF; /* PeakDecline Blue */
+    color: #ff4444;
     margin: 0;
     font-size: 1.5em;
 }
 
 .back-btn {
     display: none;
-    background: #333;
+    background: rgba(255,255,255,0.12);
     color: white;
-    border: 1px solid #555;
+    border: 1px solid rgba(255,255,255,0.18);
     padding: 5px 12px;
     border-radius: 4px;
     cursor: pointer;
@@ -45,8 +51,8 @@
 }
 
 .back-btn:hover {
-    background: #444;
-    border-color: #aaa;
+    background: rgba(255,68,68,0.22);
+    border-color: #ff4444;
 }
 
 /* --- Folder & File Buttons --- */
@@ -64,9 +70,9 @@
 
 .lib-btn {
     padding: 12px 15px;
-    background: #222630;
+    background: rgba(255,255,255,0.08);
     color: white;
-    border: 1px solid #444;
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 6px;
     cursor: pointer;
     text-align: left;
@@ -75,15 +81,15 @@
 }
 
 .lib-btn:hover {
-    border-color: #007BFF;
-    background: #2a2e39;
+    border-color: #ff4444;
+    background: rgba(255,68,68,0.14);
 }
 
 .file-btn {
     padding: 10px 15px;
-    background: #111;
+    background: rgba(0,0,0,0.42);
     color: #ddd;
-    border: 1px dashed #444;
+    border: 1px dashed rgba(255,255,255,0.18);
     border-radius: 4px;
     cursor: pointer;
     text-align: left;
@@ -91,18 +97,18 @@
 }
 
 .file-btn:hover {
-    border-color: #007BFF;
+    border-color: #ff4444;
     color: #fff;
-    background: #1a1a1a;
+    background: rgba(255,68,68,0.12);
 }
 
 .file-count {
     float: right;
-    color: #888;
+    color: #c6c9d8;
 }
 
 .empty-text {
-    color: #666;
+    color: #c6c9d8;
     text-align: center;
     margin-top: 20px;
 }
@@ -110,12 +116,12 @@
 .netplay-tip {
     margin-top: 30px;
     padding-top: 20px;
-    border-top: 1px dashed #444;
+    border-top: 1px dashed rgba(255,255,255,0.18);
 }
 
 .netplay-tip p {
     font-size: 0.85em;
-    color: #aaa;
+    color: #c6c9d8;
     margin: 0;
 }
 
@@ -131,7 +137,7 @@
     max-width: 850px;
     aspect-ratio: 4/3;
     background: #050505;
-    border: 2px solid #333;
+    border: 2px solid rgba(255,255,255,0.12);
     border-radius: 12px;
     box-shadow: 0 15px 40px rgba(0,0,0,0.8);
     display: flex;
@@ -143,12 +149,12 @@
 }
 
 .placeholder-text {
-    color: #555;
+    color: #8a8a93;
     text-align: center;
 }
 
 .placeholder-text h2 {
-    color: #444;
+    color: #c6c9d8;
     margin-bottom: 10px;
     letter-spacing: 2px;
 }
@@ -158,8 +164,8 @@
     width: 100%;
     padding: 12px 15px;
     margin-bottom: 20px;
-    background: #0a0b0e;
-    border: 1px solid #333;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 6px;
     color: white;
     font-size: 0.95rem;
@@ -169,7 +175,7 @@
 
 .search-box:focus {
     outline: none;
-    border-color: #007BFF;
-    box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+    border-color: #ff4444;
+    box-shadow: 0 0 8px rgba(255, 68, 68, 0.22);
 }
 
