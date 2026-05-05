@@ -1,12 +1,13 @@
 :root {
-    --bg-main: #141414;       /* Deep Black/Grey */
-    --bg-card: #1f1f1f;       /* Slightly lighter for cards */
-    --accent: #e50914;        /* Netflix Red */
-    --accent-hover: #f40612;
+    --bg-main: #1a1c2c;
+    --bg-gradient: linear-gradient(135deg, #1a1c2c 0%, #4a192c 100%);
+    --bg-card: rgba(20, 20, 23, 0.72);
+    --accent: #ff4444;
+    --accent-hover: #ff5f5f;
     --text-primary: #ffffff;
-    --text-secondary: #b3b3b3;
-    --border: #333333;
-    --input-bg: #333333;
+    --text-secondary: #c6c9d8;
+    --border: rgba(255,255,255,0.12);
+    --input-bg: rgba(0,0,0,0.55);
 }
 
 * {
@@ -14,7 +15,8 @@
 }
 
 body {
-    background-color: var(--bg-main);
+    background: var(--bg-gradient);
+    background-attachment: fixed;
     color: var(--text-primary);
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
@@ -91,7 +93,7 @@ a:hover {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('../img/background.jpg'); /* Optional bg image */
+    background: linear-gradient(rgba(26,28,44,0.78), rgba(74,25,44,0.78)), url('../img/background.jpg'); /* Optional bg image */
     background-size: cover;
     background-position: center;
 }
@@ -103,6 +105,7 @@ a:hover {
     width: 100%;
     max-width: 450px;
     min-height: 500px;
+    border: 1px solid var(--border);
 }
 
 .auth-card h2 {
@@ -119,8 +122,8 @@ a:hover {
 
 .form-control {
     width: 100%;
-    background: #333;
-    border: none;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
     border-radius: 4px;
     color: white;
     height: 50px;
@@ -134,7 +137,8 @@ a:hover {
 }
 
 .form-control:focus {
-    background: #454545;
+    background: rgba(0,0,0,0.7);
+    border-color: var(--accent);
     outline: none;
 }
 
@@ -153,7 +157,7 @@ a:hover {
 
 .auth-footer {
     margin-top: 16px;
-    color: #737373;
+    color: #a6a6a6;
     font-size: 1rem;
 }
 .auth-footer a {
@@ -199,10 +203,10 @@ a:hover {
 
 /* --- FOOTER --- */
 .site-footer {
-    background: rgba(0,0,0,0.75);
+    background: rgba(0,0,0,0.55);
     padding: 30px;
     margin-top: auto;
-    color: #737373;
+    color: #c6c9d8;
     font-size: 0.9em;
     text-align: center;
 }
@@ -246,7 +250,8 @@ a:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--bg-card); /* Dark Grey */
+    background-color: var(--bg-card); /* Dark glass */
+    backdrop-filter: blur(10px);
     padding: 30px;
     border-radius: 8px;
     font-size: 1.5rem;
@@ -264,7 +269,7 @@ a:hover {
     background-color: var(--accent); /* Red on hover */
     color: white;
     transform: translateY(-5px); /* Pops up slightly */
-    box-shadow: 0 10px 20px rgba(229, 9, 20, 0.4); /* Red glow */
+    box-shadow: 0 10px 20px rgba(255, 68, 68, 0.35); /* Red glow */
     border-color: var(--accent);
 }
 
@@ -272,4 +277,3 @@ a:hover {
 .login-highlight {
     border: 1px solid var(--accent);
 }
-
