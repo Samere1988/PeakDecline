@@ -28,10 +28,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSystemAction = false;
     let roomIsPlaying = true;
     let currentMediaUrl = INITIAL_MEDIA_URL || '';
+    let localVolume = Number(localStorage.getItem('watchPartyVolume') || 1);
+    let localMuted = localStorage.getItem('watchPartyMuted') === 'true';
+
 
     // --- WEBRTC & EMULATOR VARIABLES ---
     let peerConnections = {};
     let localStream = null;
+    let emulatorLoaderScript = null;
+    let emulatorBootInterval = null;
+    let localGameVolume = Number(localStorage.getItem('watchPartyGameVolume') || 1);
+    let localGameMuted = localStorage.getItem('watchPartyGameMuted') === 'true';
 
     const ICE_SERVERS = {
         iceServers: [
@@ -80,43 +87,101 @@ document.addEventListener('DOMContentLoaded', () => {
     let navigationStack = [];
 
     // --- UI STATE MANAGER ---
-    function setUIState(state) {
-        if (video) video.style.display = 'none';
-        if (gameContainer) gameContainer.style.display = 'none';
-        if (remoteVideo) remoteVideo.style.display = 'none';
-        if (btnStopGame) btnStopGame.style.display = 'none';
-        if (btnStartBroadcast) btnStartBroadcast.style.display = 'none';
+// --- UI STATE MANAGER ---
+        function setUIState(state) {
+            if (video) video.style.display = 'none';
+            if (gameContainer) gameContainer.style.display = 'none';
+            if (remoteVideo) remoteVideo.style.display = 'none';
+            if (btnStopGame) btnStopGame.style.display = 'none';
+            if (btnStartBroadcast) btnStartBroadcast.style.display = 'none';
 
-        if (state === 'plex') {
-            if (video) video.style.display = 'block';
-        } else if (state === 'emulator-host') {
-            if (gameContainer) gameContainer.style.display = 'block';
-            if (isHost && btnStopGame) btnStopGame.style.display = 'inline-block';
-            if (isHost && btnStartBroadcast) btnStartBroadcast.style.display = 'inline-block';
-        } else if (state === 'emulator-viewer') {
-            if (remoteVideo) remoteVideo.style.display = 'block';
+            if (state === 'plex') {
+                if (video) {
+                    video.style.display = 'block';
+                    video.setAttribute('controls', 'controls');
+                    video.style.pointerEvents = 'auto';
+                }
+            } else if (state === 'emulator-host') {
+                if (gameContainer) gameContainer.style.display = 'block';
+                if (isHost && btnStopGame) btnStopGame.style.display = 'inline-block';
+                if (isHost && btnStartBroadcast) btnStartBroadcast.style.display = 'inline-block';
+            } else if (state === 'emulator-viewer') {
+                if (remoteVideo) {
+                    remoteVideo.style.display = 'block';
+                    remoteVideo.setAttribute('controls', 'controls');
+                    remoteVideo.style.pointerEvents = 'auto';
+                }
+            }
         }
-    }
 
-    function applyHostPermissions() {
-        if (isHost) {
+        function applyHostPermissions() {
+            // Everyone gets native Plex video controls:
+            // pause/play, volume, fullscreen.
             if (video) {
                 video.setAttribute('controls', 'controls');
                 video.style.pointerEvents = 'auto';
             }
-            if (openSearchBtn) openSearchBtn.style.display = 'inline-block';
-            if (btnOpenGames) btnOpenGames.style.display = 'inline-block';
-        } else {
-            if (video) {
-                video.removeAttribute('controls');
-                video.style.pointerEvents = 'none';
-            }
-            if (openSearchBtn) openSearchBtn.style.display = 'none';
-            if (btnOpenGames) btnOpenGames.style.display = 'none';
-            if (btnStartBroadcast) btnStartBroadcast.style.display = 'none';
-        }
-    }
 
+            // Everyone gets native emulator stream controls:
+            // pause/play, volume, fullscreen.
+            if (remoteVideo) {
+                remoteVideo.setAttribute('controls', 'controls');
+                remoteVideo.style.pointerEvents = 'auto';
+            }
+
+            if (isHost) {
+                if (openSearchBtn) openSearchBtn.style.display = 'inline-block';
+                if (btnOpenGames) btnOpenGames.style.display = 'inline-block';
+            } else {
+                // Viewers can control only their own player.
+                // They cannot change media or start games.
+                if (openSearchBtn) openSearchBtn.style.display = 'none';
+                if (btnOpenGames) btnOpenGames.style.display = 'none';
+                if (btnStartBroadcast) btnStartBroadcast.style.display = 'none';
+                if (btnStopGame) btnStopGame.style.display = 'none';
+            }
+        }
+
+        // --- LOCAL PLEX VIDEO VOLUME MEMORY ---
+        if (video) {
+            video.volume = Math.min(1, Math.max(0, localVolume));
+            video.muted = localMuted;
+
+            video.addEventListener('volumechange', () => {
+                localVolume = video.volume;
+                localMuted = video.muted;
+
+                localStorage.setItem('watchPartyVolume', String(localVolume));
+                localStorage.setItem('watchPartyMuted', String(localMuted));
+            });
+        }
+
+        // --- LOCAL EMULATOR STREAM VOLUME MEMORY ---
+        if (remoteVideo) {
+            remoteVideo.volume = Math.min(1, Math.max(0, localGameVolume));
+            remoteVideo.muted = localGameMuted;
+
+            remoteVideo.setAttribute('controls', 'controls');
+            remoteVideo.style.pointerEvents = 'auto';
+
+            remoteVideo.addEventListener('volumechange', () => {
+                localGameVolume = remoteVideo.volume;
+                localGameMuted = remoteVideo.muted;
+
+                localStorage.setItem('watchPartyGameVolume', String(localGameVolume));
+                localStorage.setItem('watchPartyGameMuted', String(localGameMuted));
+            });
+
+            // Viewer pause/play on emulator stream is local only.
+            // Do not emit anything to Socket.IO here.
+            remoteVideo.addEventListener('pause', () => {
+                // Local only.
+            });
+
+            remoteVideo.addEventListener('play', () => {
+                // Local only. WebRTC resumes the live host stream.
+            });
+        }
     function setPlaybackClock(startEpoch, offset) {
         mediaOffset = Number(offset || 0);
         localSyncStartTime = Number(startEpoch || 0);
@@ -164,7 +229,65 @@ document.addEventListener('DOMContentLoaded', () => {
             video.style.display = 'block';
         }
     }
+    function cleanupEmulator() {
+        stopLocalBroadcast();
+        try {
+            if (window.EJS_emulator && typeof window.EJS_emulator.pause === 'function') {
+                window.EJS_emulator.pause();
+            }
+        } catch (e) {}
 
+        try {
+            if (window.EJS_emulator && typeof window.EJS_emulator.stop === 'function') {
+                window.EJS_emulator.stop();
+            }
+        } catch (e) {}
+
+        try {
+            if (window.EJS_emulator && typeof window.EJS_emulator.destroy === 'function') {
+                window.EJS_emulator.destroy();
+            }
+        } catch (e) {}
+
+        // Remove EmulatorJS-created DOM
+        const wrapper = document.getElementById('game-container');
+        if (wrapper) {
+            wrapper.innerHTML = '';
+        }
+
+        if (emulatorLoaderScript && emulatorLoaderScript.parentNode) {
+            emulatorLoaderScript.parentNode.removeChild(emulatorLoaderScript);
+        }
+        emulatorLoaderScript = null;
+
+        // Clear boot polling interval
+        if (emulatorBootInterval) {
+            clearInterval(emulatorBootInterval);
+            emulatorBootInterval = null;
+        }
+
+        // Clear global EmulatorJS variables
+        try {
+            delete window.EJS_player;
+            delete window.EJS_core;
+            delete window.EJS_color;
+            delete window.EJS_pathtodata;
+            delete window.EJS_gameUrl;
+            delete window.EJS_emulator;
+            delete window.EJS_Buttons;
+            delete window.EJS_VirtualGamepadSettings;
+        } catch (e) {}
+
+        try {
+            if (window.EJS_audio && typeof window.EJS_audio.close === 'function') {
+                window.EJS_audio.close();
+            }
+        } catch (e) {}
+
+        try {
+            delete window.EJS_audio;
+        } catch (e) {}
+    }
     function resetVideoElement() {
         if (!video) return;
 
@@ -220,17 +343,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         current_time: video.currentTime || 0
                     });
                 }
-            } else {
-                if (!roomIsPlaying) {
-                    safePauseVideo();
-                } else {
-                    const expectedTime = ((Date.now() / 1000) - localSyncStartTime) + mediaOffset;
-                    if (Math.abs(video.currentTime - expectedTime) > 1.0) {
-                        isSystemAction = true;
-                        video.currentTime = expectedTime;
-                        setTimeout(() => { isSystemAction = false; }, 100);
-                    }
-                }
+                return;
+            }
+
+            // Viewers are only allowed to play locally if the host/room is currently playing.
+            // If the host paused the room or no media is playing, immediately pause them again.
+            if (!roomIsPlaying || !currentMediaUrl) {
+                safePauseVideo();
+                return;
+            }
+
+            // Viewer pressed play while the room is playing:
+            // jump them back to the group/live position.
+            const expectedTime = ((Date.now() / 1000) - localSyncStartTime) + mediaOffset;
+
+            if (Number.isFinite(expectedTime)) {
+                isSystemAction = true;
+                video.currentTime = Math.max(0, expectedTime);
+                setTimeout(() => { isSystemAction = false; }, 100);
             }
         });
 
@@ -770,6 +900,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         destroyHls();
         resetVideoElement();
+        video.volume = Math.min(1, Math.max(0, localVolume));
+        video.muted = localMuted;
 
         if (Hls.isSupported()) {
             hls = new Hls({
@@ -888,9 +1020,10 @@ document.addEventListener('DOMContentLoaded', () => {
             gameResults.innerHTML = '<p style="color:red; text-align:center;">Error loading games.</p>';
         }
     };
-
     function bootGame(core, romPath, gameName) {
         if (!isHost) return;
+
+        cleanupEmulator();
 
         if (gameModal) gameModal.classList.remove('active');
 
@@ -914,16 +1047,20 @@ document.addEventListener('DOMContentLoaded', () => {
         window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
         window.EJS_gameUrl = '/static/' + romPath;
 
-        const script = document.createElement('script');
-        script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
-        document.body.appendChild(script);
+        emulatorLoaderScript = document.createElement('script');
+        emulatorLoaderScript.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+        document.body.appendChild(emulatorLoaderScript);
 
-        const checkCanvas = setInterval(() => {
+        emulatorBootInterval = setInterval(() => {
             const canvas = document.querySelector('#game canvas');
 
             if (canvas) {
-                clearInterval(checkCanvas);
-                if (btnStartBroadcast) btnStartBroadcast.style.display = 'inline-block';
+                clearInterval(emulatorBootInterval);
+                emulatorBootInterval = null;
+
+                if (btnStartBroadcast) {
+                    btnStartBroadcast.style.display = 'inline-block';
+                }
             }
         }, 1000);
     }
@@ -932,10 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnStopGame.addEventListener('click', () => {
             if (!isHost) return;
 
-            stopLocalBroadcast();
-
-            const gameWrapper = document.getElementById('game-container');
-            if (gameWrapper) gameWrapper.innerHTML = '';
+            cleanupEmulator();
 
             setUIState('plex');
 
@@ -968,7 +1102,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
     // ==========================================
     // PHASE 5: WEBRTC CORE LOGIC
     // ==========================================
@@ -1046,23 +1179,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!isHost && remoteVideo) {
                 remoteVideo.srcObject = e.streams[0];
+
                 remoteVideo.autoplay = true;
                 remoteVideo.playsInline = true;
                 remoteVideo.controls = true;
+                remoteVideo.style.pointerEvents = 'auto';
 
-                // Mute first so browser autoplay is more likely to allow video playback.
-                // User can unmute with controls later.
-                remoteVideo.muted = true;
+                // Preserve each viewer's own emulator stream audio settings.
+                remoteVideo.volume = Math.min(1, Math.max(0, localGameVolume));
+                remoteVideo.muted = localGameMuted;
 
                 setUIState('emulator-viewer');
 
                 remoteVideo.play()
                     .then(() => {
-                        console.log("[WebRTC] Remote video playing.");
+                        console.log("[WebRTC] Remote game stream playing.");
                     })
                     .catch((err) => {
-                        console.warn("[WebRTC] Remote video autoplay blocked:", err);
-                        addMessage("System", `<span style="color:#e5a00d;">Click the video player to start the game stream.</span>`);
+                        console.warn("[WebRTC] Remote game stream autoplay blocked:", err);
+                        addMessage("System", `<span style="color:#e5a00d;">Click the game stream to start playback.</span>`);
                     });
             }
         };

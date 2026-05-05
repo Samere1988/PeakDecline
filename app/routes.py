@@ -1,7 +1,7 @@
 import os
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urlencode, unquote
 
 from flask import Blueprint, render_template, jsonify, send_from_directory, current_app, url_for, Response, request
@@ -163,6 +163,32 @@ def _schedule_empty_room_cleanup(room_id):
 
     socketio.start_background_task(cleanup_after_grace, room_id)
 
+def _cleanup_stale_empty_rooms():
+    cutoff = datetime.utcnow() - timedelta(seconds=ROOM_EMPTY_GRACE_SECONDS)
+
+    rooms = Room.query.all()
+    deleted_any = False
+
+    for room in rooms:
+        room_id = _room_key(room.id)
+        active_users = room_occupancy.get(room_id, {})
+
+        # If the room has active sockets, do not delete it.
+        if active_users:
+            continue
+
+        # Do not delete brand-new rooms immediately. Give the host time to enter.
+        if room.last_updated and room.last_updated > cutoff:
+            continue
+
+        room_occupancy.pop(room_id, None)
+        room_states.pop(room_id, None)
+
+        db.session.delete(room)
+        deleted_any = True
+
+    if deleted_any:
+        db.session.commit()
 
 def _schedule_host_transfer(room_id, leaving_username):
     room_id = _room_key(room_id)
@@ -236,6 +262,8 @@ def on_join_watch_room(data):
     if room_id not in room_occupancy:
         room_occupancy[room_id] = {}
     room_occupancy[room_id][request.sid] = username
+    room.last_updated = datetime.utcnow()
+    db.session.commit()
 
     _emit_room_users(room_id)
 
@@ -341,6 +369,7 @@ def live_tv():
 @main_bp.route('/plex-watch-together')
 @login_required
 def plex_landing():
+    _cleanup_stale_empty_rooms()
     rooms = Room.query.order_by(Room.id.desc()).all()
     return render_template('plex_landing.html', rooms=rooms)
 
