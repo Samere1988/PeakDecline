@@ -2,7 +2,8 @@
 
 /* --- THEME VARIABLES --- */
 :root {
-    --bg-app: #09090b;
+    --bg-app: #1a1c2c;
+    --bg-gradient: linear-gradient(135deg, #1a1c2c 0%, #4a192c 100%);
     --bg-card: #141417;
     --bg-card-hover: #1e1e24;
     --bg-input: #000000;
@@ -23,7 +24,7 @@
 }
 
 body {
-    background-color: var(--bg-app);
+    background: var(--bg-gradient);
     color: var(--text-main);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
