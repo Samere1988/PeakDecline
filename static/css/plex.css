@@ -8,13 +8,9 @@
     min-height: 80vh;
 }
 
-/* --- The "Cinematic" Background --- */
-/* Apply this to your body or a wrapper in base.html if possible.
-   Otherwise, the .plex-container background works too. */
+/* --- The Red/Purple Background --- */
 body {
-    background-color: #050505;
-    /* subtle gradient to give a "spotlight" effect from top center */
-    background-image: radial-gradient(circle at 50% 0%, #1f1f25 0%, #000000 80%);
+    background: linear-gradient(135deg, #1a1c2c 0%, #4a192c 100%);
     background-attachment: fixed;
 }
 
@@ -25,7 +21,7 @@ body {
     align-items: flex-end; /* Aligns button with bottom of text */
     margin-bottom: 50px;
     padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .header-title h1 {
@@ -33,13 +29,13 @@ body {
     font-size: 3rem; /* Much larger */
     font-weight: 800;
     letter-spacing: -1.5px;
-    background: linear-gradient(to right, #fff, #888); /* Gradient text */
+    background: linear-gradient(to right, #fff, #c6c9d8); /* Gradient text */
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .header-title span {
-    color: #666;
+    color: #c6c9d8;
     font-size: 1.1rem;
     font-weight: 500;
     margin-top: 8px;
@@ -47,15 +43,15 @@ body {
 
 /* --- Buttons --- */
 .create-btn {
-    background: linear-gradient(135deg, #e5a00d 0%, #d48900 100%); /* Gradient button */
-    color: #000;
+    background: linear-gradient(135deg, #ff4444 0%, #c92525 100%); /* Gradient button */
+    color: #fff;
     font-weight: 800;
     padding: 14px 28px;
     border-radius: 50px; /* Pill shape is more modern */
     border: none;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    box-shadow: 0 4px 15px rgba(229, 160, 13, 0.3); /* Orange glow */
+    box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3); /* Red glow */
     text-transform: uppercase;
     font-size: 0.85rem;
     letter-spacing: 0.5px;
@@ -63,8 +59,8 @@ body {
 
 .create-btn:hover {
     transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(229, 160, 13, 0.5);
-    color: #000;
+    box-shadow: 0 8px 25px rgba(255, 68, 68, 0.5);
+    color: #fff;
 }
 
 /* --- Rooms Grid --- */
@@ -82,8 +78,8 @@ body {
 }
 
 .room-card {
-    background: rgba(30, 30, 35, 0.4); /* More transparent */
-    border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(20, 20, 23, 0.56); /* More transparent */
+    border: 1px solid rgba(255,255,255,0.10);
     border-radius: 20px; /* Softer corners */
     overflow: hidden;
     transition: all 0.3s ease;
@@ -97,15 +93,15 @@ body {
 /* Hover Effect: The card lifts and glows white subtly */
 .room-card:hover {
     transform: translateY(-8px);
-    border-color: rgba(255,255,255,0.2);
+    border-color: rgba(255,68,68,0.55);
     box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-    background: rgba(40, 40, 45, 0.6);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 /* --- Card Poster --- */
 .room-poster {
     height: 180px;
-    background: #111;
+    background: rgba(0,0,0,0.55);
     position: relative;
     overflow: hidden;
 }
@@ -115,7 +111,7 @@ body {
     content: '';
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    background-image: radial-gradient(#333 1px, transparent 1px);
+    background-image: radial-gradient(rgba(255,255,255,0.18) 1px, transparent 1px);
     background-size: 20px 20px;
     opacity: 0.2;
     z-index: 0;
@@ -141,7 +137,7 @@ body {
     position: absolute;
     top: 15px;
     right: 15px;
-    background: rgba(229, 9, 20, 0.9); /* Netflix Red */
+    background: rgba(255, 68, 68, 0.9);
     color: white;
     font-size: 0.65rem;
     font-weight: 800;
@@ -173,7 +169,7 @@ body {
 
 .now-playing {
     font-size: 0.9rem;
-    color: #999;
+    color: #c6c9d8;
     margin-bottom: 20px;
     display: flex;
     align-items: center;
@@ -185,12 +181,12 @@ body {
 .room-users {
     margin-top: auto;
     padding-top: 15px;
-    border-top: 1px solid rgba(255,255,255,0.08);
+    border-top: 1px solid rgba(255,255,255,0.10);
     display: flex;
     align-items: center;
     justify-content: space-between; /* Pushes text to the right */
     font-size: 0.8rem;
-    color: #777;
+    color: #c6c9d8;
 }
 
 .user-avatars {
@@ -202,8 +198,8 @@ body {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: linear-gradient(45deg, #333, #555);
-    border: 2px solid #252529; /* Matches card bg */
+    background: linear-gradient(45deg, #ff4444, #4a192c);
+    border: 2px solid rgba(20,20,23,0.9); /* Matches card bg */
     margin-left: -8px; /* Overlap effect */
     display: flex;
     align-items: center;
@@ -219,10 +215,10 @@ body {
     grid-column: 1 / -1;
     text-align: center;
     padding: 80px;
-    background: rgba(255,255,255,0.02);
-    border: 2px dashed rgba(255,255,255,0.1);
+    background: rgba(20,20,23,0.42);
+    border: 2px dashed rgba(255,255,255,0.12);
     border-radius: 20px;
-    color: #666;
+    color: #c6c9d8;
 }
 .no-rooms h2 { color: #fff; margin-bottom: 10px;}
 
@@ -243,10 +239,11 @@ body {
     display: flex !important; /* JS triggers this */
 }
 .modal-content {
-    background: #15181e;
+    background: rgba(20, 20, 23, 0.82);
+    backdrop-filter: blur(12px);
     padding: 30px;
     border-radius: 12px;
-    border: 1px solid #222630;
+    border: 1px solid rgba(255,255,255,0.10);
     width: 90%;
     max-width: 400px;
     text-align: center;
@@ -258,13 +255,13 @@ body {
     padding: 12px;
     margin: 20px 0;
     border-radius: 6px;
-    border: 1px solid #333;
-    background: #0f1115;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.55);
     color: white;
     box-sizing: border-box;
     outline: none;
 }
-.modal-input:focus { border-color: #e50914; }
+.modal-input:focus { border-color: #ff4444; }
 .modal-actions { display: flex; gap: 10px; justify-content: center; }
 .btn-cancel, .btn-submit {
     padding: 10px 20px;
@@ -274,15 +271,15 @@ body {
     font-weight: bold;
     transition: background 0.2s;
 }
-.btn-cancel { background: #333; color: white; }
-.btn-submit { background: #e50914; color: white; }
-.btn-cancel:hover { background: #444; }
-.btn-submit:hover { background: #f6121d; }
+.btn-cancel { background: rgba(255,255,255,0.12); color: white; }
+.btn-submit { background: #ff4444; color: white; }
+.btn-cancel:hover { background: rgba(255,255,255,0.20); }
+.btn-submit:hover { background: #ff5f5f; }
 
 /* --- CLEANED UP INLINE STYLES --- */
 .host-avatar-icon {
-    background: #e5a00d;
-    color: black;
+    background: #ff4444;
+    color: white;
     width: 25px;
     height: 25px;
     border-radius: 50%;
@@ -300,4 +297,4 @@ body {
     margin-top: 50px;
 }
 .empty-rooms-msg h2 { color: #aaa; }
-.empty-rooms-msg p { color: #777; }
+.empty-rooms-msg p { color: #c6c9d8; }
