@@ -1,5 +1,10 @@
 /* --- NEW: 10-LANE & BETTING STYLES --- */
 
+body {
+    background: linear-gradient(135deg, #1a1c2c 0%, #4a192c 100%);
+    background-attachment: fixed;
+}
+
 .lane {
     position: relative;
     height: 48px; /* Slimmer lanes to fit 10 horses */
@@ -17,14 +22,15 @@
 }
 
 .betting-dashboard {
-    background: #222630;
+    background: rgba(20, 20, 23, 0.72);
+    backdrop-filter: blur(10px);
     padding: 15px 25px;
     border-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    border: 1px solid #333;
+    border: 1px solid rgba(255,255,255,0.10);
 }
 
 .bet-group {
@@ -36,18 +42,24 @@
 
 .bet-group label {
     font-size: 0.85em;
-    color: #aaa;
+    color: #c6c9d8;
     text-transform: uppercase;
     font-weight: bold;
 }
 
 .bet-input {
-    background: #111;
+    background: rgba(0,0,0,0.55);
     color: white;
-    border: 1px solid #444;
+    border: 1px solid rgba(255,255,255,0.12);
     padding: 10px;
     border-radius: 4px;
     font-size: 1.1em;
+}
+
+.bet-input:focus {
+    outline: none;
+    border-color: #ff4444;
+    box-shadow: 0 0 8px rgba(255, 68, 68, 0.22);
 }
 
 .bankroll-display {
