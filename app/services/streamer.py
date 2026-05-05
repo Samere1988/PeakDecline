@@ -88,7 +88,8 @@ class StreamService:
         cmd = [
             ffmpeg,
             "-hide_banner",
-            "-loglevel", "warning",
+            "-loglevel", "info",
+            "-user_agent", "VLC/3.0.20 LibVLC/3.0.20",
             "-i", channel_url,
 
             # ─── VIDEO ────────────────────────────────────────────────
@@ -120,12 +121,15 @@ class StreamService:
 
         try:
             # 🔥 CRITICAL FIX: DO NOT PIPE STDERR
+            log_path = os.path.join(channel_dir, "ffmpeg_error.log")
+
+            log_file = open(log_path, "w", encoding="utf-8", errors="replace")
+
             self.process = subprocess.Popen(
                 cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stdout=log_file,
+                stderr=log_file
             )
-
             # ─── Wait for playlist ─────────────────────────────────────
             for i in range(20):
                 time.sleep(0.5)

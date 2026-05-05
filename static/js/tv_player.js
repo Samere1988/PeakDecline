@@ -16,8 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ✅ Load channels/favorites immediately (fixes your “type then delete” bug)
     loadChannels();
 
-    // ✅ Ask server for current online users once
-    socket.emit("request_users");
+    // Join Live TV-specific presence list
+    socket.emit("join_live_tv");
+    socket.emit("request_live_tv_users");
 
     // ✅ If someone changes the channel, update everyone
     socket.on("channel_changed", (data) => {
@@ -197,7 +198,7 @@ function setupChat() {
         box.scrollTop = box.scrollHeight;
     });
 
-    socket.on("update_users", list => {
+    socket.on("live_tv_users_update", list => {
         users.innerHTML = "";
         count.textContent = list.length;
 
