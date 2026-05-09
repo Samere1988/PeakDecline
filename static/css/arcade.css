@@ -92,3 +92,38 @@ body {
 .game-card.disabled .play-btn {
     background: rgba(255,255,255,0.14);
 }
+/* ===========================
+   MOBILE RESPONSIVENESS
+   Arcade / Games
+   =========================== */
+@media (max-width: 768px) {
+    .arcade-container {
+        margin: 0 auto;
+        padding: 90px 14px 30px;
+    }
+
+    .arcade-header {
+        margin-bottom: 28px;
+    }
+
+    .arcade-header h1 {
+        font-size: 2rem;
+    }
+
+    .games-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .game-card {
+        padding: 22px 18px;
+    }
+
+    .game-icon {
+        font-size: 3em;
+    }
+
+    .game-title {
+        font-size: 1.25em;
+    }
+}
