@@ -453,3 +453,220 @@ video {
     left: 50%;
     transform: translate(-50%, -50%);
 }
+/* ===========================
+   MOBILE RESPONSIVENESS
+   Live TV
+   =========================== */
+@media (max-width: 900px) {
+    body {
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .dashboard-container {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+        padding: 12px;
+        gap: 14px;
+    }
+
+    .main-stage {
+        order: 1;
+        height: auto;
+        min-height: auto;
+        gap: 12px;
+    }
+
+    .sidebar-left {
+        order: 2;
+        height: auto;
+        min-height: auto;
+        overflow: visible;
+    }
+
+    .sidebar-right {
+        order: 3;
+        height: auto;
+        min-height: auto;
+        gap: 14px;
+    }
+
+    .brand-header {
+        justify-content: center;
+        padding: 4px 0 8px;
+    }
+
+    .brand-logo {
+        height: 42px;
+        max-width: 90%;
+    }
+
+    .favorites-section {
+        order: 2;
+        gap: 8px;
+    }
+
+    .favorites-row {
+        min-height: 84px;
+        padding-bottom: 10px;
+    }
+
+    .fav-card {
+        width: 76px;
+    }
+
+    .fav-icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    .fav-name,
+    .fav-card span {
+        max-width: 76px;
+        font-size: 0.7rem;
+    }
+
+    .video-wrapper {
+        order: 1;
+        flex: none;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+        min-height: 210px;
+        max-height: 55vh;
+    }
+
+    video {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-height: 210px;
+    }
+
+    .video-info-bar {
+        order: 3;
+        margin-top: 2px;
+    }
+
+    .now-playing-bar {
+        max-width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+        text-align: center;
+        gap: 8px;
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+
+    .now-playing-logo {
+        width: 34px;
+        height: 24px;
+        padding: 4px;
+    }
+
+    #current-channel-name {
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .search-box {
+        font-size: 1rem;
+        padding: 12px;
+    }
+
+    .channel-list {
+        max-height: 360px;
+        overflow-y: auto;
+        padding-right: 2px;
+    }
+
+    .channel-item {
+        min-height: 46px;
+        padding: 10px;
+    }
+
+    .ch-logo {
+        width: 28px;
+        height: 28px;
+    }
+
+    .social-box {
+        padding: 14px;
+    }
+
+    .chat-box-container,
+    .users-box-container {
+        flex: none;
+        min-height: auto;
+    }
+
+    .chat-messages {
+        min-height: 230px;
+        max-height: 320px;
+    }
+
+    .users-list {
+        max-height: 220px;
+    }
+
+    .chat-input-row {
+        gap: 6px;
+    }
+
+    .chat-input {
+        min-width: 0;
+    }
+
+    .send-btn {
+        width: auto;
+        min-width: 58px;
+        padding: 0 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 10px;
+    }
+
+    .video-wrapper {
+        min-height: 190px;
+    }
+
+    video {
+        min-height: 190px;
+    }
+
+    .favorites-row {
+        gap: 8px;
+    }
+
+    .fav-card {
+        width: 68px;
+    }
+
+    .fav-icon {
+        width: 38px;
+        height: 38px;
+    }
+
+    .fav-name,
+    .fav-card span {
+        max-width: 68px;
+        font-size: 0.66rem;
+    }
+
+    .channel-item {
+        font-size: 0.9rem;
+    }
+
+    .now-playing-bar {
+        font-size: 0.75rem;
+    }
+}

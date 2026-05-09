@@ -91,3 +91,42 @@ body {
 .horse.racing {
     animation: gallop 0.25s infinite linear;
 }
+/* ===========================
+   MOBILE RESPONSIVENESS
+   Derby
+   =========================== */
+@media (max-width: 768px) {
+    .betting-dashboard {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        padding: 16px;
+    }
+
+    .bet-group {
+        width: 100%;
+    }
+
+    .bet-input {
+        width: 100%;
+    }
+
+    .bankroll-display {
+        font-size: 1.8em;
+        text-align: center;
+    }
+
+    .lane {
+        height: 42px;
+    }
+
+    .horse {
+        transform: scale(0.85);
+        transform-origin: left center;
+    }
+
+    .finish-line {
+        right: 35px;
+        width: 16px;
+    }
+}

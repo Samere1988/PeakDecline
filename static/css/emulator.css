@@ -179,3 +179,57 @@ body {
     box-shadow: 0 0 8px rgba(255, 68, 68, 0.22);
 }
 
+/* ===========================
+   MOBILE RESPONSIVENESS
+   Emulator
+   =========================== */
+@media (max-width: 900px) {
+    .emulator-container {
+        display: flex;
+        flex-direction: column;
+        margin: 0 auto;
+        padding: 90px 14px 30px;
+        gap: 18px;
+    }
+
+    .game-library {
+        min-height: auto;
+        padding: 18px;
+    }
+
+    .library-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .library-title {
+        font-size: 1.3em;
+    }
+
+    .back-btn {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .lib-btn,
+    .file-btn {
+        font-size: 0.95rem;
+    }
+
+    .tv-screen {
+        width: 100%;
+    }
+
+    .game-wrapper {
+        max-width: 100%;
+        aspect-ratio: 4 / 3;
+        min-height: 260px;
+    }
+}
+
+@media (max-width: 480px) {
+    .game-wrapper {
+        min-height: 220px;
+    }
+}
