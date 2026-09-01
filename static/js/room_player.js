@@ -1257,7 +1257,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hls = new Hls({
                 debug: false,
                 enableWorker: true,
-                lowLatencyMode: true,
+                lowLatencyMode: false,
                 startPosition: targetStart > 0 ? targetStart : -1,
                 abrEwmaDefaultEstimate: 1000000,
                 abrBandWidthFactor: 0.7,
