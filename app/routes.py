@@ -720,18 +720,12 @@ def set_room_media(room_id):
             'X-Plex-Device': 'Web'
         }
 
-        if view_offset > 0:
-            params['viewOffset'] = view_offset
-        if audio_id:
-            params['audioStreamID'] = audio_id
-        if subtitle_id:
-            params['subtitleStreamID'] = subtitle_id
-        elif subtitle_id == "":
-            params['subtitleStreamID'] = 0
+
 
         endpoint = "/video/:/transcode/universal/start.m3u8"
         base_url = "/plex-transcode"
         full_url = f"{base_url}{endpoint}?{urlencode(params)}"
+
 
         if item.type == 'episode':
             show_title = getattr(item, 'grandparentTitle', 'Unknown Show')
