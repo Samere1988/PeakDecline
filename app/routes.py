@@ -535,6 +535,39 @@ def room_view(room_id):
     room = Room.query.get_or_404(room_id)
     return render_template('room.html', room=room)
 
+def _plex_watch_state(item):
+    playable = getattr(item, 'type', '') in ('movie', 'episode')
+
+    if not playable:
+        return {
+            'view_offset_ms': 0,
+            'duration_ms': 0,
+            'watched': False,
+            'is_resume': False,
+            'progress_percent': 0
+        }
+
+    view_offset_ms = int(getattr(item, 'viewOffset', 0) or 0)
+    duration_ms = int(getattr(item, 'duration', 0) or 0)
+    view_count = int(getattr(item, 'viewCount', 0) or 0)
+
+    watched = view_count > 0
+    is_resume = view_offset_ms > 0 and not watched
+
+    progress_percent = 0
+    if duration_ms > 0:
+        progress_percent = round(
+            min(100, max(0, (view_offset_ms / duration_ms) * 100)),
+            1
+        )
+
+    return {
+        'view_offset_ms': view_offset_ms,
+        'duration_ms': duration_ms,
+        'watched': watched,
+        'is_resume': is_resume,
+        'progress_percent': progress_percent
+    }
 
 @main_bp.route('/api/plex/search')
 @login_required
@@ -576,15 +609,16 @@ def search_plex_library():
         if item.type not in ['movie', 'show', 'season', 'episode']:
             continue
 
-        output.append({
+        result = {
             'title': item.title,
             'year': item.year,
             'thumb': item.thumb,
             'key': item.ratingKey,
             'type': item.type.capitalize()
-        })
+        }
 
-    return jsonify(output)
+        result.update(_plex_watch_state(item))
+        output.append(result)
 
 
 @main_bp.route('/api/plex/children')
@@ -615,15 +649,17 @@ def get_plex_children():
             show_title = getattr(parent, 'parentTitle', 'Unknown Show')
             title = f"{show_title}, S{item.seasonNumber}:E{item.index} - {item.title}"
 
-        results.append({
+        result = {
             'title': title,
             'year': getattr(item, 'year', ''),
             'thumb': item.thumb if item.thumb else parent.thumb,
             'key': item.ratingKey,
             'type': item.type.capitalize(),
             'parent_title': parent.title
-        })
+        }
 
+        result.update(_plex_watch_state(item))
+        results.append(result)
     return jsonify(results)
 
 

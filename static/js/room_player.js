@@ -1169,14 +1169,88 @@ document.addEventListener('DOMContentLoaded', () => {
                     subTitle = item.type;
                 }
 
+                const isPlayable =
+                    item.type === 'Movie' ||
+                    item.type === 'Episode';
+
+                const progressPercent = Math.min(
+                    100,
+                    Math.max(0, Number(item.progress_percent || 0))
+                );
+
+                let watchStateHtml = '';
+                let actionsHtml = '';
+
+                if (isPlayable && item.watched) {
+                    watchStateHtml = `
+                        <div class="media-watch-state watched">
+                            ✓ Watched
+                        </div>
+                    `;
+                } else if (isPlayable && item.is_resume) {
+                    watchStateHtml = `
+                        <div class="media-progress-track">
+                            <div class="media-progress-fill"
+                                 style="width: ${progressPercent}%;">
+                            </div>
+                        </div>
+                
+                        <div class="media-watch-state">
+                            ${Math.round(progressPercent)}% watched
+                        </div>
+                    `;
+
+                    actionsHtml = `
+                        <div class="movie-card-actions">
+                            <button type="button"
+                                    class="movie-card-action resume-media">
+                                Resume
+                            </button>
+                
+                            <button type="button"
+                                    class="movie-card-action start-over-media">
+                                Start Over
+                            </button>
+                        </div>
+                    `;
+                }
+
                 card.innerHTML = `
-                    <div class="movie-card-image"><img src="${imageUrl}" loading="lazy"></div>
+                    <div class="movie-card-image">
+                        <img src="${imageUrl}" loading="lazy">
+                    </div>
+                
                     <div class="movie-info">
                         <div class="movie-title">${item.title}</div>
                         <div class="movie-meta">${subTitle}</div>
+                
+                        ${watchStateHtml}
+                        ${actionsHtml}
                     </div>
                 `;
+                const resumeBtn = card.querySelector('.resume-media');
+                const startOverBtn = card.querySelector('.start-over-media');
 
+                if (resumeBtn) {
+                    resumeBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const resumeSeconds =
+                            Number(item.view_offset_ms || 0) / 1000;
+
+                        selectMedia(item, resumeSeconds);
+                    });
+                }
+
+                if (startOverBtn) {
+                    startOverBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        selectMedia(item, 0);
+                    });
+                }
                 card.addEventListener('click', () => handleItemClick(item));
                 resultsContainer.appendChild(card);
             });
@@ -1186,16 +1260,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleItemClick(item) {
-        if (item.type === 'Show' || item.type === 'Season') {
-            navigationStack.push({ url: `/api/plex/children?key=${item.key}` });
-            loadResults(`/api/plex/children?key=${item.key}`, true);
-        } else if (item.type === 'Movie' || item.type === 'Episode') {
-            selectMedia(item);
-        }
-    }
+        function handleItemClick(item) {
+            if (item.type === 'Show' || item.type === 'Season') {
+                navigationStack.push({
+                    url: `/api/plex/children?key=${item.key}`
+                });
 
-    async function selectMedia(media) {
+                loadResults(
+                    `/api/plex/children?key=${item.key}`,
+                    true
+                );
+
+                return;
+            }
+
+            if (item.type === 'Movie' || item.type === 'Episode') {
+                const startTime = item.is_resume
+                    ? Number(item.view_offset_ms || 0) / 1000
+                    : 0;
+
+                selectMedia(item, startTime);
+            }
+        }
+
+    async function selectMedia(media, requestedStartTime = null) {
         if (!isHost) return;
 
         const rawKey = String(media.key).split('/').pop();
@@ -1210,10 +1298,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         trackOptionsLoadedForKey = '';
 
-        if (media.isResume || rawKey === String(CURRENT_KEY)) {
-            if (video && !video.paused && video.currentTime > 0) {
-                payload.view_offset = video.currentTime;
-            }
+        if (requestedStartTime !== null) {
+            payload.view_offset = Math.max(
+                0,
+                Number(requestedStartTime) || 0
+            );
+        } else if (
+            rawKey === String(CURRENT_KEY) &&
+            video &&
+            !video.paused &&
+            video.currentTime > 0
+        ) {
+            payload.view_offset = video.currentTime;
         }
 
         try {

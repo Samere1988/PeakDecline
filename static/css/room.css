@@ -289,6 +289,61 @@ video {
     font-size: 0.8rem;
     color: rgba(255,255,255,0.55);
 }
+.media-progress-track {
+    width: 100%;
+    height: 4px;
+    margin-top: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.media-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: #e50914;
+}
+
+.media-watch-state {
+    margin-top: 5px;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.media-watch-state.watched {
+    color: #7ee787;
+}
+
+.movie-card-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.movie-card-action {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 5px;
+    border: 0;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.movie-card-action:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.movie-card-action.resume-media {
+    background: #e50914;
+}
+
+.movie-card-action.resume-media:hover {
+    background: #ff1f2b;
+}
 /* =========================================
    8. SEARCH RESULTS GRID
    ========================================= */
