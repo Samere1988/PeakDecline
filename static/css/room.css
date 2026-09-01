@@ -694,4 +694,29 @@ video {
     .media-settings-panel {
         bottom: 138px;
     }
+
+    .connection-status {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #bbb;
+    white-space: nowrap;
+    }
+
+    .connection-status[data-state="connected"] {
+        background: rgba(76, 175, 80, 0.16);
+        color: #7ee787;
+    }
+
+    .connection-status[data-state="reconnecting"] {
+        background: rgba(255, 193, 7, 0.16);
+        color: #ffd866;
+    }
+
+    .connection-status[data-state="disconnected"] {
+        background: rgba(229, 9, 20, 0.16);
+        color: #ff6b73;
+    }
 }
