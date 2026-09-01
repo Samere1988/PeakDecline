@@ -920,7 +920,7 @@ if (btnNextEpisodeCancel) {
             socket.on('media_updated', (data) => {
                 if (String(data.room_id) !== String(ROOM_ID)) return;
                 if (!data.url) return;
-                clearNextEpisodeCountdown
+                clearNextEpisodeCountdown();
                 switchToPlexMode();
 
                 currentMediaUrl = data.url;
@@ -1293,7 +1293,8 @@ function startNextEpisodeCountdown(
     nextEpisodeCountdownTimer = setInterval(() => {
         // Host changed or another media item was selected.
         if (
-            !isHost ||
+            !isHost ||'' +
+            currentUIState !== 'plex' ||
             String(CURRENT_KEY) !== nextEpisodeSourceKey
         ) {
             clearNextEpisodeCountdown();
