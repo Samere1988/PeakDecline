@@ -19,19 +19,43 @@
     <!-- LEFT SIDEBAR: Viewers -->
     <div class="room-sidebar-left">
         <div class="sidebar-header">Viewers</div>
-        <div id="users-list" class="user-list custom-scroll">
+
+        <div id="users-list"
+             class="user-list custom-scroll">
         </div>
     </div>
 
-    <!-- MIDDLE: Main Stage -->
-    <div class="room-main" style="display: flex; flex-direction: column; height: 100%; padding: 0 20px;">
 
-        <!-- Top Header (Cleaned up, just the title now) -->
-        <div class="host-controls" style="padding: 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+    <!-- MIDDLE: Main Stage -->
+    <div class="room-main"
+         style="
+             display: flex;
+             flex-direction: column;
+             height: 100%;
+             padding: 0 20px;
+         ">
+
+        <!-- Room / Media Header -->
+        <div class="host-controls"
+             style="
+                 padding: 15px 0;
+                 border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+             ">
+
             <div class="media-info">
-                <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                ">
+
                     <h3 id="media-title"
-                        style="margin: 0; font-size: 1.3em; font-weight: 600; letter-spacing: 0.5px;">
+                        style="
+                            margin: 0;
+                            font-size: 1.3em;
+                            font-weight: 600;
+                            letter-spacing: 0.5px;
+                        ">
                         {{ room.current_media_title or 'Waiting for Host...' }}
                     </h3>
 
@@ -40,17 +64,63 @@
                           class="connection-status">
                         Connecting...
                     </span>
+
                 </div>
             </div>
         </div>
-        <!-- The "Ambient Theater" Stage -->
-        <div class="video-wrapper" id="main-video-wrapper" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 60%); border-radius: 16px; padding-bottom: 20px;">
 
-            <!-- 1. Plex Video Player (Host & Viewers) -->
-            <video id="video-player" controls playsinline style="width: 100%; max-height: calc(100vh - 250px); border-radius: 12px; background: #000; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 80px rgba(255,255,255,0.03); z-index: 10;"></video>
+
+        <!-- Ambient Theater Stage -->
+        <div class="video-wrapper"
+             id="main-video-wrapper"
+             style="
+                 display: flex;
+                 flex-direction: column;
+                 justify-content: center;
+                 align-items: center;
+                 height: 100%;
+                 background:
+                     radial-gradient(
+                         circle at 50% 50%,
+                         rgba(255, 255, 255, 0.04) 0%,
+                         transparent 60%
+                     );
+                 border-radius: 16px;
+                 padding-bottom: 20px;
+             ">
+
+
+            <!-- =========================================
+                 1. CUSTOM PLEX PLAYER
+                 Host & Viewers
+                 ========================================= -->
+            <div id="plex-player-shell"
+                 class="plex-player-shell">
+
+                <!--
+                    Native browser controls are intentionally disabled.
+
+                    room_player.js provides:
+                    - Play / Pause
+                    - Volume / Mute
+                    - Timeline
+                    - Sync to Host
+                    - Integrated Plex settings
+                    - Fullscreen
+                -->
+                <video id="video-player"
+                       class="plex-video-player"
+                       playsinline>
+                </video>
+
+
+                <!-- =====================================
+                     AUTOMATIC NEXT EPISODE
+                     Host Only
+                     ===================================== -->
                 <div id="next-episode-overlay"
                      class="next-episode-overlay"
-                     style="display:none;">
+                     style="display: none;">
 
                     <div class="next-episode-label">
                         Up Next
@@ -67,6 +137,7 @@
                     </div>
 
                     <div class="next-episode-actions">
+
                         <button id="btn-next-episode-play"
                                 class="next-episode-play"
                                 type="button">
@@ -78,135 +149,563 @@
                                 type="button">
                             Cancel
                         </button>
+
                     </div>
                 </div>
-            <!-- Host-only Plex audio/subtitle controls. JS shows this only for the room host. -->
-            <button id="media-settings-cog"
-                    class="media-settings-cog"
-                    type="button"
-                    title="Playback settings"
-                    aria-label="Playback settings"
-                    style="display:none;">⚙</button>
-            <div id="media-settings-panel" class="media-settings-panel" style="display:none;">
-                <div class="media-settings-title">Playback Settings</div>
 
-                <label for="video-quality-select">Quality</label>
-                <select id="video-quality-select" class="track-select">
-                    <option value="0">Original / No Limit</option>
-                    <option value="20000">20 Mbps</option>
-                    <option value="12000">12 Mbps</option>
-                    <option value="8000" selected>8 Mbps</option>
-                    <option value="4000">4 Mbps</option>
-                    <option value="2000">2 Mbps</option>
-                </select>
 
-                <label for="audio-track-select">Audio</label>
-                <select id="audio-track-select" class="track-select">
-                    <option value="">Default Audio</option>
-                </select>
+                <!-- =====================================
+                     PLEX PLAYBACK SETTINGS
+                     Opened by integrated cog
+                     Host Only
+                     ===================================== -->
+                <div id="media-settings-panel"
+                     class="media-settings-panel"
+                     style="display: none;">
 
-                <label for="subtitle-track-select">Subtitles</label>
-                <select id="subtitle-track-select" class="track-select">
-                    <option value="">Off</option>
-                </select>
+                    <div class="media-settings-title">
+                        Playback Settings
+                    </div>
 
-                <button id="btn-apply-tracks"
-                        class="btn-apply-tracks"
-                        type="button">
-                    Apply to Room
-                </button>
 
-                <div class="media-settings-note">
-                    Changing playback settings reloads the room stream and keeps everyone synced.
+                    <label for="video-quality-select">
+                        Quality
+                    </label>
+
+                    <select id="video-quality-select"
+                            class="track-select">
+
+                        <option value="0">
+                            Original / No Limit
+                        </option>
+
+                        <option value="20000">
+                            20 Mbps
+                        </option>
+
+                        <option value="12000">
+                            12 Mbps
+                        </option>
+
+                        <option value="8000" selected>
+                            8 Mbps
+                        </option>
+
+                        <option value="4000">
+                            4 Mbps
+                        </option>
+
+                        <option value="2000">
+                            2 Mbps
+                        </option>
+
+                    </select>
+
+
+                    <label for="audio-track-select">
+                        Audio
+                    </label>
+
+                    <select id="audio-track-select"
+                            class="track-select">
+
+                        <option value="">
+                            Default Audio
+                        </option>
+
+                    </select>
+
+
+                    <label for="subtitle-track-select">
+                        Subtitles
+                    </label>
+
+                    <select id="subtitle-track-select"
+                            class="track-select">
+
+                        <option value="">
+                            Off
+                        </option>
+
+                    </select>
+
+
+                    <button id="btn-apply-tracks"
+                            class="btn-apply-tracks"
+                            type="button">
+                        Apply to Room
+                    </button>
+
+
+                    <div class="media-settings-note">
+                        Changing playback settings reloads the room
+                        stream and keeps everyone synced.
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================
+                     CUSTOM PLAYER CONTROLS
+                     ===================================== -->
+                <div id="plex-player-controls"
+                     class="plex-player-controls">
+
+
+                    <!-- Timeline -->
+                    <div class="plex-progress-row">
+
+                        <input id="plex-player-progress"
+                               class="plex-player-progress"
+                               type="range"
+                               min="0"
+                               max="0"
+                               value="0"
+                               step="0.1"
+                               aria-label="Playback position">
+
+                    </div>
+
+
+                    <!-- Bottom Control Row -->
+                    <div class="plex-controls-row">
+
+
+                        <!-- Play / Pause -->
+                        <button id="plex-play-toggle"
+                                class="plex-control-btn"
+                                type="button"
+                                title="Play / Pause"
+                                aria-label="Play">
+                            ▶
+                        </button>
+
+
+                        <!-- Mute -->
+                        <button id="plex-mute-toggle"
+                                class="plex-control-btn"
+                                type="button"
+                                title="Mute / Unmute"
+                                aria-label="Mute or unmute">
+                            🔊
+                        </button>
+
+
+                        <!-- Volume -->
+                        <input id="plex-volume"
+                               class="plex-volume"
+                               type="range"
+                               min="0"
+                               max="1"
+                               value="1"
+                               step="0.05"
+                               aria-label="Volume">
+
+
+                        <!-- Current Time / Duration -->
+                        <span id="plex-player-time"
+                              class="plex-player-time">
+                            0:00 / 0:00
+                        </span>
+
+
+                        <div class="plex-controls-spacer"></div>
+
+
+                        <!--
+                            Viewer-only control.
+
+                            The JS hides this for the host and shows
+                            it for viewers when Plex media is loaded.
+                        -->
+                        <button id="btn-sync-to-host"
+                                class="plex-sync-btn"
+                                type="button"
+                                title="Jump back to the host's current position"
+                                style="display: none;">
+                            Sync to Host
+                        </button>
+
+
+                        <!--
+                            Host-only integrated Plex settings cog.
+
+                            IMPORTANT:
+                            Do NOT add the old "media-settings-cog"
+                            CSS class here. That old class positions
+                            the cog as a floating button.
+
+                            The ID stays the same so the existing JS
+                            settings logic continues to work.
+                        -->
+                        <button id="media-settings-cog"
+                                class="plex-control-btn"
+                                type="button"
+                                title="Playback settings"
+                                aria-label="Playback settings"
+                                style="display: none;">
+                            ⚙
+                        </button>
+
+
+                        <!-- Fullscreen -->
+                        <button id="plex-fullscreen-toggle"
+                                class="plex-control-btn"
+                                type="button"
+                                title="Fullscreen"
+                                aria-label="Fullscreen">
+                            ⛶
+                        </button>
+
+                    </div>
+                </div>
+
+            </div>
+            <!-- /plex-player-shell -->
+
+
+            <!-- =========================================
+                 2. EMULATOR CONTAINER
+                 Host Only
+                 ========================================= -->
+            <div id="game-container"
+                 style="
+                     display: none;
+                     width: 100%;
+                     max-height: calc(100vh - 250px);
+                     background: #000;
+                     border-radius: 12px;
+                     overflow: hidden;
+                     aspect-ratio: 4/3;
+                     margin: 0 auto;
+                     border: 1px solid rgba(255, 255, 255, 0.08);
+                     box-shadow:
+                         0 25px 50px rgba(0,0,0,0.8),
+                         0 0 80px rgba(255,255,255,0.03);
+                     z-index: 10;
+                 ">
+
+                <div id="game"
+                     style="
+                         width: 100%;
+                         height: 100%;
+                     ">
                 </div>
             </div>
 
-            <!-- 2. Emulator Container (Host Only) -->
-            <div id="game-container" style="display: none; width: 100%; max-height: calc(100vh - 250px); background: #000; border-radius: 12px; overflow: hidden; aspect-ratio: 4/3; margin: 0 auto; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 80px rgba(255,255,255,0.03); z-index: 10;">
-                <div id="game" style="width:100%; height:100%;"></div>
-            </div>
 
-            <!-- 3. WebRTC Remote Video Player (Viewers Only) -->
-            <video id="remote-video" controls autoplay playsinline style="display:none; width: 100%; max-height: calc(100vh - 250px); background: #000; border-radius: 12px; object-fit: contain; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 80px rgba(255,255,255,0.03); z-index: 10;"></video>
-            <!-- NEW: Bottom Host Controls -->
-            <div class="bottom-host-controls" style="width: 100%; display: flex; justify-content: space-between; margin-top: 25px; padding: 0 5px;">
-                <!-- Left Side: Load Media / Stop Game -->
-                <div style="display: flex; gap: 10px;">
-                    <button id="btn-open-search" class="btn-choose-media" style="display: none; background: #e50914; box-shadow: 0 4px 12px rgba(229,9,20,0.3); border: none;">Load Media</button>
-                    <button id="btn-stop-game" class="btn-choose-media" style="display: none; background: #e50914; box-shadow: 0 4px 12px rgba(229,9,20,0.3); border: none;">⏹️ Stop Game</button>
+            <!-- =========================================
+                 3. WEBRTC REMOTE GAME VIDEO
+                 Viewers Only
+                 ========================================= -->
+            <video id="remote-video"
+                   controls
+                   autoplay
+                   playsinline
+                   style="
+                       display: none;
+                       width: 100%;
+                       max-height: calc(100vh - 250px);
+                       background: #000;
+                       border-radius: 12px;
+                       object-fit: contain;
+                       border: 1px solid rgba(255, 255, 255, 0.08);
+                       box-shadow:
+                           0 25px 50px rgba(0,0,0,0.8),
+                           0 0 80px rgba(255,255,255,0.03);
+                       z-index: 10;
+                   ">
+            </video>
+
+
+            <!-- =========================================
+                 BOTTOM HOST CONTROLS
+                 ========================================= -->
+            <div class="bottom-host-controls"
+                 style="
+                     width: 100%;
+                     display: flex;
+                     justify-content: space-between;
+                     margin-top: 25px;
+                     padding: 0 5px;
+                 ">
+
+                <!-- Left Side -->
+                <div style="
+                    display: flex;
+                    gap: 10px;
+                ">
+
+                    <button id="btn-open-search"
+                            class="btn-choose-media"
+                            style="
+                                display: none;
+                                background: #e50914;
+                                box-shadow:
+                                    0 4px 12px rgba(229,9,20,0.3);
+                                border: none;
+                            ">
+                        Load Media
+                    </button>
+
+
+                    <button id="btn-stop-game"
+                            class="btn-choose-media"
+                            style="
+                                display: none;
+                                background: #e50914;
+                                box-shadow:
+                                    0 4px 12px rgba(229,9,20,0.3);
+                                border: none;
+                            ">
+                        ⏹️ Stop Game
+                    </button>
+
                 </div>
 
-                <!-- Right Side: Games / Start Broadcast -->
-                <div style="display: flex; gap: 10px;">
-                    <button id="btn-start-broadcast" class="btn-choose-media" style="display: none; background: #4CAF50; box-shadow: 0 4px 12px rgba(76,175,80,0.3); border: none;">🟢 Start Broadcast</button>
-                    <button id="btn-open-games" class="btn-choose-media" style="display: none; background: #007BFF; box-shadow: 0 4px 12px rgba(0,123,255,0.3); border: none;">Games</button>
+
+                <!-- Right Side -->
+                <div style="
+                    display: flex;
+                    gap: 10px;
+                ">
+
+                    <button id="btn-start-broadcast"
+                            class="btn-choose-media"
+                            style="
+                                display: none;
+                                background: #4CAF50;
+                                box-shadow:
+                                    0 4px 12px rgba(76,175,80,0.3);
+                                border: none;
+                            ">
+                        🟢 Start Broadcast
+                    </button>
+
+
+                    <button id="btn-open-games"
+                            class="btn-choose-media"
+                            style="
+                                display: none;
+                                background: #007BFF;
+                                box-shadow:
+                                    0 4px 12px rgba(0,123,255,0.3);
+                                border: none;
+                            ">
+                        Games
+                    </button>
+
                 </div>
+
             </div>
 
         </div>
-    </div> <!-- /room-main -->
+        <!-- /main-video-wrapper -->
 
-    <!-- RIGHT SIDEBAR: Chat -->
+    </div>
+    <!-- /room-main -->
+
+
+    <!-- =========================================
+         RIGHT SIDEBAR: Chat
+         ========================================= -->
     <div class="room-sidebar-right">
-        <div class="sidebar-header">Chat</div>
-        <div id="chat-box" class="chat-messages custom-scroll"></div>
+
+        <div class="sidebar-header">
+            Chat
+        </div>
+
+
+        <div id="chat-box"
+             class="chat-messages custom-scroll">
+        </div>
+
 
         <div class="chat-input-area">
-            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message...">
-            <button id="btn-send-chat" class="btn-send">Send</button>
+
+            <input type="text"
+                   id="chat-input"
+                   class="chat-input"
+                   placeholder="Type a message...">
+
+            <button id="btn-send-chat"
+                    class="btn-send">
+                Send
+            </button>
+
         </div>
+
     </div>
 
 </div>
+<!-- /room-app -->
 
-<!-- Plex Search Modal -->
-<div id="searchModal" class="search-modal">
+
+<!-- =============================================
+     PLEX SEARCH MODAL
+     ============================================= -->
+<div id="searchModal"
+     class="search-modal">
+
     <div class="search-content">
-        <div class="sidebar-header" style="background:transparent; border:none; display:flex; justify-content:space-between;">
-            <h2>Select Media from Plex</h2>
-            <button id="btn-close-search" style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">&times;</button>
+
+        <div class="sidebar-header"
+             style="
+                 background: transparent;
+                 border: none;
+                 display: flex;
+                 justify-content: space-between;
+             ">
+
+            <h2>
+                Select Media from Plex
+            </h2>
+
+            <button id="btn-close-search"
+                    type="button"
+                    style="
+                        background: none;
+                        border: none;
+                        color: white;
+                        font-size: 1.5em;
+                        cursor: pointer;
+                    ">
+                &times;
+            </button>
+
         </div>
+
 
         <div class="search-bar-row">
-            <input type="text" id="plex-search-input" class="chat-input" placeholder="Search for a movie...">
-            <button id="btn-search-plex" class="btn-choose-media">Search</button>
+
+            <input type="text"
+                   id="plex-search-input"
+                   class="chat-input"
+                   placeholder="Search for a movie...">
+
+            <button id="btn-search-plex"
+                    class="btn-choose-media"
+                    type="button">
+                Search
+            </button>
+
         </div>
 
-        <div id="search-results" class="search-results custom-scroll">
-            <p style="color:#777; width:100%; text-align:center; margin-top:50px;">
+
+        <div id="search-results"
+             class="search-results custom-scroll">
+
+            <p style="
+                color: #777;
+                width: 100%;
+                text-align: center;
+                margin-top: 50px;
+            ">
                 Type a movie name to search your library.
             </p>
+
         </div>
+
     </div>
 </div>
 
-<!-- Game Selection Modal -->
-<div id="gameModal" class="search-modal">
+
+<!-- =============================================
+     GAME SELECTION MODAL
+     ============================================= -->
+<div id="gameModal"
+     class="search-modal">
+
     <div class="search-content">
-        <div class="sidebar-header" style="background:transparent; border:none; display:flex; justify-content:space-between;">
-            <h2>Select a Game</h2>
-            <button id="btn-close-games" style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">&times;</button>
+
+        <div class="sidebar-header"
+             style="
+                 background: transparent;
+                 border: none;
+                 display: flex;
+                 justify-content: space-between;
+             ">
+
+            <h2>
+                Select a Game
+            </h2>
+
+            <button id="btn-close-games"
+                    type="button"
+                    style="
+                        background: none;
+                        border: none;
+                        color: white;
+                        font-size: 1.5em;
+                        cursor: pointer;
+                    ">
+                &times;
+            </button>
+
         </div>
+
 
         <!-- Quick System Filters -->
-        <div style="display: flex; gap: 10px; padding: 0 20px 20px 20px; justify-content: center;">
-            <button class="btn-choose-media" onclick="fetchGames('snes')">SNES</button>
-            <button class="btn-choose-media" onclick="fetchGames('n64')">N64</button>
-            <button class="btn-choose-media" onclick="fetchGames('psx')">PS1</button>
+        <div style="
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 20px 20px;
+            justify-content: center;
+        ">
+
+            <button class="btn-choose-media"
+                    type="button"
+                    onclick="fetchGames('snes')">
+                SNES
+            </button>
+
+            <button class="btn-choose-media"
+                    type="button"
+                    onclick="fetchGames('n64')">
+                N64
+            </button>
+
+            <button class="btn-choose-media"
+                    type="button"
+                    onclick="fetchGames('psx')">
+                PS1
+            </button>
+
         </div>
 
-        <div id="game-results" class="search-results custom-scroll" style="display: grid; grid-template-columns: 1fr; gap: 10px; padding: 0 20px 20px 20px;">
-            <p style="color:#777; width:100%; text-align:center; margin-top:20px;">
+
+        <div id="game-results"
+             class="search-results custom-scroll"
+             style="
+                 display: grid;
+                 grid-template-columns: 1fr;
+                 gap: 10px;
+                 padding: 0 20px 20px 20px;
+             ">
+
+            <p style="
+                color: #777;
+                width: 100%;
+                text-align: center;
+                margin-top: 20px;
+            ">
                 Select a console above to view games.
             </p>
+
         </div>
+
     </div>
 </div>
+
 {% endblock %}
 
+
 {% block scripts %}
+
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
 <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
 
 <script src="{{ url_for('static', filename='js/room_player.js') }}"></script>
+
 {% endblock %}
