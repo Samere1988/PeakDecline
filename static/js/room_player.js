@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const ROOM_ID = appContainer.dataset.roomId;
-    let INITIAL_MEDIA_URL = appContainer.dataset.initialMediaUrl;
     let CURRENT_KEY = appContainer.dataset.currentKey;
 
     let isHost = appContainer.dataset.isHost === 'true';
@@ -27,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ignoreSyncWindow = false;
     let isSystemAction = false;
     let roomIsPlaying = true;
-    let currentMediaUrl = INITIAL_MEDIA_URL || '';
+    let currentMediaUrl = '';
     let localVolume = Number(localStorage.getItem('watchPartyVolume') || 1);
     let localMuted = localStorage.getItem('watchPartyMuted') === 'true';
 
@@ -1214,12 +1213,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if (INITIAL_MEDIA_URL) {
-        // Fallback only. The server's room_state event should replace this with the correct timestamp.
-        if (isHost && CURRENT_KEY) loadTrackOptions(CURRENT_KEY);
-        updateMediaSettingsVisibility();
-        loadVideo(INITIAL_MEDIA_URL, 0, true);
-    }
 
     // ==========================================
     // PHASE 4: GAME BOOTING LOGIC (Host Only)
