@@ -690,7 +690,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 switchToPlexMode();
 
-                currentMediaUrl = data.url;
+                const incomingKey = String(data.rating_key || '');
+                const previousKey = String(CURRENT_KEY || '');
+
+                // Check BEFORE overwriting currentMediaUrl/CURRENT_KEY.
+                // If this exact stream is already loaded, a reconnect should not
+                // destroy and recreate the HLS player.
+                const sameMediaAlreadyLoaded =
+                    currentMediaUrl === data.url &&
+                    previousKey === incomingKey &&
+                    video &&
+                    (
+                        hls !== null ||
+                        (!!video.currentSrc && video.readyState > 0)
+                    );
+
                 roomIsPlaying = data.is_playing !== false;
                 isBuffering = false;
 
@@ -698,17 +712,77 @@ document.addEventListener('DOMContentLoaded', () => {
                     mediaTitleElem.innerText = data.title || 'Now Playing';
                 }
 
-                CURRENT_KEY = data.rating_key || '';
-                if (appContainer) appContainer.dataset.currentKey = CURRENT_KEY;
-                if (isHost && CURRENT_KEY) loadTrackOptions(CURRENT_KEY);
+                CURRENT_KEY = incomingKey;
+                currentMediaUrl = data.url;
+
+                if (appContainer) {
+                    appContainer.dataset.currentKey = CURRENT_KEY;
+                }
+
+                if (isHost && CURRENT_KEY) {
+                    loadTrackOptions(CURRENT_KEY);
+                }
+
                 updateMediaSettingsVisibility();
 
-                const currentTime = Number(data.current_time || data.offset || 0);
+                const currentTime = Number(
+                    data.current_time || data.offset || 0
+                );
 
-                // The server already calculated current_time for reconnects,
-                // so anchor the clock to the browser's current time.
+                // room_state gives us the server's calculated position at the
+                // moment we rejoined, so anchor the local sync clock here.
                 setPlaybackClock(Date.now() / 1000, currentTime);
 
+                if (sameMediaAlreadyLoaded) {
+                    // Do NOT rebuild HLS on a normal reconnect.
+                    //
+                    // The host is the authoritative player, so don't move the host
+                    // because a socket connection briefly disappeared.
+                    if (!isHost && video) {
+
+                        // If the room itself is paused, viewers must match that state.
+                        if (!roomIsPlaying) {
+                            if (Math.abs(video.currentTime - currentTime) > 1.0) {
+                                isSystemAction = true;
+
+                                try {
+                                    video.currentTime = Math.max(0, currentTime);
+                                } catch (e) {}
+
+                                setTimeout(() => {
+                                    isSystemAction = false;
+                                }, 150);
+                            }
+
+                            if (!video.paused) {
+                                safePauseVideo();
+                            }
+
+                        // If the viewer is currently playing, correct only a large
+                        // reconnect drift. If they paused locally, leave them paused.
+                        } else if (!video.paused) {
+                            const drift = currentTime - video.currentTime;
+
+                            if (Math.abs(drift) > 3.0) {
+                                isSystemAction = true;
+
+                                try {
+                                    video.currentTime = Math.max(0, currentTime);
+                                } catch (e) {}
+
+                                setTimeout(() => {
+                                    isSystemAction = false;
+                                }, 150);
+                            }
+                        }
+                    }
+
+                    startSyncLoop();
+                    return;
+                }
+
+                // First room join, changed media, or player was lost/broken:
+                // build the HLS player normally.
                 loadVideo(data.url, currentTime, roomIsPlaying);
                 startSyncLoop();
             });
