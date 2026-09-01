@@ -14,7 +14,6 @@
      data-username="{{ current_user.username }}"
      data-host-username="{{ room.host.username }}"
      data-current-key="{{ room.current_media_key if room.current_media_key else '' }}"
-     data-initial-media-url="{{ room.current_media_url | safe if room.current_media_url else '' }}"
      data-media-title="{{ room.current_media_title if room.current_media_title else '' }}">
 
     <!-- LEFT SIDEBAR: Viewers -->
