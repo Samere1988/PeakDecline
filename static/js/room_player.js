@@ -28,9 +28,26 @@ document.addEventListener('DOMContentLoaded', () => {
     let roomIsPlaying = true;
     let currentMediaUrl = '';
     const PLEX_PROGRESS_INTERVAL_MS = 15000;
+    const NEXT_EPISODE_COUNTDOWN_SECONDS = 10;
+    let nextEpisodeCountdownTimer = null;
+    let nextEpisodeCandidate = null;
+    let nextEpisodeSourceKey = '';
     let localVolume = Number(localStorage.getItem('watchPartyVolume') || 1);
     let localMuted = localStorage.getItem('watchPartyMuted') === 'true';
+    const nextEpisodeOverlay =
+    document.getElementById('next-episode-overlay');
 
+    const nextEpisodeTitle =
+        document.getElementById('next-episode-title');
+
+    const nextEpisodeCountdown =
+        document.getElementById('next-episode-countdown');
+
+    const btnNextEpisodePlay =
+        document.getElementById('btn-next-episode-play');
+
+    const btnNextEpisodeCancel =
+        document.getElementById('btn-next-episode-cancel');
 
     // --- WEBRTC & EMULATOR VARIABLES ---
     let peerConnections = {};
@@ -199,6 +216,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('watchPartyVolume', String(localVolume));
                 localStorage.setItem('watchPartyMuted', String(localMuted));
             });
+        }
+            if (btnNextEpisodePlay) {
+        btnNextEpisodePlay.addEventListener(
+            'click',
+            () => {
+                playNextEpisodeNow();
+            }
+        );
+    }
+
+        if (btnNextEpisodeCancel) {
+            btnNextEpisodeCancel.addEventListener(
+                'click',
+                () => {
+                    clearNextEpisodeCountdown();
+                }
+            );
         }
 
         // --- LOCAL EMULATOR STREAM VOLUME MEMORY ---
@@ -507,6 +541,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 'stopped',
                 true
             );
+
+            prepareNextEpisode();
         });
         video.addEventListener('canplay', () => {
             if (isHost && isBuffering && socket) {
@@ -588,15 +624,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-        setInterval(() => {
-        if (!isHost) return;
-        if (!video) return;
-        if (video.paused) return;
-        if (video.ended) return;
+            setInterval(() => {
+            if (!isHost) return;
+            if (!video) return;
+            if (video.paused) return;
+            if (video.ended) return;
 
-        reportPlexProgress('playing');
+            reportPlexProgress('playing');
 
-    }, PLEX_PROGRESS_INTERVAL_MS);
+        }, PLEX_PROGRESS_INTERVAL_MS);
     window.addEventListener('pagehide', () => {
         if (!isHost) return;
         if (!video) return;
@@ -608,6 +644,23 @@ document.addEventListener('DOMContentLoaded', () => {
             true
         );
     });
+    if (btnNextEpisodePlay) {
+    btnNextEpisodePlay.addEventListener(
+        'click',
+        () => {
+            playNextEpisodeNow();
+        }
+    );
+}
+
+if (btnNextEpisodeCancel) {
+    btnNextEpisodeCancel.addEventListener(
+        'click',
+        () => {
+            clearNextEpisodeCountdown();
+        }
+    );
+}
     if (mainVideoWrapper) {
         mainVideoWrapper.addEventListener('mousemove', showMediaControlsOverlay);
         mainVideoWrapper.addEventListener('touchstart', showMediaControlsOverlay, { passive: true });
@@ -867,7 +920,7 @@ document.addEventListener('DOMContentLoaded', () => {
             socket.on('media_updated', (data) => {
                 if (String(data.room_id) !== String(ROOM_ID)) return;
                 if (!data.url) return;
-
+                clearNextEpisodeCountdown
                 switchToPlexMode();
 
                 currentMediaUrl = data.url;
@@ -943,7 +996,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isHost && CURRENT_KEY) loadTrackOptions(CURRENT_KEY, true);
                 updateMediaSettingsVisibility();
 
-                if (!isHost) stopLocalBroadcast();
+                if (!isHost) {
+                    clearNextEpisodeCountdown();
+                    stopLocalBroadcast();
+                }
             });
 
             socket.on('force_pause', (data) => {
@@ -1156,6 +1212,162 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+    function clearNextEpisodeCountdown() {
+    if (nextEpisodeCountdownTimer) {
+        clearInterval(nextEpisodeCountdownTimer);
+        nextEpisodeCountdownTimer = null;
+    }
+
+    nextEpisodeCandidate = null;
+    nextEpisodeSourceKey = '';
+
+    if (nextEpisodeOverlay) {
+        nextEpisodeOverlay.style.display = 'none';
+    }
+
+    if (nextEpisodeCountdown) {
+        nextEpisodeCountdown.textContent =
+            String(NEXT_EPISODE_COUNTDOWN_SECONDS);
+    }
+}
+
+
+async function playNextEpisodeNow() {
+    if (!isHost) return;
+    if (!nextEpisodeCandidate) return;
+
+    // Preserve it because clearNextEpisodeCountdown()
+    // intentionally resets the candidate.
+    const episode = nextEpisodeCandidate;
+
+    clearNextEpisodeCountdown();
+
+    // Automatic next episode always begins at the start.
+    await selectMedia(
+        episode,
+        0
+    );
+}
+
+
+function startNextEpisodeCountdown(
+    episode,
+    sourceKey
+) {
+    if (!isHost) return;
+    if (!episode) return;
+
+    clearNextEpisodeCountdown();
+
+    nextEpisodeCandidate = episode;
+    nextEpisodeSourceKey = String(sourceKey);
+
+    let secondsLeft =
+        NEXT_EPISODE_COUNTDOWN_SECONDS;
+
+    const showTitle =
+        episode.show_title || 'Unknown Show';
+
+    const seasonNumber =
+        Number(episode.season_number || 0);
+
+    const episodeNumber =
+        Number(episode.episode_number || 0);
+
+    if (nextEpisodeTitle) {
+        nextEpisodeTitle.textContent =
+            `${showTitle} — ` +
+            `S${seasonNumber}:E${episodeNumber} - ` +
+            `${episode.title || 'Next Episode'}`;
+    }
+
+    if (nextEpisodeCountdown) {
+        nextEpisodeCountdown.textContent =
+            String(secondsLeft);
+    }
+
+    if (nextEpisodeOverlay) {
+        nextEpisodeOverlay.style.display = 'flex';
+    }
+
+    nextEpisodeCountdownTimer = setInterval(() => {
+        // Host changed or another media item was selected.
+        if (
+            !isHost ||
+            String(CURRENT_KEY) !== nextEpisodeSourceKey
+        ) {
+            clearNextEpisodeCountdown();
+            return;
+        }
+
+        secondsLeft -= 1;
+
+        if (nextEpisodeCountdown) {
+            nextEpisodeCountdown.textContent =
+                String(Math.max(0, secondsLeft));
+        }
+
+        if (secondsLeft <= 0) {
+            playNextEpisodeNow();
+        }
+
+    }, 1000);
+}
+
+
+async function prepareNextEpisode() {
+    if (!isHost) return;
+    if (!CURRENT_KEY) return;
+    if (currentUIState !== 'plex') return;
+
+    const endedKey = String(CURRENT_KEY);
+
+    clearNextEpisodeCountdown();
+
+    try {
+        const response = await fetch(
+            `/api/room/${ROOM_ID}/next-episode/` +
+            encodeURIComponent(endedKey)
+        );
+
+        // The room changed media while this request was running.
+        if (response.status === 409) {
+            return;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.error || 'Could not find next episode'
+            );
+        }
+
+        // A new item was selected while Plex was answering.
+        if (
+            !isHost ||
+            String(CURRENT_KEY) !== endedKey
+        ) {
+            return;
+        }
+
+        // Movies and the final episode of a show end normally.
+        if (!data.next_episode) {
+            return;
+        }
+
+        startNextEpisodeCountdown(
+            data.next_episode,
+            endedKey
+        );
+
+    } catch (err) {
+        console.warn(
+            'Could not prepare next episode:',
+            err
+        );
+    }
+}
     function startSyncLoop() {
         if (syncInterval) clearInterval(syncInterval);
 
@@ -1395,6 +1607,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function selectMedia(media, requestedStartTime = null) {
         if (!isHost) return;
+        clearNextEpisodeCountdown();
 
         const rawKey = String(media.key).split('/').pop();
 

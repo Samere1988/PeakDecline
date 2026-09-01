@@ -932,6 +932,136 @@ def get_plex_metadata(rating_key):
         return jsonify({'error': str(e)}), 500
 
 
+@main_bp.route(
+    '/api/room/<room_id>/next-episode/<rating_key>',
+    methods=['GET']
+)
+@login_required
+def get_room_next_episode(room_id, rating_key):
+    room = Room.query.get(room_id)
+
+    if not room:
+        return jsonify({'error': 'Room not found'}), 404
+
+    # Only the current host controls automatic episode changes.
+    if str(room.host_id) != str(current_user.id):
+        return jsonify({
+            'error': 'Only the host can get the next episode'
+        }), 403
+
+    # Reject a delayed request if the room already changed media.
+    if str(room.current_media_key or '') != str(rating_key):
+        return jsonify({
+            'error': 'Stale media request'
+        }), 409
+
+    plex = get_plex_server()
+
+    if not plex:
+        return jsonify({'error': 'Plex unavailable'}), 500
+
+    try:
+        current_episode = plex.fetchItem(int(rating_key))
+
+        # Movies and other media simply have no "next episode".
+        if getattr(current_episode, 'type', '') != 'episode':
+            return jsonify({
+                'next_episode': None
+            })
+
+        show = current_episode.show()
+
+        episodes = list(show.episodes())
+
+        # Explicit chronological episode order.
+        #
+        # Using season/episode numbers means the transition from the
+        # end of one season to the beginning of the next works too.
+        episodes.sort(
+            key=lambda episode: (
+                int(
+                    getattr(
+                        episode,
+                        'seasonNumber',
+                        0
+                    ) or 0
+                ),
+                int(
+                    getattr(
+                        episode,
+                        'index',
+                        0
+                    ) or 0
+                ),
+                int(
+                    getattr(
+                        episode,
+                        'ratingKey',
+                        0
+                    ) or 0
+                )
+            )
+        )
+
+        current_index = next(
+            (
+                index
+                for index, episode in enumerate(episodes)
+                if str(episode.ratingKey) == str(rating_key)
+            ),
+            None
+        )
+
+        # Current episode wasn't found or this is the final episode.
+        if (
+            current_index is None or
+            current_index + 1 >= len(episodes)
+        ):
+            return jsonify({
+                'next_episode': None
+            })
+
+        next_episode = episodes[current_index + 1]
+
+        return jsonify({
+            'next_episode': {
+                'key': str(next_episode.ratingKey),
+                'type': 'Episode',
+                'title': next_episode.title,
+                'show_title': getattr(
+                    next_episode,
+                    'grandparentTitle',
+                    getattr(show, 'title', 'Unknown Show')
+                ),
+                'season_number': int(
+                    getattr(
+                        next_episode,
+                        'seasonNumber',
+                        0
+                    ) or 0
+                ),
+                'episode_number': int(
+                    getattr(
+                        next_episode,
+                        'index',
+                        0
+                    ) or 0
+                ),
+                'thumb': (
+                    getattr(next_episode, 'thumb', None) or
+                    getattr(next_episode, 'parentThumb', None) or
+                    getattr(next_episode, 'grandparentThumb', None)
+                )
+            }
+        })
+
+    except Exception as e:
+        print(f"Error finding next Plex episode: {e}")
+
+        return jsonify({
+            'error': 'Could not find next episode'
+        }), 500
+
 # --- WATCH PARTY PLAYBACK SOCKET EVENTS ---
 @socketio.on('user_buffering')
 def handle_user_buffering(data):

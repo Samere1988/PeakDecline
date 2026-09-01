@@ -757,5 +757,94 @@ video {
 .connection-status[data-state="disconnected"] {
     background: rgba(229, 9, 20, 0.16);
     color: #ff6b73;
+
+
+    .video-wrapper {
+    position: relative;
+}
+
+.next-episode-overlay {
+    position: absolute;
+    right: 24px;
+    bottom: 90px;
+    z-index: 40;
+
+    width: min(380px, calc(100% - 48px));
+    padding: 18px;
+
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+
+    background: rgba(18, 18, 20, 0.94);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.65);
+
+    flex-direction: column;
+    gap: 8px;
+}
+
+.next-episode-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.next-episode-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.35;
+}
+
+.next-episode-countdown-text {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.next-episode-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.next-episode-play,
+.next-episode-cancel {
+    flex: 1;
+
+    padding: 9px 12px;
+
+    border: 0;
+    border-radius: 6px;
+
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.next-episode-play {
+    background: #e50914;
+    color: #fff;
+}
+
+.next-episode-play:hover {
+    background: #ff1f2b;
+}
+
+.next-episode-cancel {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.next-episode-cancel:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 768px) {
+    .next-episode-overlay {
+        right: 12px;
+        bottom: 70px;
+        width: calc(100% - 24px);
+    }
+}
 }
 
