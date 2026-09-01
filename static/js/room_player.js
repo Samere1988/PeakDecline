@@ -588,6 +588,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+        setInterval(() => {
+        if (!isHost) return;
+        if (!video) return;
+        if (video.paused) return;
+        if (video.ended) return;
+
+        reportPlexProgress('playing');
+
+    }, PLEX_PROGRESS_INTERVAL_MS);
     window.addEventListener('pagehide', () => {
         if (!isHost) return;
         if (!video) return;

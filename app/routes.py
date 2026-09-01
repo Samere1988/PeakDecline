@@ -620,7 +620,7 @@ def search_plex_library():
 
         result.update(_plex_watch_state(item))
         output.append(result)
-        return jsonify(output)
+    return jsonify(output)
 
 
 @main_bp.route('/api/plex/children')
