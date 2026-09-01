@@ -648,6 +648,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 setConnectionStatus('Connection lost', 'disconnected');
             });
 
+            socket.on('connect_error', () => {
+                setConnectionStatus('Connection lost', 'disconnected');
+            });
+
             socket.io.on('reconnect_attempt', () => {
                 setConnectionStatus('Reconnecting...', 'reconnecting');
             });
