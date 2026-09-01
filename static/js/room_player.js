@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSystemAction = false;
     let roomIsPlaying = true;
     let currentMediaUrl = '';
+    const PLEX_PROGRESS_INTERVAL_MS = 15000;
     let localVolume = Number(localStorage.getItem('watchPartyVolume') || 1);
     let localMuted = localStorage.getItem('watchPartyMuted') === 'true';
 
@@ -499,7 +500,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
+        video.addEventListener('ended', () => {
+            if (!isHost) return;
 
+            reportPlexProgress(
+                'stopped',
+                true
+            );
+        });
         video.addEventListener('canplay', () => {
             if (isHost && isBuffering && socket) {
                 socket.emit('buffer_resolved', {
@@ -513,11 +521,15 @@ document.addEventListener('DOMContentLoaded', () => {
         video.addEventListener('pause', () => {
             if (isSystemAction) return;
 
-            if (isHost && socket) {
-                socket.emit('user_pause', {
-                    room_id: ROOM_ID,
-                    current_time: video.currentTime || 0
-                });
+            if (isHost) {
+                if (socket) {
+                    socket.emit('user_pause', {
+                        room_id: ROOM_ID,
+                        current_time: video.currentTime || 0
+                    });
+                }
+
+                reportPlexProgress('paused');
             }
         });
 
@@ -531,6 +543,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         current_time: video.currentTime || 0
                     });
                 }
+
+                reportPlexProgress('playing');
                 return;
             }
 
@@ -553,7 +567,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         video.addEventListener('seeked', () => {
-            if (isSystemAction || isHost) return;
+            if (isSystemAction) return;
+
+            if (isHost) {
+                reportPlexProgress(
+                    video.paused ? 'paused' : 'playing'
+                );
+                return;
+            }
 
             if (roomIsPlaying) {
                 const expectedTime = ((Date.now() / 1000) - localSyncStartTime) + mediaOffset;
@@ -567,7 +588,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    window.addEventListener('pagehide', () => {
+        if (!isHost) return;
+        if (!video) return;
+        if (video.ended) return;
 
+        reportPlexProgress(
+            'stopped',
+            false,
+            true
+        );
+    });
     if (mainVideoWrapper) {
         mainVideoWrapper.addEventListener('mousemove', showMediaControlsOverlay);
         mainVideoWrapper.addEventListener('touchstart', showMediaControlsOverlay, { passive: true });
@@ -1045,7 +1076,77 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // PHASE 3: HELPER FUNCTIONS
     // ==========================================
+    async function reportPlexProgress(
+        state = null,
+        completed = false,
+        keepalive = false
+    ) {
+        if (!isHost) return;
+        if (!video) return;
+        if (!CURRENT_KEY) return;
+        if (!currentMediaUrl) return;
+        if (currentUIState !== 'plex') return;
+        if (ignoreSyncWindow) return;
 
+        const currentTime = Number(
+            video.currentTime || 0
+        );
+
+        if (
+            !Number.isFinite(currentTime) ||
+            currentTime <= 0
+        ) {
+            return;
+        }
+
+        const playbackState =
+            state ||
+            (video.paused ? 'paused' : 'playing');
+
+        const payload = {
+            rating_key: String(CURRENT_KEY),
+            current_time: currentTime,
+            state: playbackState,
+            completed: completed
+        };
+
+        try {
+            const response = await fetch(
+                `/api/room/${ROOM_ID}/plex-progress`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload),
+                    keepalive: keepalive
+                }
+            );
+
+            // This just means a delayed request belonged
+            // to media that is no longer playing.
+            if (response.status === 409) {
+                return;
+            }
+
+            if (!response.ok) {
+                console.warn(
+                    'Could not update Plex progress:',
+                    response.status
+                );
+            }
+
+        } catch (err) {
+            // Don't produce noisy console errors while the
+            // browser is navigating away.
+            if (!keepalive) {
+                console.warn(
+                    'Plex progress update failed:',
+                    err
+                );
+            }
+        }
+    }
     function startSyncLoop() {
         if (syncInterval) clearInterval(syncInterval);
 

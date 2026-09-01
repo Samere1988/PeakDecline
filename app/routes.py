@@ -1,5 +1,6 @@
 import os
 import time
+import math
 import requests
 from datetime import datetime, timedelta
 from urllib.parse import urlencode, unquote
@@ -822,6 +823,84 @@ def set_room_media(room_id):
         print(f"Error setting media: {e}")
         return jsonify({'error': str(e)}), 500
 
+@main_bp.route('/api/room/<room_id>/plex-progress', methods=['POST'])
+@login_required
+def update_room_plex_progress(room_id):
+    data = request.get_json(silent=True) or {}
+
+    room = Room.query.get(room_id)
+    if not room:
+        return jsonify({'error': 'Room not found'}), 404
+
+    # Only the current room host is allowed to update Plex progress.
+    if str(room.host_id) != str(current_user.id):
+        return jsonify({'error': 'Only the host can update Plex progress'}), 403
+
+    rating_key = str(data.get('rating_key') or '')
+
+    if not rating_key:
+        return jsonify({'error': 'Missing rating_key'}), 400
+
+    # Reject an old/in-flight progress update after the room has
+    # already switched to a different movie or episode.
+    if rating_key != str(room.current_media_key or ''):
+        return jsonify({'error': 'Stale media progress update'}), 409
+
+    try:
+        current_time = float(data.get('current_time', 0) or 0)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid playback position'}), 400
+
+    if not math.isfinite(current_time) or current_time < 0:
+        return jsonify({'error': 'Invalid playback position'}), 400
+
+    state = str(data.get('state') or 'playing').lower()
+
+    if state not in {'playing', 'paused', 'stopped'}:
+        return jsonify({'error': 'Invalid playback state'}), 400
+
+    completed = data.get('completed') is True
+
+    plex = get_plex_server()
+    if not plex:
+        return jsonify({'error': 'Plex unavailable'}), 500
+
+    try:
+        item = plex.fetchItem(int(rating_key))
+
+        if getattr(item, 'type', '') not in ('movie', 'episode'):
+            return jsonify({'error': 'Unsupported Plex media type'}), 400
+
+        position_ms = int(round(current_time * 1000))
+
+        duration_ms = int(
+            getattr(item, 'duration', 0) or 0
+        )
+
+        if duration_ms > 0:
+            position_ms = min(
+                position_ms,
+                duration_ms
+            )
+
+        if completed:
+            item.markPlayed()
+
+        elif position_ms > 0:
+            item.updateProgress(
+                position_ms,
+                state=state
+            )
+
+        return jsonify({
+            'success': True
+        })
+
+    except Exception as e:
+        print(f"Error updating Plex progress: {e}")
+        return jsonify({
+            'error': 'Could not update Plex progress'
+        }), 500
 
 @main_bp.route('/api/plex/metadata/<rating_key>')
 @login_required
