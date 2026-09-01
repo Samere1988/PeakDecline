@@ -1,4 +1,5 @@
 import os
+import uuid
 import time
 import math
 import requests
@@ -49,7 +50,27 @@ def get_public_ip():
 # --- WATCH ROOM HELPERS ---
 def _now():
     return time.time()
+def _plex_playback_headers(room_id):
+    """
+    Stable Plex client identity for a PeakDecline room.
 
+    The client identifier should remain stable across:
+    - seeks
+    - audio changes
+    - subtitle changes
+    - transcode restarts
+    """
+    client_id = f"peak-decline-room-{room_id}"
+
+    return {
+        'X-Plex-Client-Identifier': client_id,
+        'X-Plex-Session-Identifier': client_id,
+        'X-Plex-Product': 'PeakDecline',
+        'X-Plex-Device': 'Web',
+        'X-Plex-Device-Name': 'PeakDecline Watch Together',
+        'X-Plex-Platform': 'Web',
+        'X-Plex-Version': '1.0'
+    }
 
 def _room_key(room_id):
     return str(room_id)
@@ -685,31 +706,79 @@ def proxy_plex_image():
         return "Error", 500
 
 
-@main_bp.route('/api/room/<room_id>/set_media', methods=['POST'])
+@main_bp.route(
+    '/api/room/<room_id>/set_media',
+    methods=['POST']
+)
 @login_required
 def set_room_media(room_id):
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
+
     rating_key = data.get('rating_key')
 
     if not rating_key:
-        return jsonify({'error': 'Missing rating_key'}), 400
+        return jsonify({
+            'error': 'Missing rating_key'
+        }), 400
+
 
     room = Room.query.get(room_id)
+
     if not room:
-        return jsonify({'error': 'Room not found'}), 404
+        return jsonify({
+            'error': 'Room not found'
+        }), 404
+
 
     if str(room.host_id) != str(current_user.id):
-        return jsonify({'error': 'Only the host can change media'}), 403
+        return jsonify({
+            'error': 'Only the host can change media'
+        }), 403
 
-    view_offset = float(data.get('view_offset', 0) or 0)
-    audio_id = data.get('audio_stream_id')
-    subtitle_id = data.get('subtitle_stream_id')
-    raw_max_video_bitrate = data.get('max_video_bitrate', 8000)
 
     try:
-        max_video_bitrate = int(raw_max_video_bitrate)
+        view_offset = float(
+            data.get('view_offset', 0) or 0
+        )
     except (TypeError, ValueError):
-        return jsonify({'error': 'Invalid video quality'}), 400
+        return jsonify({
+            'error': 'Invalid playback position'
+        }), 400
+
+
+    if (
+        not math.isfinite(view_offset)
+        or view_offset < 0
+    ):
+        return jsonify({
+            'error': 'Invalid playback position'
+        }), 400
+
+
+    audio_id = data.get(
+        'audio_stream_id'
+    )
+
+    subtitle_id = data.get(
+        'subtitle_stream_id'
+    )
+
+
+    raw_max_video_bitrate = data.get(
+        'max_video_bitrate',
+        8000
+    )
+
+
+    try:
+        max_video_bitrate = int(
+            raw_max_video_bitrate
+        )
+    except (TypeError, ValueError):
+        return jsonify({
+            'error': 'Invalid video quality'
+        }), 400
+
 
     allowed_video_bitrates = {
         0,
@@ -720,161 +789,451 @@ def set_room_media(room_id):
         20000
     }
 
-    if max_video_bitrate not in allowed_video_bitrates:
-        return jsonify({'error': 'Invalid video quality'}), 400
+
+    if (
+        max_video_bitrate
+        not in allowed_video_bitrates
+    ):
+        return jsonify({
+            'error': 'Invalid video quality'
+        }), 400
+
 
     plex = get_plex_server()
+
     if not plex:
-        return jsonify({'error': 'Plex unavailable'}), 500
+        return jsonify({
+            'error': 'Plex unavailable'
+        }), 500
+
 
     try:
-        item = plex.fetchItem(int(rating_key))
+        item = plex.fetchItem(
+            int(rating_key)
+        )
 
-        changes_made = False
-        for part in item.iterParts():
-            if audio_id:
-                target_stream = next((s for s in part.audioStreams() if str(s.id) == str(audio_id)), None)
-                if target_stream:
-                    part.setSelectedAudioStream(target_stream)
-                    changes_made = True
 
-            if subtitle_id:
-                target_stream = next((s for s in part.subtitleStreams() if str(s.id) == str(subtitle_id)), None)
-                if target_stream:
-                    part.setSelectedSubtitleStream(target_stream)
-                    changes_made = True
-            elif subtitle_id == "":
-                plex.query(f'/library/parts/{part.id}?subtitleStreamID=0&allParts=1', method=plex._session.put)
-                changes_made = True
+        # -------------------------------------------------
+        # TRANSCODE SESSION
+        # -------------------------------------------------
+        #
+        # The Plex CLIENT identity remains stable for the
+        # room, but each actual transcoder gets its own ID.
+        #
+        # This prevents a settings change from colliding
+        # with an older transcode.
+        # -------------------------------------------------
 
-        if changes_made:
-            time.sleep(0.5)
-            item.reload()
+        transcode_session_id = (
+            uuid.uuid4().hex
+        )
 
-        unique_ts = int(_now())
-        session_id = f"room-{room_id}-{unique_ts}"
-        client_id = f"peak-decline-room-{room_id}-{unique_ts}"
+        plex_headers = (
+            _plex_playback_headers(
+                room_id
+            )
+        )
+
 
         params = {
             'path': item.key,
+
             'mediaIndex': 0,
             'partIndex': 0,
+
             'protocol': 'hls',
+
             'fastSeek': 1,
+
+            # HLS browser playback.
             'directPlay': 0,
             'directStream': 1,
-            'autoSelectAudio': 0,
+            'directStreamAudio': 1,
+
+            'hasMDE': 1,
+
             'subtitleSize': 100,
             'audioBoost': 100,
-            'workaround': 'nvidia-shallow',
+
+            'workaround':
+                'nvidia-shallow',
+
             'copyts': 1,
-            'session': session_id,
-            'X-Plex-Token': plex._token,
-            'X-Plex-Client-Identifier': client_id,
-            'X-Plex-Product': 'PeakDecline',
-            'X-Plex-Device': 'Web'
 
+            # Plex recommends clients describe
+            # available buffer capacity.
+            'mediaBufferSize': 102400,
+
+            # Unique actual transcode.
+            'session':
+                transcode_session_id,
+
+            # Stable PeakDecline player identity.
+            'X-Plex-Client-Identifier':
+                plex_headers[
+                    'X-Plex-Client-Identifier'
+                ],
+
+            'X-Plex-Session-Identifier':
+                plex_headers[
+                    'X-Plex-Session-Identifier'
+                ],
+
+            'X-Plex-Product':
+                plex_headers[
+                    'X-Plex-Product'
+                ],
+
+            'X-Plex-Device':
+                plex_headers[
+                    'X-Plex-Device'
+                ],
+
+            'X-Plex-Device-Name':
+                plex_headers[
+                    'X-Plex-Device-Name'
+                ],
+
+            'X-Plex-Platform':
+                plex_headers[
+                    'X-Plex-Platform'
+                ],
+
+            'X-Plex-Version':
+                plex_headers[
+                    'X-Plex-Version'
+                ],
+
+            # Existing browser stream route currently
+            # authenticates this request this way.
+            'X-Plex-Token':
+                plex._token
         }
+
+
+        # -------------------------------------------------
+        # START THE PLEX TRANSCODER AT THE CURRENT POSITION
+        # -------------------------------------------------
+
+        if view_offset > 0:
+            params['offset'] = round(
+                view_offset,
+                3
+            )
+
+
+        # -------------------------------------------------
+        # AUDIO SELECTION
+        # -------------------------------------------------
+        #
+        # Do NOT change Plex's global selected stream.
+        #
+        # Tell THIS transcode exactly which audio stream
+        # should be used.
+        # -------------------------------------------------
+
+        if audio_id not in (
+            None,
+            ''
+        ):
+            params['audioStreamID'] = str(
+                audio_id
+            )
+
+            params['autoSelectAudio'] = 0
+
+        else:
+            # No explicit choice:
+            # let Plex use its normal preferred/default audio.
+            params['autoSelectAudio'] = 1
+
+
+        # -------------------------------------------------
+        # SUBTITLE SELECTION
+        # -------------------------------------------------
+
+        params['autoSelectSubtitle'] = 0
+
+
+        if subtitle_id not in (
+            None,
+            ''
+        ):
+            params['subtitleStreamID'] = str(
+                subtitle_id
+            )
+
+        else:
+            params['subtitleStreamID'] = 0
+            params['skipSubtitles'] = 1
+
+
+        # -------------------------------------------------
+        # QUALITY
+        # -------------------------------------------------
+
         if max_video_bitrate > 0:
-            params['maxVideoBitrate'] = max_video_bitrate
+            params['maxVideoBitrate'] = (
+                max_video_bitrate
+            )
 
 
-        endpoint = "/video/:/transcode/universal/start.m3u8"
-        base_url = "/plex-transcode"
-        full_url = f"{base_url}{endpoint}?{urlencode(params)}"
+        endpoint = (
+            '/video/:/transcode/'
+            'universal/start.m3u8'
+        )
 
+        base_url = (
+            '/plex-transcode'
+        )
+
+
+        full_url = (
+            f'{base_url}'
+            f'{endpoint}?'
+            f'{urlencode(params)}'
+        )
+
+
+        # -------------------------------------------------
+        # DISPLAY TITLE
+        # -------------------------------------------------
 
         if item.type == 'episode':
-            show_title = getattr(item, 'grandparentTitle', 'Unknown Show')
-            title_str = f"{show_title}, S{item.seasonNumber}:E{item.index} - {item.title}"
-        else:
-            title_str = f"{item.title} ({item.year})"
+            show_title = getattr(
+                item,
+                'grandparentTitle',
+                'Unknown Show'
+            )
 
-        room.current_media_key = str(rating_key)
-        room.current_media_url = full_url
-        room.current_media_title = title_str
+            title_str = (
+                f'{show_title}, '
+                f'S{item.seasonNumber}:'
+                f'E{item.index} - '
+                f'{item.title}'
+            )
+
+        else:
+            title_str = (
+                f'{item.title} '
+                f'({item.year})'
+            )
+
+
+        # -------------------------------------------------
+        # SAVE ROOM STATE
+        # -------------------------------------------------
+
+        room.current_media_key = str(
+            rating_key
+        )
+
+        room.current_media_url = (
+            full_url
+        )
+
+        room.current_media_title = (
+            title_str
+        )
+
         room.is_playing = True
-        room.current_time = view_offset
-        room.last_updated = datetime.utcnow()
+
+        room.current_time = (
+            view_offset
+        )
+
+        room.last_updated = (
+            datetime.utcnow()
+        )
+
+
         db.session.commit()
 
+
         current_epoch = _now()
-        room_states[_room_key(room.id)] = {
-            'start_time': current_epoch,
-            'offset': view_offset,
-            'status': 'playing'
+
+
+        room_states[
+            _room_key(room.id)
+        ] = {
+            'start_time':
+                current_epoch,
+
+            'offset':
+                view_offset,
+
+            'status':
+                'playing'
         }
 
-        socketio.emit('media_updated', {
-            'room_id': room.id,
-            'url': full_url,
-            'title': room.current_media_title,
-            'rating_key': str(rating_key),
-            'start_time': view_offset,
-            'offset': view_offset,
-            'status': 'playing',
-            'is_playing': True,
-            'server_epoch': current_epoch
-        }, to=f"room_{_room_key(room.id)}")
 
-        return jsonify({'success': True, 'url': full_url})
+        # -------------------------------------------------
+        # LOAD THE NEW STREAM FOR EVERYONE
+        # -------------------------------------------------
+
+        socketio.emit(
+            'media_updated',
+            {
+                'room_id':
+                    room.id,
+
+                'url':
+                    full_url,
+
+                'title':
+                    room.current_media_title,
+
+                'rating_key':
+                    str(rating_key),
+
+                'start_time':
+                    view_offset,
+
+                'offset':
+                    view_offset,
+
+                'status':
+                    'playing',
+
+                'is_playing':
+                    True,
+
+                'server_epoch':
+                    current_epoch
+            },
+            to=(
+                f'room_'
+                f'{_room_key(room.id)}'
+            )
+        )
+
+
+        return jsonify({
+            'success': True,
+            'url': full_url
+        })
+
 
     except Exception as e:
-        print(f"Error setting media: {e}")
-        return jsonify({'error': str(e)}), 500
+        print(
+            f'Error setting media: {e}'
+        )
 
-@main_bp.route('/api/room/<room_id>/plex-progress', methods=['POST'])
+        return jsonify({
+            'error':
+                'Could not start Plex media'
+        }), 500
+
+@main_bp.route(
+    '/api/room/<room_id>/plex-progress',
+    methods=['POST']
+)
 @login_required
 def update_room_plex_progress(room_id):
     data = request.get_json(silent=True) or {}
 
     room = Room.query.get(room_id)
+
     if not room:
-        return jsonify({'error': 'Room not found'}), 404
+        return jsonify({
+            'error': 'Room not found'
+        }), 404
 
-    # Only the current room host is allowed to update Plex progress.
+    # Only the current room host reports the room's
+    # playback state back to Plex.
     if str(room.host_id) != str(current_user.id):
-        return jsonify({'error': 'Only the host can update Plex progress'}), 403
+        return jsonify({
+            'error': 'Only the host can update Plex progress'
+        }), 403
 
-    rating_key = str(data.get('rating_key') or '')
+    rating_key = str(
+        data.get('rating_key') or ''
+    )
 
     if not rating_key:
-        return jsonify({'error': 'Missing rating_key'}), 400
+        return jsonify({
+            'error': 'Missing rating_key'
+        }), 400
 
-    # Reject an old/in-flight progress update after the room has
-    # already switched to a different movie or episode.
-    if rating_key != str(room.current_media_key or ''):
-        return jsonify({'error': 'Stale media progress update'}), 409
+    # Reject an old progress request if the room changed
+    # to a different movie/episode while this request
+    # was still in flight.
+    if rating_key != str(
+        room.current_media_key or ''
+    ):
+        return jsonify({
+            'error': 'Stale media progress update'
+        }), 409
 
     try:
-        current_time = float(data.get('current_time', 0) or 0)
+        current_time = float(
+            data.get('current_time', 0) or 0
+        )
     except (TypeError, ValueError):
-        return jsonify({'error': 'Invalid playback position'}), 400
+        return jsonify({
+            'error': 'Invalid playback position'
+        }), 400
 
-    if not math.isfinite(current_time) or current_time < 0:
-        return jsonify({'error': 'Invalid playback position'}), 400
+    if (
+        not math.isfinite(current_time)
+        or current_time < 0
+    ):
+        return jsonify({
+            'error': 'Invalid playback position'
+        }), 400
 
-    state = str(data.get('state') or 'playing').lower()
+    state = str(
+        data.get('state') or 'playing'
+    ).lower()
 
-    if state not in {'playing', 'paused', 'stopped'}:
-        return jsonify({'error': 'Invalid playback state'}), 400
+    if state not in {
+        'playing',
+        'paused',
+        'stopped'
+    }:
+        return jsonify({
+            'error': 'Invalid playback state'
+        }), 400
 
-    completed = data.get('completed') is True
+    completed = (
+        data.get('completed') is True
+    )
 
     plex = get_plex_server()
+
     if not plex:
-        return jsonify({'error': 'Plex unavailable'}), 500
+        return jsonify({
+            'error': 'Plex unavailable'
+        }), 500
 
     try:
-        item = plex.fetchItem(int(rating_key))
+        item = plex.fetchItem(
+            int(rating_key)
+        )
 
-        if getattr(item, 'type', '') not in ('movie', 'episode'):
-            return jsonify({'error': 'Unsupported Plex media type'}), 400
+        if getattr(
+            item,
+            'type',
+            ''
+        ) not in (
+            'movie',
+            'episode'
+        ):
+            return jsonify({
+                'error': 'Unsupported Plex media type'
+            }), 400
 
-        position_ms = int(round(current_time * 1000))
+        # Plex uses milliseconds for timeline/progress.
+        position_ms = int(
+            round(current_time * 1000)
+        )
 
         duration_ms = int(
-            getattr(item, 'duration', 0) or 0
+            getattr(
+                item,
+                'duration',
+                0
+            ) or 0
         )
 
         if duration_ms > 0:
@@ -882,6 +1241,10 @@ def update_room_plex_progress(room_id):
                 position_ms,
                 duration_ms
             )
+
+        # ==========================================
+        # 1. PLEX RESUME / WATCHED STATE
+        # ==========================================
 
         if completed:
             item.markPlayed()
@@ -892,14 +1255,104 @@ def update_room_plex_progress(room_id):
                 state=state
             )
 
+        # ==========================================
+        # 2. PLEX ACTIVE PLAYBACK TIMELINE
+        # ==========================================
+        #
+        # updateProgress() updates Plex resume state,
+        # but /:/timeline is Plex's actual playback
+        # heartbeat endpoint.
+        #
+        # Keep this client identifier stable for the
+        # room. Do NOT generate a new one every 10 sec.
+        # ==========================================
+
+        client_id = (
+            f'peak-decline-room-{room_id}'
+        )
+
+        session_id = (
+            f'peak-decline-room-{room_id}'
+        )
+
+        timeline_params = {
+            'ratingKey': str(rating_key),
+
+            'key': item.key,
+
+            'identifier':
+                'com.plexapp.plugins.library',
+
+            'time': position_ms,
+
+            'duration': duration_ms,
+
+            'state': state
+        }
+
+        # Tell Plex this playback is not continuing
+        # after a true stop.
+        if state == 'stopped':
+            timeline_params[
+                'continuing'
+            ] = 0
+
+        timeline_headers = {
+            'X-Plex-Client-Identifier':
+                client_id,
+
+            'X-Plex-Session-Identifier':
+                session_id,
+
+            'X-Plex-Product':
+                'PeakDecline',
+
+            'X-Plex-Device':
+                'Web',
+
+            'X-Plex-Device-Name':
+                'PeakDecline Watch Together',
+
+            'X-Plex-Platform':
+                'Web',
+
+            'X-Plex-Version':
+                '1.0',
+
+            'X-Plex-Provides':
+                'player'
+        }
+
+        try:
+            plex.query(
+                '/:/timeline',
+                method=plex._session.post,
+                params=timeline_params,
+                headers=timeline_headers
+            )
+
+        except Exception as timeline_error:
+            # Resume progress is more important than
+            # Dashboard presence, so don't fail the
+            # whole request if Plex rejects only the
+            # timeline heartbeat.
+            print(
+                'Plex timeline update failed: '
+                f'{timeline_error}'
+            )
+
         return jsonify({
             'success': True
         })
 
     except Exception as e:
-        print(f"Error updating Plex progress: {e}")
+        print(
+            f'Error updating Plex progress: {e}'
+        )
+
         return jsonify({
-            'error': 'Could not update Plex progress'
+            'error':
+                'Could not update Plex progress'
         }), 500
 
 @main_bp.route('/api/plex/metadata/<rating_key>')

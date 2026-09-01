@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let roomIsPlaying = true;
     let currentMediaUrl = '';
 
-    const PLEX_PROGRESS_INTERVAL_MS = 15000;
+    const PLEX_PROGRESS_INTERVAL_MS = 10000;
 
     const NEXT_EPISODE_COUNTDOWN_SECONDS = 10;
 
