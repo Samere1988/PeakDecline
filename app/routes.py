@@ -1033,12 +1033,204 @@ def set_room_media(room_id):
         # QUALITY
         # -------------------------------------------------
 
-        if max_video_bitrate > 0:
-            params['maxVideoBitrate'] = (
-                max_video_bitrate
+        # ==========================================
+        # DEBUG: STREAM SELECTION
+        # ==========================================
+
+        print('\n========================================')
+        print('PLEX STREAM SELECTION DEBUG')
+        print('========================================')
+
+        print(f'Rating key: {rating_key}')
+        print(f'Requested audio ID: {audio_id}')
+        print(f'Requested subtitle ID: {subtitle_id}')
+        print(f'Playback offset: {view_offset}')
+        print(f'Transcode session: {transcode_session_id}')
+
+        # ------------------------------------------
+        # Show the actual streams in media 0 / part 0
+        # ------------------------------------------
+
+        media = item.media[0]
+        part = media.parts[0]
+
+        print('\nAVAILABLE AUDIO STREAMS:')
+
+        for stream in part.audioStreams():
+            print({
+                'id': stream.id,
+                'language': getattr(
+                    stream,
+                    'language',
+                    None
+                ),
+                'languageCode': getattr(
+                    stream,
+                    'languageCode',
+                    None
+                ),
+                'title': getattr(
+                    stream,
+                    'title',
+                    None
+                ),
+                'codec': getattr(
+                    stream,
+                    'codec',
+                    None
+                ),
+                'channels': getattr(
+                    stream,
+                    'channels',
+                    None
+                ),
+                'selected': getattr(
+                    stream,
+                    'selected',
+                    False
+                )
+            })
+
+        print('\nAVAILABLE SUBTITLE STREAMS:')
+
+        for stream in part.subtitleStreams():
+            print({
+                'id': stream.id,
+                'language': getattr(
+                    stream,
+                    'language',
+                    None
+                ),
+                'languageCode': getattr(
+                    stream,
+                    'languageCode',
+                    None
+                ),
+                'title': getattr(
+                    stream,
+                    'title',
+                    None
+                ),
+                'codec': getattr(
+                    stream,
+                    'codec',
+                    None
+                ),
+                'selected': getattr(
+                    stream,
+                    'selected',
+                    False
+                )
+            })
+
+        # ------------------------------------------
+        # Show the params we're about to give Plex.
+        #
+        # IMPORTANT:
+        # Never print the Plex token.
+        # ------------------------------------------
+
+        safe_params = {
+            key: value
+            for key, value in params.items()
+            if key != 'X-Plex-Token'
+        }
+
+        print('\nTRANSCODE PARAMS:')
+        print(safe_params)
+
+        # ------------------------------------------
+        # Ask Plex what it WOULD actually play.
+        #
+        # This uses the same universal transcoder
+        # configuration, but calls /decision instead
+        # of starting HLS.
+        # ------------------------------------------
+
+        try:
+            decision_params = {
+                key: value
+                for key, value in params.items()
+                if key != 'X-Plex-Token'
+            }
+
+            decision = plex.query(
+                '/video/:/transcode/universal/decision',
+                params=decision_params
             )
 
+            print('\nPLEX TRANSCODE DECISION:')
 
+            if decision is None:
+                print('No decision returned by Plex.')
+
+            else:
+                for stream in decision.iter('Stream'):
+
+                    stream_type = stream.attrib.get(
+                        'streamType'
+                    )
+
+                    # 1 = video
+                    # 2 = audio
+                    # 3 = subtitle
+                    if stream_type not in (
+                            '2',
+                            '3'
+                    ):
+                        continue
+
+                    label = (
+                        'AUDIO'
+                        if stream_type == '2'
+                        else 'SUBTITLE'
+                    )
+
+                    print(
+                        f'{label}:',
+                        {
+                            'id':
+                                stream.attrib.get('id'),
+
+                            'language':
+                                stream.attrib.get(
+                                    'language'
+                                ),
+
+                            'languageCode':
+                                stream.attrib.get(
+                                    'languageCode'
+                                ),
+
+                            'title':
+                                stream.attrib.get(
+                                    'title'
+                                ),
+
+                            'codec':
+                                stream.attrib.get(
+                                    'codec'
+                                ),
+
+                            'selected':
+                                stream.attrib.get(
+                                    'selected'
+                                ),
+
+                            'decision':
+                                stream.attrib.get(
+                                    'decision'
+                                )
+                        }
+                    )
+
+        except Exception as decision_error:
+            print(
+                '\nPLEX DECISION ERROR:',
+                decision_error
+            )
+
+        print('========================================\n')
         endpoint = (
             '/video/:/transcode/'
             'universal/start.m3u8'
