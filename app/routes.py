@@ -666,6 +666,24 @@ def set_room_media(room_id):
     view_offset = float(data.get('view_offset', 0) or 0)
     audio_id = data.get('audio_stream_id')
     subtitle_id = data.get('subtitle_stream_id')
+    raw_max_video_bitrate = data.get('max_video_bitrate', 8000)
+
+    try:
+        max_video_bitrate = int(raw_max_video_bitrate)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid video quality'}), 400
+
+    allowed_video_bitrates = {
+        0,
+        2000,
+        4000,
+        8000,
+        12000,
+        20000
+    }
+
+    if max_video_bitrate not in allowed_video_bitrates:
+        return jsonify({'error': 'Invalid video quality'}), 400
 
     plex = get_plex_server()
     if not plex:
@@ -706,11 +724,10 @@ def set_room_media(room_id):
             'protocol': 'hls',
             'fastSeek': 1,
             'directPlay': 0,
-            'directStream': 0,
+            'directStream': 1,
             'autoSelectAudio': 0,
             'subtitleSize': 100,
             'audioBoost': 100,
-            'maxVideoBitrate': 8000,
             'workaround': 'nvidia-shallow',
             'copyts': 1,
             'session': session_id,
@@ -718,8 +735,10 @@ def set_room_media(room_id):
             'X-Plex-Client-Identifier': client_id,
             'X-Plex-Product': 'PeakDecline',
             'X-Plex-Device': 'Web'
-        }
 
+        }
+        if max_video_bitrate > 0:
+            params['maxVideoBitrate'] = max_video_bitrate
 
 
         endpoint = "/video/:/transcode/universal/start.m3u8"

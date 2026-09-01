@@ -53,7 +53,17 @@
             <button id="media-settings-cog" class="media-settings-cog" type="button" title="Audio and subtitles" aria-label="Audio and subtitles" style="display:none;">⚙</button>
 
             <div id="media-settings-panel" class="media-settings-panel" style="display:none;">
-                <div class="media-settings-title">Audio &amp; Subtitles</div>
+                <div class="media-settings-title">Playback Settings</div>
+
+                <label for="video-quality-select">Quality</label>
+                <select id="video-quality-select" class="track-select">
+                    <option value="0">Original / No Limit</option>
+                    <option value="20000">20 Mbps</option>
+                    <option value="12000">12 Mbps</option>
+                    <option value="8000" selected>8 Mbps</option>
+                    <option value="4000">4 Mbps</option>
+                    <option value="2000">2 Mbps</option>
+                </select>
 
                 <label for="audio-track-select">Audio</label>
                 <select id="audio-track-select" class="track-select">
@@ -65,8 +75,15 @@
                     <option value="">Off</option>
                 </select>
 
-                <button id="btn-apply-tracks" class="btn-apply-tracks" type="button">Apply to Room</button>
-                <div class="media-settings-note">Changing this reloads the room stream and keeps everyone synced.</div>
+                <button id="btn-apply-tracks"
+                        class="btn-apply-tracks"
+                        type="button">
+                    Apply to Room
+                </button>
+
+                <div class="media-settings-note">
+                    Changing playback settings reloads the room stream and keeps everyone synced.
+                </div>
             </div>
 
             <!-- 2. Emulator Container (Host Only) -->

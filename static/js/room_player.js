@@ -73,6 +73,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const mediaSettingsCog = document.getElementById('media-settings-cog');
     const mediaSettingsPanel = document.getElementById('media-settings-panel');
     const audioTrackSelect = document.getElementById('audio-track-select');
+    const videoQualitySelect = document.getElementById('video-quality-select');
+    const allowedVideoBitrates = new Set([
+            '0',
+            '20000',
+            '12000',
+            '8000',
+            '4000',
+            '2000'
+        ]);
+
+        const savedVideoBitrate =
+            localStorage.getItem('watchPartyVideoBitrate') || '8000';
+
+        if (videoQualitySelect) {
+            videoQualitySelect.value =
+                allowedVideoBitrates.has(savedVideoBitrate)
+                    ? savedVideoBitrate
+                    : '8000';
+
+            videoQualitySelect.addEventListener('change', () => {
+                const value = videoQualitySelect.value;
+
+                if (allowedVideoBitrates.has(value)) {
+                    localStorage.setItem('watchPartyVideoBitrate', value);
+                }
+            });
+        }
     const subtitleTrackSelect = document.getElementById('subtitle-track-select');
     const btnApplyTracks = document.getElementById('btn-apply-tracks');
 
@@ -295,13 +322,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const subtitleStreamId = subtitleTrackSelect ? subtitleTrackSelect.value : '';
         const currentTime = video ? (video.currentTime || mediaOffset || 0) : (mediaOffset || 0);
 
+        const maxVideoBitrate = videoQualitySelect
+            ? videoQualitySelect.value
+            : '8000';
+
         const payload = {
             rating_key: CURRENT_KEY,
             audio_stream_id: audioStreamId,
             subtitle_stream_id: subtitleStreamId,
+            max_video_bitrate: maxVideoBitrate,
             view_offset: currentTime
         };
-
+        if (allowedVideoBitrates.has(maxVideoBitrate)) {
+            localStorage.setItem(
+                'watchPartyVideoBitrate',
+                maxVideoBitrate
+            );
+}
         if (btnApplyTracks) {
             btnApplyTracks.disabled = true;
             btnApplyTracks.textContent = 'Applying...';
@@ -1162,7 +1199,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isHost) return;
 
         const rawKey = String(media.key).split('/').pop();
-        const payload = { rating_key: rawKey };
+
+        const maxVideoBitrate = videoQualitySelect
+            ? videoQualitySelect.value
+            : (localStorage.getItem('watchPartyVideoBitrate') || '8000');
+
+        const payload = {
+            rating_key: rawKey,
+            max_video_bitrate: maxVideoBitrate
+        };
         trackOptionsLoadedForKey = '';
 
         if (media.isResume || rawKey === String(CURRENT_KEY)) {
