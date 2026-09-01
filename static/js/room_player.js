@@ -333,11 +333,11 @@ document.addEventListener('DOMContentLoaded', () => {
             max_video_bitrate: maxVideoBitrate,
             view_offset: currentTime
         };
-        if (allowedVideoBitrates.has(maxVideoBitrate)) {
-            localStorage.setItem(
-                'watchPartyVideoBitrate',
-                maxVideoBitrate
-            );
+    if (allowedVideoBitrates.has(maxVideoBitrate)) {
+        localStorage.setItem(
+            'watchPartyVideoBitrate',
+            maxVideoBitrate
+        );
 }
         if (btnApplyTracks) {
             btnApplyTracks.disabled = true;
