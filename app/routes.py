@@ -1076,6 +1076,50 @@ def handle_user_buffering(data):
     _save_room_playback_state(room_id, 'paused', current_time)
     socketio.emit('force_pause', {'user': username, 'offset': current_time}, to=f"room_{room_id}")
 
+@socketio.on('user_seek')
+def handle_user_seek(data):
+    room_id = _room_key(data.get('room_id'))
+
+    if not room_id:
+        return
+
+    if not _is_current_user_room_host(room_id):
+        return
+
+    try:
+        current_time = float(
+            data.get('current_time', 0) or 0
+        )
+    except (TypeError, ValueError):
+        return
+
+    if current_time < 0:
+        return
+
+    is_playing = data.get('is_playing') is True
+
+    status = (
+        'playing'
+        if is_playing
+        else 'paused'
+    )
+
+    state = _save_room_playback_state(
+        room_id,
+        status,
+        current_time
+    )
+
+    socketio.emit(
+        'force_seek',
+        {
+            'offset': current_time,
+            'is_playing': is_playing,
+            'server_epoch': state['start_time']
+        },
+        to=f"room_{room_id}",
+        skip_sid=request.sid
+    )
 
 @socketio.on('buffer_resolved')
 def handle_buffer_resolved(data):
