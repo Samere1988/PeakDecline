@@ -812,7 +812,138 @@ def set_room_media(room_id):
             int(rating_key)
         )
 
+        # ==========================================
+        # APPLY AUDIO / SUBTITLE SELECTION TO PLEX
+        # ==========================================
+        #
+        # Plex's universal transcoder chooses the streams
+        # marked "selected" on the media part.
+        #
+        # audioStreamID/subtitleStreamID in the transcode
+        # URL alone are not reliably honored.
+        # ==========================================
 
+        if not item.media or not item.media[0].parts:
+            return jsonify({
+                'error': 'Plex media has no playable part'
+            }), 400
+
+        media = item.media[0]
+        part = media.parts[0]
+
+        selection_params = {
+            'allParts': 1
+        }
+
+        selection_changed = False
+
+        # ------------------------------------------
+        # AUDIO
+        # ------------------------------------------
+
+        if (
+                'audio_stream_id' in data
+                and audio_id not in (None, '')
+        ):
+            requested_audio_id = int(audio_id)
+
+            valid_audio_ids = {
+                int(stream.id)
+                for stream in part.audioStreams()
+            }
+
+            if requested_audio_id not in valid_audio_ids:
+                return jsonify({
+                    'error': 'Invalid Plex audio stream'
+                }), 400
+
+            selection_params[
+                'audioStreamID'
+            ] = requested_audio_id
+
+            selection_changed = True
+
+        # ------------------------------------------
+        # SUBTITLES
+        # ------------------------------------------
+
+        if 'subtitle_stream_id' in data:
+
+            if subtitle_id in (None, ''):
+                # Explicitly turn subtitles off.
+                selection_params[
+                    'subtitleStreamID'
+                ] = 0
+
+                selection_changed = True
+
+            else:
+                requested_subtitle_id = int(
+                    subtitle_id
+                )
+
+                valid_subtitle_ids = {
+                    int(stream.id)
+                    for stream in part.subtitleStreams()
+                }
+
+                if (
+                        requested_subtitle_id
+                        not in valid_subtitle_ids
+                ):
+                    return jsonify({
+                        'error':
+                            'Invalid Plex subtitle stream'
+                    }), 400
+
+                selection_params[
+                    'subtitleStreamID'
+                ] = requested_subtitle_id
+
+                selection_changed = True
+
+        # ------------------------------------------
+        # Tell Plex which streams this user selected.
+        # ------------------------------------------
+
+        if selection_changed:
+            plex.query(
+                f'/library/parts/{part.id}',
+                method=plex._session.put,
+                params=selection_params
+            )
+
+            # Give Plex a moment to persist the selection.
+            time.sleep(0.15)
+
+            # Reload metadata so the universal transcode
+            # decision sees the newly selected streams.
+            item = plex.fetchItem(
+                int(rating_key)
+            )
+
+            media = item.media[0]
+            part = media.parts[0]
+
+            print('\nPLEX SELECTION AFTER UPDATE:')
+
+            for stream in part.audioStreams():
+                print(
+                    'AUDIO',
+                    stream.id,
+                    stream.language,
+                    'selected=',
+                    bool(stream.selected)
+                )
+
+            for stream in part.subtitleStreams():
+                print(
+                    'SUBTITLE',
+                    stream.id,
+                    stream.language,
+                    'selected=',
+                    bool(stream.selected)
+                )
         # -------------------------------------------------
         # TRANSCODE SESSION
         # -------------------------------------------------
@@ -955,7 +1086,8 @@ def set_room_media(room_id):
                 subtitle_id
             )
 
-            params['subtitles'] = 'embedded'
+            params['subtitles'] = 'burn'
+            params['skipSubtitles'] = 0
 
         else:
             params['subtitleStreamID'] = 0
