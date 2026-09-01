@@ -834,7 +834,6 @@ def set_room_media(room_id):
             )
         )
 
-
         params = {
             'path': item.key,
 
@@ -845,30 +844,41 @@ def set_room_media(room_id):
 
             'fastSeek': 1,
 
-            # HLS browser playback.
             'directPlay': 0,
             'directStream': 1,
-            'directStreamAudio': 1,
+
+            # Important:
+            # Allow Plex to rebuild the audio stream around
+            # the explicitly requested audioStreamID.
+            'directStreamAudio': 0,
 
             'hasMDE': 1,
 
             'subtitleSize': 100,
             'audioBoost': 100,
 
-            'workaround':
-                'nvidia-shallow',
+            'workaround': 'nvidia-shallow',
 
             'copyts': 1,
 
-            # Plex recommends clients describe
-            # available buffer capacity.
             'mediaBufferSize': 102400,
 
-            # Unique actual transcode.
-            'session':
-                transcode_session_id,
+            'session': transcode_session_id,
 
-            # Stable PeakDecline player identity.
+            # Use Plex's Chrome profile because we're serving
+            # HLS to a web browser.
+            'X-Plex-Client-Profile-Name': 'Chrome',
+
+            # Critical for selecting a non-default audio/subtitle
+            # stream on this transcode without modifying the Plex
+            # library's globally selected stream.
+            'X-Plex-Client-Profile-Extra': (
+                'add-settings('
+                'DirectPlayStreamSelection=true'
+                '&StreamUnselectedIncompatibleAudioStreams=true'
+                ')'
+            ),
+
             'X-Plex-Client-Identifier':
                 plex_headers[
                     'X-Plex-Client-Identifier'
@@ -895,20 +905,71 @@ def set_room_media(room_id):
                 ],
 
             'X-Plex-Platform':
-                plex_headers[
-                    'X-Plex-Platform'
-                ],
+                'Web',
 
             'X-Plex-Version':
                 plex_headers[
                     'X-Plex-Version'
                 ],
 
-            # Existing browser stream route currently
-            # authenticates this request this way.
             'X-Plex-Token':
                 plex._token
         }
+
+        # Start at the same playback position after
+        # changing language/subtitles/quality.
+        if view_offset > 0:
+            params['offset'] = round(
+                view_offset,
+                3
+            )
+
+        # ==========================================
+        # AUDIO
+        # ==========================================
+
+        if audio_id not in (
+                None,
+                ''
+        ):
+            params['audioStreamID'] = int(
+                audio_id
+            )
+
+            params['autoSelectAudio'] = 0
+
+        else:
+            params['autoSelectAudio'] = 1
+
+        # ==========================================
+        # SUBTITLES
+        # ==========================================
+
+        params['autoSelectSubtitle'] = 0
+
+        if subtitle_id not in (
+                None,
+                ''
+        ):
+            params['subtitleStreamID'] = int(
+                subtitle_id
+            )
+
+            params['subtitles'] = 'embedded'
+
+        else:
+            params['subtitleStreamID'] = 0
+            params['skipSubtitles'] = 1
+            params['subtitles'] = 'none'
+
+        # ==========================================
+        # QUALITY
+        # ==========================================
+
+        if max_video_bitrate > 0:
+            params['maxVideoBitrate'] = (
+                max_video_bitrate
+            )
 
 
         # -------------------------------------------------
@@ -1355,35 +1416,153 @@ def update_room_plex_progress(room_id):
                 'Could not update Plex progress'
         }), 500
 
-@main_bp.route('/api/plex/metadata/<rating_key>')
+@main_bp.route(
+    '/api/plex/metadata/<rating_key>'
+)
 @login_required
 def get_plex_metadata(rating_key):
     plex = get_plex_server()
+
+    if not plex:
+        return jsonify({
+            'error': 'Plex unavailable'
+        }), 500
+
     try:
-        item = plex.fetchItem(int(rating_key))
+        item = plex.fetchItem(
+            int(rating_key)
+        )
+
+        if not item.media:
+            return jsonify({
+                'audio': [],
+                'subtitles': []
+            })
+
+        media = item.media[0]
+
+        if not media.parts:
+            return jsonify({
+                'audio': [],
+                'subtitles': []
+            })
+
+        # Must match set_room_media():
+        # mediaIndex=0 / partIndex=0
+        part = media.parts[0]
+
+
         audio_streams = []
-        for stream in item.audioStreams():
+
+        for stream in part.audioStreams():
             audio_streams.append({
                 'id': stream.id,
-                'language': stream.language or 'Unknown',
-                'title': stream.title or stream.displayTitle or 'Unknown',
-                'selected': stream.selected
+
+                'language':
+                    stream.language
+                    or 'Unknown',
+
+                'language_code':
+                    getattr(
+                        stream,
+                        'languageCode',
+                        None
+                    ),
+
+                'title':
+                    stream.title
+                    or stream.displayTitle
+                    or 'Unknown',
+
+                'codec':
+                    getattr(
+                        stream,
+                        'codec',
+                        None
+                    ),
+
+                'channels':
+                    getattr(
+                        stream,
+                        'channels',
+                        None
+                    ),
+
+                'selected':
+                    bool(
+                        getattr(
+                            stream,
+                            'selected',
+                            False
+                        )
+                    )
             })
 
-        subtitle_streams = [{'id': '', 'language': 'None', 'title': 'Off', 'selected': True}]
-        for stream in item.subtitleStreams():
+
+        subtitle_streams = [
+            {
+                'id': '',
+                'language': 'None',
+                'language_code': None,
+                'title': 'Off',
+                'selected': False
+            }
+        ]
+
+
+        for stream in part.subtitleStreams():
             subtitle_streams.append({
                 'id': stream.id,
-                'language': stream.language or 'Unknown',
-                'title': stream.title or stream.displayTitle or 'Unknown',
-                'selected': stream.selected
+
+                'language':
+                    stream.language
+                    or 'Unknown',
+
+                'language_code':
+                    getattr(
+                        stream,
+                        'languageCode',
+                        None
+                    ),
+
+                'title':
+                    stream.title
+                    or stream.displayTitle
+                    or 'Unknown',
+
+                'codec':
+                    getattr(
+                        stream,
+                        'codec',
+                        None
+                    ),
+
+                'selected':
+                    bool(
+                        getattr(
+                            stream,
+                            'selected',
+                            False
+                        )
+                    )
             })
 
-        return jsonify({'audio': audio_streams, 'subtitles': subtitle_streams})
-    except Exception as e:
-        print(f"Error fetching metadata: {e}")
-        return jsonify({'error': str(e)}), 500
 
+        return jsonify({
+            'audio': audio_streams,
+            'subtitles': subtitle_streams
+        })
+
+
+    except Exception as e:
+        print(
+            f'Error fetching metadata: {e}'
+        )
+
+        return jsonify({
+            'error':
+                'Could not fetch Plex metadata'
+        }), 500
 
 @main_bp.route(
     '/api/room/<room_id>/next-episode/<rating_key>',
