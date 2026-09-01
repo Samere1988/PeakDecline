@@ -70,6 +70,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const remoteVideo = document.getElementById('remote-video');
     const mediaTitleElem = document.getElementById('media-title');
 
+    const mainVideoWrapper = document.getElementById('main-video-wrapper');
+    const mediaSettingsCog = document.getElementById('media-settings-cog');
+    const mediaSettingsPanel = document.getElementById('media-settings-panel');
+    const audioTrackSelect = document.getElementById('audio-track-select');
+    const subtitleTrackSelect = document.getElementById('subtitle-track-select');
+    const btnApplyTracks = document.getElementById('btn-apply-tracks');
+
     const chatBox = document.getElementById('chat-box');
     const chatInput = document.getElementById('chat-input');
     const sendBtn = document.getElementById('btn-send-chat');
@@ -85,10 +92,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameResults = document.getElementById('game-results');
 
     let navigationStack = [];
+    let currentUIState = 'plex';
+    let controlsHideTimer = null;
+    let trackOptionsLoadedForKey = '';
 
     // --- UI STATE MANAGER ---
 // --- UI STATE MANAGER ---
         function setUIState(state) {
+            currentUIState = state;
+            hideMediaSettingsPanel();
+            updateMediaSettingsVisibility();
+
             if (video) video.style.display = 'none';
             if (gameContainer) gameContainer.style.display = 'none';
             if (remoteVideo) remoteVideo.style.display = 'none';
@@ -112,6 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     remoteVideo.style.pointerEvents = 'auto';
                 }
             }
+
+            updateMediaSettingsVisibility();
         }
 
         function applyHostPermissions() {
@@ -128,6 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 remoteVideo.setAttribute('controls', 'controls');
                 remoteVideo.style.pointerEvents = 'auto';
             }
+
+            updateMediaSettingsVisibility();
 
             if (isHost) {
                 if (openSearchBtn) openSearchBtn.style.display = 'inline-block';
@@ -182,6 +200,140 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Local only. WebRTC resumes the live host stream.
             });
         }
+    function updateMediaSettingsVisibility() {
+        if (!mediaSettingsCog) return;
+
+        const canShow = isHost && currentUIState === 'plex' && !!CURRENT_KEY && !!currentMediaUrl;
+        mediaSettingsCog.style.display = canShow ? 'block' : 'none';
+
+        if (!canShow) {
+            hideMediaSettingsPanel();
+            if (mainVideoWrapper) mainVideoWrapper.classList.remove('controls-visible');
+        }
+    }
+
+    function hideMediaSettingsPanel() {
+        if (mediaSettingsPanel) mediaSettingsPanel.style.display = 'none';
+        if (mediaSettingsCog) mediaSettingsCog.classList.remove('panel-open');
+    }
+
+    function showMediaControlsOverlay() {
+        if (!isHost || !mediaSettingsCog || !mainVideoWrapper) return;
+        if (currentUIState !== 'plex' || !CURRENT_KEY || !currentMediaUrl) return;
+
+        mainVideoWrapper.classList.add('controls-visible');
+        clearTimeout(controlsHideTimer);
+
+        controlsHideTimer = setTimeout(() => {
+            if (mediaSettingsPanel && mediaSettingsPanel.style.display === 'flex') return;
+            mainVideoWrapper.classList.remove('controls-visible');
+        }, 2500);
+    }
+
+    function formatTrackLabel(track, fallback) {
+        if (!track) return fallback;
+
+        const parts = [];
+        if (track.language) parts.push(track.language);
+        if (track.title && !parts.includes(track.title)) parts.push(track.title);
+
+        return parts.join(' - ') || fallback;
+    }
+
+    function populateTrackSelect(selectElem, tracks, fallbackText) {
+        if (!selectElem) return;
+
+        selectElem.innerHTML = '';
+
+        if (!Array.isArray(tracks) || tracks.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = fallbackText;
+            selectElem.appendChild(option);
+            return;
+        }
+
+        tracks.forEach(track => {
+            const option = document.createElement('option');
+            option.value = track.id == null ? '' : String(track.id);
+            option.textContent = formatTrackLabel(track, fallbackText);
+            if (track.selected) option.selected = true;
+            selectElem.appendChild(option);
+        });
+    }
+
+    async function loadTrackOptions(ratingKey, forceReload = false) {
+        if (!isHost || !ratingKey || !audioTrackSelect || !subtitleTrackSelect) return;
+        if (!forceReload && trackOptionsLoadedForKey === String(ratingKey)) return;
+
+        trackOptionsLoadedForKey = String(ratingKey);
+
+        try {
+            populateTrackSelect(audioTrackSelect, [], 'Loading audio...');
+            populateTrackSelect(subtitleTrackSelect, [], 'Loading subtitles...');
+
+            const response = await fetch(`/api/plex/metadata/${encodeURIComponent(ratingKey)}`);
+            const data = await response.json();
+
+            if (!response.ok || data.error) {
+                throw new Error(data.error || 'Could not load Plex metadata.');
+            }
+
+            populateTrackSelect(audioTrackSelect, data.audio || [], 'Default Audio');
+            populateTrackSelect(subtitleTrackSelect, data.subtitles || [], 'Off');
+        } catch (err) {
+            console.error('Error loading audio/subtitle options:', err);
+            trackOptionsLoadedForKey = '';
+            populateTrackSelect(audioTrackSelect, [], 'Audio unavailable');
+            populateTrackSelect(subtitleTrackSelect, [], 'Subtitles unavailable');
+        }
+    }
+
+    async function applySelectedTracks() {
+        if (!isHost || !CURRENT_KEY) return;
+
+        const audioStreamId = audioTrackSelect ? audioTrackSelect.value : null;
+        const subtitleStreamId = subtitleTrackSelect ? subtitleTrackSelect.value : '';
+        const currentTime = video ? (video.currentTime || mediaOffset || 0) : (mediaOffset || 0);
+
+        const payload = {
+            rating_key: CURRENT_KEY,
+            audio_stream_id: audioStreamId,
+            subtitle_stream_id: subtitleStreamId,
+            view_offset: currentTime
+        };
+
+        if (btnApplyTracks) {
+            btnApplyTracks.disabled = true;
+            btnApplyTracks.textContent = 'Applying...';
+        }
+
+        try {
+            const response = await fetch(`/api/room/${ROOM_ID}/set_media`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Error changing audio/subtitles');
+            }
+
+            hideMediaSettingsPanel();
+            showMediaControlsOverlay();
+        } catch (err) {
+            console.error('Error applying audio/subtitle tracks:', err);
+            alert('Error changing audio/subtitles: ' + err.message);
+        } finally {
+            if (btnApplyTracks) {
+                btnApplyTracks.disabled = false;
+                btnApplyTracks.textContent = 'Apply to Room';
+            }
+        }
+    }
+
     function setPlaybackClock(startEpoch, offset) {
         mediaOffset = Number(offset || 0);
         localSyncStartTime = Number(startEpoch || 0);
@@ -380,6 +532,47 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (mainVideoWrapper) {
+        mainVideoWrapper.addEventListener('mousemove', showMediaControlsOverlay);
+        mainVideoWrapper.addEventListener('touchstart', showMediaControlsOverlay, { passive: true });
+        mainVideoWrapper.addEventListener('mouseleave', () => {
+            if (mediaSettingsPanel && mediaSettingsPanel.style.display === 'flex') return;
+            clearTimeout(controlsHideTimer);
+            controlsHideTimer = setTimeout(() => {
+                mainVideoWrapper.classList.remove('controls-visible');
+            }, 600);
+        });
+    }
+
+    if (mediaSettingsCog) {
+        mediaSettingsCog.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!isHost || !mediaSettingsPanel) return;
+
+            const isOpen = mediaSettingsPanel.style.display === 'flex';
+            if (isOpen) {
+                hideMediaSettingsPanel();
+            } else {
+                if (CURRENT_KEY) loadTrackOptions(CURRENT_KEY);
+                mediaSettingsPanel.style.display = 'flex';
+                mediaSettingsCog.classList.add('panel-open');
+                showMediaControlsOverlay();
+            }
+        });
+    }
+
+    if (mediaSettingsPanel) {
+        mediaSettingsPanel.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    if (btnApplyTracks) {
+        btnApplyTracks.addEventListener('click', applySelectedTracks);
+    }
+
     // ==========================================
     // PHASE 1: ACTIVATE BUTTONS
     // ==========================================
@@ -434,7 +627,34 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof io !== 'undefined') {
             socket = io();
 
-            socket.emit('join_watch_room', { room_id: ROOM_ID });
+            const connectionStatus = document.getElementById('connection-status');
+
+            function setConnectionStatus(text, state) {
+                if (!connectionStatus) return;
+
+                connectionStatus.textContent = text;
+                connectionStatus.dataset.state = state;
+            }
+
+            socket.on('connect', () => {
+                setConnectionStatus('Connected', 'connected');
+
+                socket.emit('join_watch_room', {
+                    room_id: ROOM_ID
+                });
+            });
+
+            socket.on('disconnect', () => {
+                setConnectionStatus('Connection lost', 'disconnected');
+            });
+
+            socket.io.on('reconnect_attempt', () => {
+                setConnectionStatus('Reconnecting...', 'reconnecting');
+            });
+
+            socket.io.on('reconnect_error', () => {
+                setConnectionStatus('Connection lost', 'disconnected');
+            });
 
             if (sendBtn) {
                 sendBtn.addEventListener('click', () => {
@@ -477,6 +697,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 CURRENT_KEY = data.rating_key || '';
                 if (appContainer) appContainer.dataset.currentKey = CURRENT_KEY;
+                if (isHost && CURRENT_KEY) loadTrackOptions(CURRENT_KEY);
+                updateMediaSettingsVisibility();
 
                 const currentTime = Number(data.current_time || data.offset || 0);
 
@@ -504,6 +726,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 CURRENT_KEY = data.rating_key || '';
                 if (appContainer) appContainer.dataset.currentKey = CURRENT_KEY;
+                if (isHost && CURRENT_KEY) loadTrackOptions(CURRENT_KEY);
+                updateMediaSettingsVisibility();
 
                 const startTime = Number(data.start_time || data.offset || 0);
 
@@ -562,6 +786,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 addMessage("System", `<span style="color:#e5a00d;">${HOST_USERNAME} is now the host</span>`);
                 applyHostPermissions();
+                if (isHost && CURRENT_KEY) loadTrackOptions(CURRENT_KEY, true);
+                updateMediaSettingsVisibility();
 
                 if (!isHost) stopLocalBroadcast();
             });
@@ -860,6 +1086,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const rawKey = String(media.key).split('/').pop();
         const payload = { rating_key: rawKey };
+        trackOptionsLoadedForKey = '';
 
         if (media.isResume || rawKey === String(CURRENT_KEY)) {
             if (video && !video.paused && video.currentTime > 0) {
@@ -892,6 +1119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentMediaUrl = url;
         setUIState('plex');
+        updateMediaSettingsVisibility();
 
         ignoreSyncWindow = true;
         setTimeout(() => { ignoreSyncWindow = false; }, 4000);
@@ -984,6 +1212,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (INITIAL_MEDIA_URL) {
         // Fallback only. The server's room_state event should replace this with the correct timestamp.
+        if (isHost && CURRENT_KEY) loadTrackOptions(CURRENT_KEY);
+        updateMediaSettingsVisibility();
         loadVideo(INITIAL_MEDIA_URL, 0, true);
     }
 

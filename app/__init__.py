@@ -50,7 +50,7 @@ def create_app():
 
     # --- PLEX CONFIGURATION (NEW) ---
     app.config['PLEX_URL'] = 'http://127.0.0.1:32400'
-    app.config['PLEX_TOKEN'] = 'uHmJsmLp1jo-BxJKWQGU'
+    app.config['PLEX_TOKEN'] = 'NE8K9zmzknZgwtx6qaBU'
 
     # Initialize extensions
     db.init_app(app)

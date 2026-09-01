@@ -71,8 +71,19 @@ function initPlayer() {
         if (hls) hls.destroy();
 
         hls = new Hls({
-            liveSyncDurationCount: 3,
-            liveMaxLatencyDurationCount: 6
+            enableWorker: true,
+
+            liveSyncDurationCount: 4,
+            liveMaxLatencyDurationCount: 8,
+
+            maxBufferLength: 20,
+            maxMaxBufferLength: 30,
+            backBufferLength: 10,
+
+            lowLatencyMode: false,
+
+            capLevelToPlayerSize: true,
+            startLevel: -1
         });
 
         hls.loadSource(url);

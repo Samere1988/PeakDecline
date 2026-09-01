@@ -94,13 +94,13 @@ class StreamService:
 
             # ─── VIDEO ────────────────────────────────────────────────
             "-c:v", "libx264",
-            "-preset", "veryfast",
+            "-preset", "superfast",
             "-tune", "zerolatency",
             "-pix_fmt", "yuv420p",
             "-profile:v", "baseline",
             "-level", "3.0",
-            "-g", "60",
-            "-keyint_min", "60",
+            "-g", "90",
+            "-keyint_min", "90",
             "-sc_threshold", "0",
 
             # ─── AUDIO ────────────────────────────────────────────────
@@ -110,9 +110,9 @@ class StreamService:
 
             # ─── HLS ──────────────────────────────────────────────────
             "-f", "hls",
-            "-hls_time", "2",
-            "-hls_list_size", "12",
-            "-hls_flags", "delete_segments+append_list",
+            "-hls_time", "3",
+            "-hls_list_size", "8",
+            "-hls_flags", "delete_segments+independent_segments",
             "-hls_allow_cache", "0",
             "-hls_segment_filename", segment_pattern,
 

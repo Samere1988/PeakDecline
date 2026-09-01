@@ -551,3 +551,147 @@ video {
         height: 158px;
     }
 }
+
+/* =========================================
+   HOST-ONLY MEDIA SETTINGS OVERLAY
+   ========================================= */
+.video-wrapper {
+    position: relative;
+}
+
+.media-settings-cog {
+    position: absolute;
+    right: 28px;
+    bottom: 112px;
+    z-index: 45;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(0,0,0,0.68);
+    color: #fff;
+    font-size: 1.22rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 0.22s ease, transform 0.22s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.video-wrapper.controls-visible .media-settings-cog,
+.media-settings-cog.panel-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.media-settings-cog:hover {
+    background: rgba(255, 68, 68, 0.88);
+    border-color: rgba(255,255,255,0.35);
+}
+
+.media-settings-panel {
+    position: absolute;
+    right: 28px;
+    bottom: 166px;
+    z-index: 46;
+    width: 280px;
+    padding: 15px;
+    border-radius: 12px;
+    background: rgba(20, 20, 23, 0.94);
+    border: 1px solid rgba(255,255,255,0.14);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 18px 45px rgba(0,0,0,0.70);
+    flex-direction: column;
+    gap: 8px;
+}
+
+.media-settings-title {
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.98rem;
+    margin-bottom: 4px;
+}
+
+.media-settings-panel label {
+    color: #c6c9d8;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.track-select {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(0,0,0,0.58);
+    color: #fff;
+    outline: none;
+}
+
+.track-select:focus {
+    border-color: #ff4444;
+    box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.14);
+}
+
+.btn-apply-tracks {
+    margin-top: 6px;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #ff4444;
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.btn-apply-tracks:hover {
+    background: #ff5f5f;
+    transform: translateY(-1px);
+}
+
+.btn-apply-tracks:disabled {
+    opacity: 0.65;
+    cursor: wait;
+    transform: none;
+}
+
+.media-settings-note {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.72rem;
+    line-height: 1.3;
+    margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+    .media-settings-cog {
+        right: 18px;
+        bottom: 96px;
+        width: 48px;
+        height: 48px;
+        font-size: 1.28rem;
+    }
+
+    .media-settings-panel {
+        right: 14px;
+        left: 14px;
+        bottom: 150px;
+        width: auto;
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .media-settings-cog {
+        right: 14px;
+        bottom: 84px;
+    }
+
+    .media-settings-panel {
+        bottom: 138px;
+    }
+}
