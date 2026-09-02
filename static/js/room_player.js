@@ -421,8 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 segment
             );
         }
-    updateBufferedProgress();
-    updatePlexSyncStatus();
     }
 
     function updateCustomPlayerUI() {
@@ -512,7 +510,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 'controls-visible'
             );
         }
+    updateBufferedProgress();
     updatePlexSyncStatus();
+}
     }
 
 
@@ -2145,20 +2145,18 @@ document.addEventListener('DOMContentLoaded', () => {
         plexVolume.addEventListener(
             'input',
             () => {
-                const newVolume =
-                    Math.min(
-                        1,
-                        Math.max(
-                            0,
-                            Number(
-                                plexVolume.value
-                            )
-                        )
-                    );
+            const newVolume =
+                Math.min(
+                    1,
+                    Math.max(
+                        0,
+                        Number(plexVolume.value)
+                    )
+                );
 
-                video.muted =
-                    false;
-            }
+            video.volume = newVolume;
+            video.muted = false;
+                        }
         );
     }
 
