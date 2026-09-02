@@ -510,9 +510,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 'controls-visible'
             );
         }
-    updateBufferedProgress();
-    updatePlexSyncStatus();
-}
+
+        updateBufferedProgress();
+        updatePlexSyncStatus();
     }
 
 
