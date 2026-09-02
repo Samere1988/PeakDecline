@@ -37,6 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentMediaUrl = '';
 
     const PLEX_PROGRESS_INTERVAL_MS = 10000;
+    const SYNCED_THRESHOLD_SECONDS = 0.5;
+    const MANUAL_SYNC_THRESHOLD_SECONDS = 2.0;
 
     const NEXT_EPISODE_COUNTDOWN_SECONDS = 10;
 
@@ -142,6 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const plexPlayerTime =
         document.getElementById('plex-player-time');
+
+    const plexSyncStatus =
+        document.getElementById('plex-sync-status');
 
     const btnSyncToHost =
         document.getElementById('btn-sync-to-host');
@@ -417,6 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'controls-visible'
             );
         }
+    updatePlexSyncStatus();
     }
 
 
@@ -435,7 +441,177 @@ document.addEventListener('DOMContentLoaded', () => {
             + mediaOffset
         );
     }
+    function updatePlexSyncStatus() {
+        const hasPlexMedia =
+            (
+                currentUIState === 'plex'
+                && !!CURRENT_KEY
+                && !!currentMediaUrl
+                && !!video
+            );
 
+
+        if (!hasPlexMedia) {
+            if (plexSyncStatus) {
+                plexSyncStatus.style.display =
+                    'none';
+            }
+
+            updatePlexSyncStatus();
+
+
+        /*
+         * HOST
+         *
+         * The host is the synchronization source,
+         * so drift does not apply to them.
+         */
+        if (isHost) {
+            if (plexSyncStatus) {
+                plexSyncStatus.style.display =
+                    'inline-flex';
+
+                plexSyncStatus.textContent =
+                    'Host';
+
+                plexSyncStatus.dataset.state =
+                    'host';
+            }
+
+            if (btnSyncToHost) {
+                btnSyncToHost.style.display =
+                    'none';
+            }
+
+            return;
+        }
+
+
+        if (!plexSyncStatus) {
+            return;
+        }
+
+
+        plexSyncStatus.style.display =
+            'inline-flex';
+
+
+        /*
+         * A viewer is allowed to pause locally.
+         *
+         * While the room continues playing, their
+         * local position intentionally falls behind.
+         */
+        if (
+            roomIsPlaying
+            && video.paused
+        ) {
+            plexSyncStatus.textContent =
+                'Paused locally';
+
+            plexSyncStatus.dataset.state =
+                'paused';
+
+            if (btnSyncToHost) {
+                btnSyncToHost.style.display =
+                    'inline-flex';
+            }
+
+            return;
+        }
+
+
+        const expectedTime =
+            getExpectedRoomTime();
+
+        const actualTime =
+            Number(video.currentTime || 0);
+
+
+        if (
+            !Number.isFinite(expectedTime)
+            || !Number.isFinite(actualTime)
+        ) {
+            plexSyncStatus.textContent =
+                'Syncing';
+
+            plexSyncStatus.dataset.state =
+                'syncing';
+
+            if (btnSyncToHost) {
+                btnSyncToHost.style.display =
+                    'none';
+            }
+
+            return;
+        }
+
+
+        /*
+         * Positive drift:
+         * Host/room is ahead of this viewer.
+         *
+         * Negative drift:
+         * Viewer is ahead of the room.
+         */
+        const drift =
+            expectedTime - actualTime;
+
+        const absoluteDrift =
+            Math.abs(drift);
+
+
+        if (
+            absoluteDrift
+            <= SYNCED_THRESHOLD_SECONDS
+        ) {
+            plexSyncStatus.textContent =
+                'Synced';
+
+            plexSyncStatus.dataset.state =
+                'synced';
+
+            if (btnSyncToHost) {
+                btnSyncToHost.style.display =
+                    'none';
+            }
+
+            return;
+        }
+
+
+        const sign =
+            drift >= 0
+                ? '+'
+                : '−';
+
+
+        plexSyncStatus.textContent =
+            `Syncing ${sign}${absoluteDrift.toFixed(1)}s`;
+
+
+        if (
+            absoluteDrift
+            >= MANUAL_SYNC_THRESHOLD_SECONDS
+        ) {
+            plexSyncStatus.dataset.state =
+                'out-of-sync';
+
+            if (btnSyncToHost) {
+                btnSyncToHost.style.display =
+                    'inline-flex';
+            }
+
+        } else {
+            plexSyncStatus.dataset.state =
+                'syncing';
+
+            if (btnSyncToHost) {
+                btnSyncToHost.style.display =
+                    'none';
+            }
+        }
+    }
 
     function syncViewerToHost() {
         if (isHost) {
@@ -499,6 +675,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         updateCustomPlayerUI();
+        updatePlexSyncStatus();
+
     }
 
 
@@ -606,7 +784,12 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCustomPlayerUI();
     }
 
-
+    setInterval(
+    () => {
+        updatePlexSyncStatus();
+    },
+    500
+);
     // ==========================================
     // 6. UI STATE MANAGER
     // ==========================================
