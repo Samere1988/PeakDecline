@@ -312,11 +312,20 @@
                         <div class="plex-controls-spacer"></div>
 
 
-                        <!--
-                            Viewer-only control.
+                        <!-- Live room synchronization status -->
+                        <span id="plex-sync-status"
+                              class="plex-sync-status"
+                              data-state="synced"
+                              style="display: none;">
+                            Synced
+                        </span>
 
-                            The JS hides this for the host and shows
-                            it for viewers when Plex media is loaded.
+
+                        <!--
+                            Viewer-only manual resync button.
+
+                            JS only shows this when the viewer is
+                            meaningfully out of sync or locally paused.
                         -->
                         <button id="btn-sync-to-host"
                                 class="plex-sync-btn"
