@@ -127,9 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const plexPlayerShell =
         document.getElementById('plex-player-shell');
 
-    const plexPlayerControls =
-        document.getElementById('plex-player-controls');
-
     const plexPlayToggle =
         document.getElementById('plex-play-toggle');
 
@@ -141,6 +138,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const plexPlayerProgress =
         document.getElementById('plex-player-progress');
+    const plexBufferedRanges =
+        document.getElementById('plex-buffered-ranges');
+
+    const plexPlayedProgress =
+        document.getElementById('plex-played-progress');
 
     const plexPlayerTime =
         document.getElementById('plex-player-time');
@@ -156,8 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // Main stage
-    const mainVideoWrapper =
-        document.getElementById('main-video-wrapper');
+
 
     const gameContainer =
         document.getElementById('game-container');
@@ -334,6 +335,95 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
+
+    function updateBufferedProgress() {
+        if (!video) {
+            return;
+        }
+
+        const duration =
+            Number.isFinite(video.duration)
+                ? video.duration
+                : 0;
+
+        if (duration <= 0) {
+            if (plexPlayedProgress) {
+                plexPlayedProgress.style.width = '0%';
+            }
+
+            if (plexBufferedRanges) {
+                plexBufferedRanges.replaceChildren();
+            }
+
+            return;
+        }
+
+
+        // ------------------------------------------
+        // PLAYED PORTION
+        // ------------------------------------------
+
+        if (plexPlayedProgress) {
+            const playedPercent =
+                Math.min(
+                    100,
+                    Math.max(
+                        0,
+                        (video.currentTime / duration) * 100
+                    )
+                );
+
+            plexPlayedProgress.style.width =
+                `${playedPercent}%`;
+        }
+
+
+        // ------------------------------------------
+        // BUFFERED PORTIONS
+        // ------------------------------------------
+
+        if (!plexBufferedRanges) {
+            return;
+        }
+
+        plexBufferedRanges.replaceChildren();
+
+        for (
+            let index = 0;
+            index < video.buffered.length;
+            index += 1
+        ) {
+            const start =
+                video.buffered.start(index);
+
+            const end =
+                video.buffered.end(index);
+
+            const left =
+                (start / duration) * 100;
+
+            const width =
+                ((end - start) / duration) * 100;
+
+            const segment =
+                document.createElement('div');
+
+            segment.className =
+                'plex-buffered-segment';
+
+            segment.style.left =
+                `${left}%`;
+
+            segment.style.width =
+                `${width}%`;
+
+            plexBufferedRanges.appendChild(
+                segment
+            );
+        }
+    updateBufferedProgress();
+    updatePlexSyncStatus();
+    }
 
     function updateCustomPlayerUI() {
         if (!video) {
@@ -1950,6 +2040,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         [
             'timeupdate',
+            'progress',
             'durationchange',
             'loadedmetadata'
         ].forEach(
@@ -2064,10 +2155,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             )
                         )
                     );
-
-
-                video.volume =
-                    newVolume;
 
                 video.muted =
                     false;
@@ -4513,6 +4600,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="movie-card-image">
                             <img
                                 src="${imageUrl}"
+                                alt=""
                                 loading="lazy"
                             >
                         </div>
