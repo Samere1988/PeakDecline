@@ -441,6 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
             + mediaOffset
         );
     }
+
     function updatePlexSyncStatus() {
         const hasPlexMedia =
             (
@@ -450,76 +451,53 @@ document.addEventListener('DOMContentLoaded', () => {
                 && !!video
             );
 
-
         if (!hasPlexMedia) {
             if (plexSyncStatus) {
-                plexSyncStatus.style.display =
-                    'none';
-            }
-
-            updatePlexSyncStatus();
-
-
-        /*
-         * HOST
-         *
-         * The host is the synchronization source,
-         * so drift does not apply to them.
-         */
-        if (isHost) {
-            if (plexSyncStatus) {
-                plexSyncStatus.style.display =
-                    'inline-flex';
-
-                plexSyncStatus.textContent =
-                    'Host';
-
-                plexSyncStatus.dataset.state =
-                    'host';
+                plexSyncStatus.style.display = 'none';
             }
 
             if (btnSyncToHost) {
-                btnSyncToHost.style.display =
-                    'none';
+                btnSyncToHost.style.display = 'none';
             }
 
             return;
         }
 
+        // Host is the synchronization source.
+        if (isHost) {
+            if (plexSyncStatus) {
+                plexSyncStatus.style.display = 'inline-flex';
+                plexSyncStatus.textContent = 'Host';
+                plexSyncStatus.dataset.state = 'host';
+            }
+
+            if (btnSyncToHost) {
+                btnSyncToHost.style.display = 'none';
+            }
+
+            return;
+        }
 
         if (!plexSyncStatus) {
             return;
         }
 
+        plexSyncStatus.style.display = 'inline-flex';
 
-        plexSyncStatus.style.display =
-            'inline-flex';
-
-
-        /*
-         * A viewer is allowed to pause locally.
-         *
-         * While the room continues playing, their
-         * local position intentionally falls behind.
-         */
+        // Viewer intentionally paused locally.
         if (
             roomIsPlaying
             && video.paused
         ) {
-            plexSyncStatus.textContent =
-                'Paused locally';
-
-            plexSyncStatus.dataset.state =
-                'paused';
+            plexSyncStatus.textContent = 'Paused locally';
+            plexSyncStatus.dataset.state = 'paused';
 
             if (btnSyncToHost) {
-                btnSyncToHost.style.display =
-                    'inline-flex';
+                btnSyncToHost.style.display = 'inline-flex';
             }
 
             return;
         }
-
 
         const expectedTime =
             getExpectedRoomTime();
@@ -527,68 +505,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const actualTime =
             Number(video.currentTime || 0);
 
-
         if (
             !Number.isFinite(expectedTime)
             || !Number.isFinite(actualTime)
         ) {
-            plexSyncStatus.textContent =
-                'Syncing';
-
-            plexSyncStatus.dataset.state =
-                'syncing';
+            plexSyncStatus.textContent = 'Syncing';
+            plexSyncStatus.dataset.state = 'syncing';
 
             if (btnSyncToHost) {
-                btnSyncToHost.style.display =
-                    'none';
+                btnSyncToHost.style.display = 'none';
             }
 
             return;
         }
 
-
-        /*
-         * Positive drift:
-         * Host/room is ahead of this viewer.
-         *
-         * Negative drift:
-         * Viewer is ahead of the room.
-         */
         const drift =
             expectedTime - actualTime;
 
         const absoluteDrift =
             Math.abs(drift);
 
-
         if (
             absoluteDrift
             <= SYNCED_THRESHOLD_SECONDS
         ) {
-            plexSyncStatus.textContent =
-                'Synced';
-
-            plexSyncStatus.dataset.state =
-                'synced';
+            plexSyncStatus.textContent = 'Synced';
+            plexSyncStatus.dataset.state = 'synced';
 
             if (btnSyncToHost) {
-                btnSyncToHost.style.display =
-                    'none';
+                btnSyncToHost.style.display = 'none';
             }
 
             return;
         }
-
 
         const sign =
             drift >= 0
                 ? '+'
                 : '−';
 
-
         plexSyncStatus.textContent =
             `Syncing ${sign}${absoluteDrift.toFixed(1)}s`;
-
 
         if (
             absoluteDrift
@@ -601,7 +558,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnSyncToHost.style.display =
                     'inline-flex';
             }
-
         } else {
             plexSyncStatus.dataset.state =
                 'syncing';
@@ -991,16 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     : 'none';
         }
 
-
-        if (btnSyncToHost) {
-            btnSyncToHost.style.display =
-                (
-                    !isHost
-                    && hasPlexMedia
-                )
-                    ? 'inline-flex'
-                    : 'none';
-        }
+        updatePlexSyncStatus();
 
 
         if (plexPlayerProgress) {
