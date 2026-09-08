@@ -1,0 +1,123 @@
+{
+  "generatedAt": "2026-09-08T17:55:17.361Z",
+  "sourceHash": "f18b5fbe29ba5c936c3d88eac069e94e549ba409a97feb49c5849098428c050f",
+  "source": "static/js/room_player.js + app/routes.py",
+  "method": "15 isolated JS VMs, simulated media and network timing, real authenticated Flask-SocketIO test clients, in-memory SQLite",
+  "results": [
+    {
+      "name": "Host pause aligns all 15 viewers to within 50ms",
+      "pass": true,
+      "details": "paused max drift=0.0000s"
+    },
+    {
+      "name": "Paused downtime retries a seek the media element initially ignores",
+      "pass": true,
+      "details": "position=150.0000s; target=150s"
+    },
+    {
+      "name": "15-user mixed-speed lifecycle soak (10 simulated minutes)",
+      "pass": true,
+      "details": "peak=15, final users=15, paused=[], max sampled drift=1.82s, simulated=602s, outgoing=9"
+    },
+    {
+      "name": "HLS.js obsolete load cannot change replacement media",
+      "pass": true,
+      "details": "position=37, paused=true"
+    },
+    {
+      "name": "HLS.js slow join: host pauses before metadata",
+      "pass": true,
+      "details": "room paused; viewer paused=true, position=101.00"
+    },
+    {
+      "name": "HLS.js slow join: host plays before metadata",
+      "pass": true,
+      "details": "room playing; viewer paused=false, position=110.00"
+    },
+    {
+      "name": "Native HLS obsolete load cannot change replacement media",
+      "pass": true,
+      "details": "position=37, paused=true"
+    },
+    {
+      "name": "Native HLS slow join: host pauses before metadata",
+      "pass": true,
+      "details": "room paused; viewer paused=true, position=101.00"
+    },
+    {
+      "name": "Native HLS slow join: host plays before metadata",
+      "pass": true,
+      "details": "room playing; viewer paused=false, position=110.00"
+    },
+    {
+      "name": "Host buffer recovery resumes room",
+      "pass": true,
+      "details": "host paused=false, viewer paused=false, buffer_resolved emissions=1"
+    },
+    {
+      "name": "Fast buffer recovery waits for slow server acknowledgement",
+      "pass": true,
+      "details": "host paused=false, viewer paused=false"
+    },
+    {
+      "name": "Reconnect after missing host play resumes viewer",
+      "pass": true,
+      "details": "same-media reconnect, room playing=true, viewer paused=false"
+    },
+    {
+      "name": "Late buffer recovery does not override an intentional host pause",
+      "pass": true,
+      "details": "intentional pause followed by delayed buffer_resolved; room playing=false"
+    },
+    {
+      "name": "Out-of-order playback state cannot undo newer pause",
+      "pass": true,
+      "details": "stale force_play delivered after newer force_pause"
+    },
+    {
+      "name": "Intentional viewer pause survives reconnect",
+      "pass": true,
+      "details": "explicit local pause preserved"
+    },
+    {
+      "name": "Old media commands are rejected after a media switch",
+      "pass": true,
+      "details": "playing=false, position=37"
+    },
+    {
+      "name": "Autoplay denial provides explicit gesture guidance",
+      "pass": true,
+      "details": "blocked label=\"Click Play to join\", sync button visible=true, user click recovers=true"
+    },
+    {
+      "name": "Viewer buffering avoids repeated seeks into unavailable media",
+      "pass": true,
+      "details": "stalled viewer advanced by 0.00s through programmatic seeks"
+    },
+    {
+      "name": "Clock skew +120s keeps viewer within 3 seconds",
+      "pass": true,
+      "details": "viewer-host drift=0.00s"
+    },
+    {
+      "name": "Host refresh within grace retains ownership",
+      "pass": true,
+      "details": "host=0, unique users=15"
+    },
+    {
+      "name": "Host departure transfers to remaining user",
+      "pass": true,
+      "details": "host=1, unique users=14"
+    },
+    {
+      "name": "Viewer cannot pause/play/seek/buffer the room",
+      "pass": true,
+      "details": "70 unauthorized viewer commands; playing=true, offset=100"
+    },
+    {
+      "name": "Backend rejects non-finite seek positions",
+      "pass": true,
+      "details": "offset=0"
+    }
+  ]
+}

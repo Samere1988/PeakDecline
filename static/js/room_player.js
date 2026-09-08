@@ -33,7 +33,24 @@ document.addEventListener('DOMContentLoaded', () => {
     let ignoreSyncWindow = false;
     let isSystemAction = false;
 
-    let roomIsPlaying = true;
+    let roomIsPlaying = false;
+    let playbackIntent = false;
+    let viewerPaused = false;
+    let autoplayBlocked = false;
+    let playbackRevision = -1;
+    let playbackEpoch = '';
+    let mediaVersion = '';
+    let loadGeneration = 0;
+    let mediaReady = false;
+    let pendingSeek = true;
+    let playPending = false;
+    let bufferEpisode = null;
+    let bufferRecoverySent = false;
+    let bufferSequence = 0;
+    let lastRecoverySeek = -Infinity;
+    let metadataListener = null;
+    const playbackNow = () => (typeof performance !== 'undefined'
+        ? performance.now() / 1000 : Date.now() / 1000);
     let currentMediaUrl = '';
 
     const PLEX_PROGRESS_INTERVAL_MS = 10000;
@@ -525,7 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return (
             (
-                (Date.now() / 1000)
+                playbackNow()
                 - localSyncStartTime
             )
             + mediaOffset
@@ -574,10 +591,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         plexSyncStatus.style.display = 'inline-flex';
 
+        if (autoplayBlocked || isBuffering || !mediaReady) {
+            plexSyncStatus.textContent = autoplayBlocked ? 'Click Play to join' : 'Buffering';
+            plexSyncStatus.dataset.state = autoplayBlocked ? 'paused' : 'syncing';
+            if (btnSyncToHost) btnSyncToHost.style.display = autoplayBlocked ? 'inline-flex' : 'none';
+            return;
+        }
+
         // Viewer intentionally paused locally.
         if (
             roomIsPlaying
-            && video.paused
+            && viewerPaused
         ) {
             plexSyncStatus.textContent = 'Paused locally';
             plexSyncStatus.dataset.state = 'paused';
@@ -659,96 +683,107 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function syncViewerToHost() {
-        if (isHost) {
-            return;
-        }
-
-        if (!video) {
-            return;
-        }
-
-        if (!currentMediaUrl) {
-            return;
-        }
-
-
-        const expectedTime =
-            getExpectedRoomTime();
-
-
-        if (
-            !Number.isFinite(expectedTime)
-        ) {
-            return;
-        }
-
-
-        isSystemAction = true;
-
-
-        try {
-            video.currentTime =
-                Math.max(
-                    0,
-                    expectedTime
-                );
-        } catch (e) {}
-
-
-        if (roomIsPlaying) {
-            video.play().catch(
-                err => {
-                    console.warn(
-                        'Viewer sync play blocked:',
-                        err
-                    );
-                }
-            );
-        } else {
-            try {
-                video.pause();
-            } catch (e) {}
-        }
-
-
-        setTimeout(
-            () => {
-                isSystemAction = false;
-            },
-            150
-        );
-
-
-        updateCustomPlayerUI();
-        updatePlexSyncStatus();
-
+    function playbackCommand(event, extra = {}) {
+        if (!socket || socket.connected === false) return;
+        socket.emit(event, {
+            room_id: ROOM_ID,
+            current_time: Number(video.currentTime) || 0,
+            media_version: mediaVersion,
+            revision: playbackRevision,
+            ...extra
+        });
     }
 
+    function syncViewerToHost() {
+        if (isHost || !video || !currentMediaUrl) return;
+        viewerPaused = false;
+        autoplayBlocked = false;
+        pendingSeek = true;
+        reconcilePlayback(true);
+    }
 
     function togglePlexPlayback() {
-        if (
-            !video
-            || !currentMediaUrl
-        ) {
-            return;
-        }
-
-
-        if (video.paused) {
-            video.play().catch(
-                err => {
-                    console.warn(
-                        'Could not start playback:',
-                        err
-                    );
-                }
-            );
+        if (!video || !currentMediaUrl) return;
+        autoplayBlocked = false;
+        if (isHost) {
+            // A gesture changes intent. Native media events only report readiness.
+            playbackIntent = video.paused && !bufferEpisode ? true : !playbackIntent;
+            roomIsPlaying = playbackIntent;
+            bufferEpisode = null;
+            bufferRecoverySent = false;
+            setPlaybackClock(0, video.currentTime);
+            playbackCommand(playbackIntent ? 'user_play' : 'user_pause');
+            reportPlexProgress(playbackIntent ? 'playing' : 'paused');
         } else {
-            video.pause();
+            viewerPaused = !video.paused;
+            if (!viewerPaused) pendingSeek = true;
         }
+        reconcilePlayback(true);
     }
 
+    function acceptPlaybackState(data, snapshot = false) {
+        if (String(data.room_id) !== String(ROOM_ID)) return false;
+        if (!Number.isInteger(data.revision) || !data.playback_epoch) return false;
+        if (!snapshot && playbackEpoch && playbackEpoch !== data.playback_epoch) return false;
+        if (playbackEpoch === data.playback_epoch &&
+                (data.revision < playbackRevision || (!snapshot && data.revision === playbackRevision))) return false;
+        playbackEpoch = data.playback_epoch;
+        playbackRevision = data.revision;
+        mediaVersion = data.media_version || '';
+        roomIsPlaying = data.is_playing === true;
+        playbackIntent = data.playback_intent === true;
+        bufferEpisode = isHost ? (data.buffer_id || null) : null;
+        if (!bufferEpisode) bufferRecoverySent = false;
+        // Anchor a server-computed position locally; wall-clock skew is not media time.
+        setPlaybackClock(0, Number(data.current_time ?? data.offset) || 0);
+        return true;
+    }
+
+    function reconcilePlayback(gesture = false) {
+        if (!video || !currentMediaUrl) return;
+        if (!roomIsPlaying || (!isHost && viewerPaused)) {
+            video.playbackRate = 1;
+            video.pause();
+        }
+        if (!mediaReady) return;
+        // A paused room is a fixed target. Use the downtime to remove even
+        // small drift, and retry seeks ignored before metadata/buffers are ready.
+        if ((pendingSeek || !roomIsPlaying) && !video.seeking) {
+            const target = Math.max(0, getExpectedRoomTime());
+            // Keep margin for native pause/clock rounding so any two clients
+            // stay within the 50ms paused-alignment acceptance threshold.
+            const tolerance = roomIsPlaying ? 0.75 : 0.01;
+            pendingSeek = false;
+            if (Math.abs(video.currentTime - target) > tolerance) {
+                try { video.currentTime = target; } catch (_) { pendingSeek = true; }
+            }
+            if (!roomIsPlaying && Math.abs(video.currentTime - target) > tolerance) pendingSeek = true;
+        }
+        if (!roomIsPlaying || (!isHost && viewerPaused)) return;
+        if (autoplayBlocked && !gesture) return;
+        if (video.paused && !playPending) {
+            const generation = loadGeneration;
+            playPending = true;
+            video.play().catch(error => {
+                if (generation !== loadGeneration) return;
+                if (error.name === 'NotAllowedError') autoplayBlocked = true;
+            }).finally(() => {
+                if (generation !== loadGeneration) return;
+                playPending = false;
+                if (!roomIsPlaying || (!isHost && viewerPaused)) video.pause();
+                updateCustomPlayerUI();
+            });
+        }
+        updateCustomPlayerUI();
+    }
+
+    function recoverHostBuffer() {
+        if (isHost && bufferEpisode && playbackIntent && !roomIsPlaying && !bufferRecoverySent &&
+                mediaReady && video.readyState >= 3 && !video.seeking) {
+            bufferRecoverySent = true;
+            playbackCommand('buffer_resolved', {buffer_id: bufferEpisode});
+        }
+    }
 
     function seekHostPlayer(targetTime) {
         if (!isHost) {
@@ -806,7 +841,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 {
                     room_id: ROOM_ID,
                     current_time: target,
-                    is_playing: !video.paused
+                    is_playing: playbackIntent,
+                    media_version: mediaVersion,
+                    revision: playbackRevision
                 }
             );
         }
@@ -1581,37 +1618,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 9. PLAYBACK CLOCK / MEDIA HELPERS
     // ==========================================
 
-    function setPlaybackClock(
-        startEpoch,
-        offset
-    ) {
-        mediaOffset =
-            Number(offset || 0);
-
-        localSyncStartTime =
-            Number(startEpoch || 0);
-
-
-        const localNow =
-            Date.now() / 1000;
-
-
-        /*
-         * If the server epoch looks invalid for the
-         * current local clock, anchor it locally.
-         */
-        if (
-            !localSyncStartTime
-            || Math.abs(
-                localNow
-                - localSyncStartTime
-            ) > 300
-        ) {
-            localSyncStartTime =
-                localNow;
-        }
+    function setPlaybackClock(startEpoch, offset) {
+        mediaOffset = Number(offset) || 0;
+        localSyncStartTime = playbackNow();
     }
-
 
     function destroyHls() {
         if (!hls) {
@@ -1824,54 +1834,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (video) {
 
-        video.addEventListener(
-            'waiting',
-            () => {
-                if (
-                    isHost
-                    && !isBuffering
-                    && socket
-                    && !ignoreSyncWindow
-                ) {
-                    isBuffering = true;
-
-                    socket.emit(
-                        'user_buffering',
-                        {
-                            room_id: ROOM_ID,
-                            current_time:
-                                video.currentTime
-                                || mediaOffset
-                                || 0
-                        }
-                    );
-                }
+        video.addEventListener('waiting', () => {
+            isBuffering = true;
+            video.playbackRate = 1;
+            if (isHost && playbackIntent && roomIsPlaying && mediaReady &&
+                    !video.seeking && !bufferEpisode) {
+                bufferEpisode = `${loadGeneration}:${++bufferSequence}:${Date.now()}`;
+                bufferRecoverySent = false;
+                playbackCommand('user_buffering', {buffer_id: bufferEpisode});
             }
-        );
-
-
-        video.addEventListener(
-            'canplay',
-            () => {
-                if (
-                    isHost
-                    && isBuffering
-                    && socket
-                ) {
-                    socket.emit(
-                        'buffer_resolved',
-                        {
-                            room_id: ROOM_ID,
-                            current_time:
-                                video.currentTime
-                                || mediaOffset
-                                || 0
-                        }
-                    );
-                }
-            }
-        );
-
+            updatePlexSyncStatus();
+        });
+        video.addEventListener('canplay', () => {
+            isBuffering = false;
+            recoverHostBuffer();
+            reconcilePlayback();
+        });
 
         video.addEventListener(
             'ended',
@@ -1894,123 +1872,12 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
 
-        video.addEventListener(
-            'pause',
-            () => {
-                updateCustomPlayerUI();
-
-
-                if (isSystemAction) {
-                    return;
-                }
-
-
-                if (isHost) {
-                    if (socket) {
-                        socket.emit(
-                            'user_pause',
-                            {
-                                room_id: ROOM_ID,
-                                current_time:
-                                    video.currentTime
-                                    || 0
-                            }
-                        );
-                    }
-
-
-                    reportPlexProgress(
-                        'paused'
-                    );
-                }
-            }
-        );
-
-
-        video.addEventListener(
-            'play',
-            () => {
-                updateCustomPlayerUI();
-                showMediaControlsOverlay();
-
-
-                if (isSystemAction) {
-                    return;
-                }
-
-
-                if (isHost) {
-                    if (socket) {
-                        socket.emit(
-                            'user_play',
-                            {
-                                room_id: ROOM_ID,
-                                current_time:
-                                    video.currentTime
-                                    || 0
-                            }
-                        );
-                    }
-
-
-                    reportPlexProgress(
-                        'playing'
-                    );
-
-                    return;
-                }
-
-
-                /*
-                 * Viewers are only allowed to locally
-                 * play while the room is itself playing.
-                 */
-                if (
-                    !roomIsPlaying
-                    || !currentMediaUrl
-                ) {
-                    safePauseVideo();
-                    return;
-                }
-
-
-                /*
-                 * Viewer intentionally resumes:
-                 * send them back to the live room position.
-                 */
-                const expectedTime =
-                    getExpectedRoomTime();
-
-
-                if (
-                    Number.isFinite(
-                        expectedTime
-                    )
-                ) {
-                    isSystemAction =
-                        true;
-
-
-                    try {
-                        video.currentTime =
-                            Math.max(
-                                0,
-                                expectedTime
-                            );
-                    } catch (e) {}
-
-
-                    setTimeout(
-                        () => {
-                            isSystemAction =
-                                false;
-                        },
-                        100
-                    );
-                }
-            }
-        );
-
+        video.addEventListener('pause', updateCustomPlayerUI);
+        video.addEventListener('play', () => {
+            if (!roomIsPlaying || (!isHost && viewerPaused)) video.pause();
+            updateCustomPlayerUI();
+            showMediaControlsOverlay();
+        });
 
         /*
          * Viewers no longer have a seekable timeline.
@@ -2736,310 +2603,32 @@ document.addEventListener('DOMContentLoaded', () => {
             // ROOM STATE
             // ==================================
 
-            socket.on(
-                'room_state',
-                data => {
-                    if (
-                        String(data.room_id)
-                        !== String(ROOM_ID)
-                    ) {
-                        return;
-                    }
-
-
-                    if (!data.url) {
-                        return;
-                    }
-
-
-                    switchToPlexMode();
-
-
-                    const incomingKey =
-                        String(
-                            data.rating_key
-                            || ''
-                        );
-
-
-                    const previousKey =
-                        String(
-                            CURRENT_KEY
-                            || ''
-                        );
-
-
-                    /*
-                     * Compare BEFORE replacing current values.
-                     */
-                    const sameMediaAlreadyLoaded =
-                        (
-                            currentMediaUrl
-                                === data.url
-                            && previousKey
-                                === incomingKey
-                            && video
-                            && (
-                                hls !== null
-                                || (
-                                    !!video.currentSrc
-                                    && video.readyState > 0
-                                )
-                            )
-                        );
-
-
-                    roomIsPlaying =
-                        data.is_playing
-                        !== false;
-
-
-                    isBuffering =
-                        false;
-
-
-                    if (mediaTitleElem) {
-                        mediaTitleElem.innerText =
-                            data.title
-                            || 'Now Playing';
-                    }
-
-
-                    CURRENT_KEY =
-                        incomingKey;
-
-
-                    currentMediaUrl =
-                        data.url;
-
-
-                    appContainer.dataset.currentKey =
-                        CURRENT_KEY;
-
-
-                    if (
-                        isHost
-                        && CURRENT_KEY
-                    ) {
-                        loadTrackOptions(
-                            CURRENT_KEY
-                        );
-                    }
-
-
-                    updateMediaSettingsVisibility();
-
-
-                    const currentTime =
-                        Number(
-                            data.current_time
-                            || data.offset
-                            || 0
-                        );
-
-
-                    setPlaybackClock(
-                        Date.now() / 1000,
-                        currentTime
-                    );
-
-
-                    if (
-                        sameMediaAlreadyLoaded
-                    ) {
-
-                        /*
-                         * Reconnect:
-                         * do not rebuild HLS.
-                         */
-                        if (
-                            !isHost
-                            && video
-                        ) {
-
-                            if (!roomIsPlaying) {
-
-                                if (
-                                    Math.abs(
-                                        video.currentTime
-                                        - currentTime
-                                    ) > 1
-                                ) {
-                                    isSystemAction =
-                                        true;
-
-
-                                    try {
-                                        video.currentTime =
-                                            Math.max(
-                                                0,
-                                                currentTime
-                                            );
-                                    } catch (e) {}
-
-
-                                    setTimeout(
-                                        () => {
-                                            isSystemAction =
-                                                false;
-                                        },
-                                        150
-                                    );
-                                }
-
-
-                                if (!video.paused) {
-                                    safePauseVideo();
-                                }
-
-                            } else if (
-                                !video.paused
-                            ) {
-
-                                const drift =
-                                    currentTime
-                                    - video.currentTime;
-
-
-                                if (
-                                    Math.abs(drift)
-                                    > 3
-                                ) {
-                                    isSystemAction =
-                                        true;
-
-
-                                    try {
-                                        video.currentTime =
-                                            Math.max(
-                                                0,
-                                                currentTime
-                                            );
-                                    } catch (e) {}
-
-
-                                    setTimeout(
-                                        () => {
-                                            isSystemAction =
-                                                false;
-                                        },
-                                        150
-                                    );
-                                }
-                            }
-                        }
-
-
-                        updateCustomPlayerUI();
-                        startSyncLoop();
-
-                        return;
-                    }
-
-
-                    /*
-                     * First room join, changed media,
-                     * or destroyed/lost player.
-                     */
-                    loadVideo(
-                        data.url,
-                        currentTime,
-                        roomIsPlaying
-                    );
-
-
-                    startSyncLoop();
-                }
-            );
-
-
-            socket.on(
-                'media_updated',
-                data => {
-                    if (
-                        String(data.room_id)
-                        !== String(ROOM_ID)
-                    ) {
-                        return;
-                    }
-
-
-                    if (!data.url) {
-                        return;
-                    }
-
-
+            function receiveRoomState(data) {
+                const previousMediaVersion = mediaVersion;
+                if (!acceptPlaybackState(data, true) || !data.url) return;
+                const sameMedia = currentMediaUrl === data.url &&
+                    CURRENT_KEY === String(data.rating_key || '') &&
+                    previousMediaVersion === mediaVersion && (hls || mediaReady);
+                switchToPlexMode();
+                CURRENT_KEY = String(data.rating_key || '');
+                appContainer.dataset.currentKey = CURRENT_KEY;
+                if (mediaTitleElem) mediaTitleElem.innerText = data.title || 'Now Playing';
+                if (isHost && CURRENT_KEY) loadTrackOptions(CURRENT_KEY);
+                if (!sameMedia) {
+                    viewerPaused = false;
+                    autoplayBlocked = false;
                     clearNextEpisodeCountdown();
-
-                    switchToPlexMode();
-
-
-                    currentMediaUrl =
-                        data.url;
-
-                    roomIsPlaying =
-                        true;
-
-                    isBuffering =
-                        false;
-
-
-                    if (mediaTitleElem) {
-                        mediaTitleElem.innerText =
-                            data.title
-                            || 'Now Playing';
-                    }
-
-
-                    CURRENT_KEY =
-                        data.rating_key
-                        || '';
-
-
-                    appContainer.dataset.currentKey =
-                        CURRENT_KEY;
-
-
-                    if (
-                        isHost
-                        && CURRENT_KEY
-                    ) {
-                        loadTrackOptions(
-                            CURRENT_KEY
-                        );
-                    }
-
-
-                    updateMediaSettingsVisibility();
-
-
-                    const startTime =
-                        Number(
-                            data.start_time
-                            || data.offset
-                            || 0
-                        );
-
-
-                    setPlaybackClock(
-                        data.server_epoch
-                        || (
-                            Date.now() / 1000
-                        ),
-                        startTime
-                    );
-
-
-                    loadVideo(
-                        data.url,
-                        startTime,
-                        true
-                    );
-
-
-                    startSyncLoop();
+                    loadVideo(data.url, getExpectedRoomTime());
+                } else {
+                    pendingSeek = true;
+                    reconcilePlayback();
+                    recoverHostBuffer();
                 }
-            );
+                startSyncLoop();
+                updateMediaSettingsVisibility();
+            }
+            socket.on('room_state', receiveRoomState);
+            socket.on('media_updated', receiveRoomState);
 
 
             // ==================================
@@ -3199,6 +2788,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     applyHostPermissions();
 
+                    if (isHost) {
+                        viewerPaused = false;
+                        socket.emit('join_watch_room', {room_id: ROOM_ID});
+                    }
+
 
                     if (
                         isHost
@@ -3229,235 +2823,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // PLAYBACK FORCE EVENTS
             // ==================================
 
-            socket.on(
-                'force_pause',
-                data => {
-                    const offset =
-                        Number(
-                            data.offset
-                            ?? (
-                                video
-                                    ? video.currentTime
-                                    : 0
-                            )
-                            ?? mediaOffset
-                            ?? 0
-                        );
-
-
-                    roomIsPlaying =
-                        false;
-
-
-                    mediaOffset =
-                        offset;
-
-
-                    localSyncStartTime =
-                        Date.now() / 1000;
-
-
-                    isBuffering =
-                        false;
-
-
-                    safePauseVideo();
-
-
-                    if (
-                        video
-                        && Number.isFinite(offset)
-                        && Math.abs(
-                            video.currentTime
-                            - offset
-                        ) > 0.75
-                    ) {
-                        isSystemAction =
-                            true;
-
-
-                        video.currentTime =
-                            offset;
-
-
-                        setTimeout(
-                            () => {
-                                isSystemAction =
-                                    false;
-                            },
-                            100
-                        );
-                    }
-
-
-                    updateCustomPlayerUI();
-                }
-            );
-
-
-            socket.on(
-                'force_play',
-                data => {
-                    roomIsPlaying =
-                        true;
-
-
-                    setPlaybackClock(
-                        data.server_epoch
-                        || data.start_time,
-                        data.offset
-                        || 0
-                    );
-
-
-                    ignoreSyncWindow =
-                        true;
-
-
-                    setTimeout(
-                        () => {
-                            ignoreSyncWindow =
-                                false;
-                        },
-                        3000
-                    );
-
-
-                    if (
-                        video
-                        && Math.abs(
-                            video.currentTime
-                            - mediaOffset
-                        ) > 1
-                    ) {
-                        video.currentTime =
-                            mediaOffset;
-                    }
-
-
-                    isBuffering =
-                        false;
-
-                    isSystemAction =
-                        true;
-
-
-                    if (video) {
-                        video.play().catch(
-                            e => {
-                                console.log(
-                                    'Autoplay blocked',
-                                    e
-                                );
-                            }
-                        );
-                    }
-
-
-                    setTimeout(
-                        () => {
-                            isSystemAction =
-                                false;
-                        },
-                        100
-                    );
-
-
-                    updateCustomPlayerUI();
-                }
-            );
-
-
-            /*
-             * #10:
-             * Explicit room seek event.
-             */
-            socket.on(
-                'force_seek',
-                data => {
-                    if (!video) {
-                        return;
-                    }
-
-
-                    const offset =
-                        Number(
-                            data.offset
-                            || 0
-                        );
-
-
-                    if (
-                        !Number.isFinite(
-                            offset
-                        )
-                    ) {
-                        return;
-                    }
-
-
-                    /*
-                     * Preserve local viewer pause.
-                     */
-                    const wasLocallyPaused =
-                        video.paused;
-
-
-                    roomIsPlaying =
-                        data.is_playing
-                        !== false;
-
-
-                    setPlaybackClock(
-                        data.server_epoch
-                        || (
-                            Date.now() / 1000
-                        ),
-                        offset
-                    );
-
-
-                    isSystemAction =
-                        true;
-
-
-                    try {
-                        video.currentTime =
-                            Math.max(
-                                0,
-                                offset
-                            );
-                    } catch (e) {}
-
-
-                    if (!roomIsPlaying) {
-
-                        try {
-                            video.pause();
-                        } catch (e) {}
-
-                    } else if (
-                        !wasLocallyPaused
-                    ) {
-
-                        video.play().catch(
-                            () => {}
-                        );
-                    }
-
-
-                    setTimeout(
-                        () => {
-                            isSystemAction =
-                                false;
-                        },
-                        150
-                    );
-
-
-                    updateCustomPlayerUI();
-                }
-            );
+            function receivePlayback(data) {
+                if (!acceptPlaybackState(data)) return;
+                pendingSeek = true;
+                reconcilePlayback();
+                recoverHostBuffer();
+            }
+            socket.on('force_pause', receivePlayback);
+            socket.on('force_play', receivePlayback);
+            socket.on('force_seek', receivePlayback);
 
 
             // ==================================
@@ -4117,200 +3491,36 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
 
     function startSyncLoop() {
-        if (syncInterval) {
-            clearInterval(
-                syncInterval
-            );
-        }
-
-
-        syncInterval =
-            setInterval(
-                () => {
-                    if (
-                        !video
-                        || video.paused
-                        || isBuffering
-                        || ignoreSyncWindow
-                    ) {
-                        return;
-                    }
-
-
-                    const expectedTime =
-                        (
-                            (Date.now() / 1000)
-                            - localSyncStartTime
-                        )
-                        + mediaOffset;
-
-
-                    const actualTime =
-                        video.currentTime;
-
-
-                    const drift =
-                        expectedTime
-                        - actualTime;
-
-
-                    if (!isHost) {
-
-                        if (
-                            Math.abs(drift)
-                            > 3
-                        ) {
-                            isSystemAction =
-                                true;
-
-
-                            video.currentTime =
-                                expectedTime;
-
-
-                            setTimeout(
-                                () => {
-                                    isSystemAction =
-                                        false;
-                                },
-                                100
-                            );
-
-                        } else if (
-                            drift > 0.5
-                        ) {
-
-                            if (
-                                video.playbackRate
-                                !== 1.15
-                            ) {
-                                video.playbackRate =
-                                    1.15;
-                            }
-
-                        } else if (
-                            drift < -0.5
-                        ) {
-
-                            if (
-                                video.playbackRate
-                                !== 0.9
-                            ) {
-                                video.playbackRate =
-                                    0.9;
-                            }
-
-                        } else {
-
-                            if (
-                                video.playbackRate
-                                !== 1
-                            ) {
-                                video.playbackRate =
-                                    1;
-                            }
-                        }
-
-                    } else {
-
-                        /*
-                         * Existing host sync behavior preserved.
-                         *
-                         * We have not changed this here because
-                         * this file rebuild is specifically the
-                         * custom-player/#10 work.
-                         */
-                        if (
-                            drift > 3
-                        ) {
-                            isBuffering =
-                                true;
-
-
-                            safePauseVideo();
-
-
-                            if (socket) {
-                                socket.emit(
-                                    'user_buffering',
-                                    {
-                                        room_id:
-                                            ROOM_ID,
-
-                                        current_time:
-                                            video.currentTime
-                                            || mediaOffset
-                                            || 0
-                                    }
-                                );
-                            }
-
-
-                            if (
-                                video.readyState >= 3
-                            ) {
-                                setTimeout(
-                                    () => {
-                                        if (socket) {
-                                            socket.emit(
-                                                'buffer_resolved',
-                                                {
-                                                    room_id:
-                                                        ROOM_ID,
-
-                                                    current_time:
-                                                        video.currentTime
-                                                        || mediaOffset
-                                                        || 0
-                                                }
-                                            );
-                                        }
-                                    },
-                                    500
-                                );
-                            }
-
-                        } else if (
-                            drift > 0.5
-                        ) {
-
-                            if (
-                                video.playbackRate
-                                !== 1.15
-                            ) {
-                                video.playbackRate =
-                                    1.15;
-                            }
-
-                        } else if (
-                            drift < -0.5
-                        ) {
-
-                            if (
-                                video.playbackRate
-                                !== 0.9
-                            ) {
-                                video.playbackRate =
-                                    0.9;
-                            }
-
-                        } else {
-
-                            if (
-                                video.playbackRate
-                                !== 1
-                            ) {
-                                video.playbackRate =
-                                    1;
-                            }
-                        }
-                    }
-
-                },
-                2000
-            );
+        if (syncInterval) clearInterval(syncInterval);
+        syncInterval = setInterval(() => {
+            if (!video || !mediaReady) return;
+            if (!roomIsPlaying) {
+                reconcilePlayback();
+                return;
+            }
+            if (viewerPaused ||
+                    video.paused || video.seeking || isBuffering || video.readyState < 3) return;
+            // The host's decoded position is the source, never a target to chase.
+            if (isHost) { video.playbackRate = 1; return; }
+            const target = getExpectedRoomTime();
+            const drift = target - video.currentTime;
+            if (Math.abs(drift) > 3) {
+                video.playbackRate = 1;
+                let buffered = false;
+                for (let i = 0; i < video.buffered.length; i++) {
+                    if (target >= video.buffered.start(i) && target + 0.5 < video.buffered.end(i)) buffered = true;
+                }
+                // Unbuffered resync is bounded to once every 15 seconds, only
+                // after playback is healthy. Never chase a target during a stall.
+                if (buffered || Date.now() - lastRecoverySeek >= 15000) {
+                    lastRecoverySeek = Date.now();
+                    video.currentTime = Math.max(0, target);
+                }
+            } else {
+                video.playbackRate = drift > 0.5 ? 1.05 : drift < -0.5 ? 0.95 : 1;
+            }
+        }, 2000);
     }
-
 
     // ==========================================
     // 21. CHAT DISPLAY
@@ -4899,8 +4109,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
 
-        currentMediaUrl =
-            url;
+        const generation = ++loadGeneration;
+        video.preload = 'auto';
+        mediaReady = false;
+        pendingSeek = true;
+        playPending = false;
+        isBuffering = false;
+        if (metadataListener) video.removeEventListener('loadedmetadata', metadataListener);
+        const onReady = () => {
+            if (generation !== loadGeneration) return;
+            mediaReady = true;
+            reconcilePlayback();
+            recoverHostBuffer();
+        };
+        currentMediaUrl = url;
 
 
         setUIState(
@@ -5005,50 +4227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             hls.on(
                 Hls.Events.MANIFEST_PARSED,
-                () => {
-
-                    if (
-                        targetStart > 0
-                    ) {
-                        try {
-                            video.currentTime =
-                                targetStart;
-                        } catch (e) {}
-                    }
-
-
-                    isSystemAction =
-                        true;
-
-
-                    if (shouldPlay) {
-
-                        video.play().catch(
-                            err => {
-                                console.warn(
-                                    'Plex autoplay blocked:',
-                                    err
-                                );
-                            }
-                        );
-
-                    } else {
-
-                        video.pause();
-                    }
-
-
-                    setTimeout(
-                        () => {
-                            isSystemAction =
-                                false;
-                        },
-                        200
-                    );
-
-
-                    updateCustomPlayerUI();
-                }
+                onReady
             );
 
 
@@ -5058,6 +4237,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     event,
                     data
                 ) => {
+                    if (generation !== loadGeneration) return;
                     console.warn(
                         'HLS error:',
                         data
@@ -5112,61 +4292,9 @@ document.addEventListener('DOMContentLoaded', () => {
             )
         ) {
 
-            video.src =
-                url;
-
-
-            video.addEventListener(
-                'loadedmetadata',
-                () => {
-
-                    if (
-                        targetStart > 0
-                    ) {
-                        try {
-                            video.currentTime =
-                                targetStart;
-                        } catch (e) {}
-                    }
-
-
-                    isSystemAction =
-                        true;
-
-
-                    if (shouldPlay) {
-
-                        video.play().catch(
-                            err => {
-                                console.warn(
-                                    'Native HLS autoplay blocked:',
-                                    err
-                                );
-                            }
-                        );
-
-                    } else {
-
-                        video.pause();
-                    }
-
-
-                    setTimeout(
-                        () => {
-                            isSystemAction =
-                                false;
-                        },
-                        200
-                    );
-
-
-                    updateCustomPlayerUI();
-
-                },
-                {
-                    once: true
-                }
-            );
+            metadataListener = onReady;
+            video.addEventListener('loadedmetadata', metadataListener, {once: true});
+            video.src = url;
         }
     }
 

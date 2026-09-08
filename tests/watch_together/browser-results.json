@@ -1,0 +1,2040 @@
+{
+  "generatedAt": "2026-09-08T18:03:49.376Z",
+  "sourceHash": "f18b5fbe29ba5c936c3d88eac069e94e549ba409a97feb49c5849098428c050f",
+  "method": "Real headless Edge, actual HLS.js 1.6.13 decoding generated HLS, CDP network throttling; minimal fixture UI; real backend test-client bridge (not WebSocket transport)",
+  "results": [
+    {
+      "name": "Nominal viewers play while below-bitrate profiles buffer",
+      "pass": true,
+      "details": "host=21.28s; paused, stalled or >3s drift=4:stalled, 9:stalled, 14:stalled; diagnostic below-bitrate profiles, recovery checked next",
+      "snapshots": {
+        "0": {
+          "paused": false,
+          "time": 21.281506,
+          "ready": 4,
+          "rate": 1,
+          "frames": 324,
+          "status": "Host",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 454.59999999403954,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 6857.39999999851,
+              "position": 0.012312
+            },
+            {
+              "event": "pause",
+              "time": 22162.39999999851,
+              "position": 15.274641
+            },
+            {
+              "event": "play",
+              "time": 23679.5,
+              "position": 15.34
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "1": {
+          "paused": false,
+          "time": 21.216874,
+          "ready": 4,
+          "rate": 1,
+          "frames": 342,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 599.9000000059605,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 6582.10000000149,
+              "position": 0.001131
+            },
+            {
+              "event": "pause",
+              "time": 21854.5,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 21854.60000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 21885.20000000298,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 21885.40000000596,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 23368.90000000596,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "2": {
+          "paused": false,
+          "time": 21.218841,
+          "ready": 4,
+          "rate": 1,
+          "frames": 330,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 999.3999999985099,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 6280.29999999702,
+              "position": 0.001031
+            },
+            {
+              "event": "pause",
+              "time": 21555,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 21555.10000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 21608,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 21608.10000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 23070,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "3": {
+          "paused": false,
+          "time": 21.210365,
+          "ready": 4,
+          "rate": 1,
+          "frames": 330,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 2468.39999999851,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 6001,
+              "position": 0.011609
+            },
+            {
+              "event": "pause",
+              "time": 21276.80000000447,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 21277,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 21341.80000000447,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 21342,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 22791.80000000447,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "4": {
+          "paused": false,
+          "time": 18.26204,
+          "ready": 1,
+          "rate": 1,
+          "frames": 99,
+          "status": "Buffering",
+          "events": [
+            {
+              "event": "play",
+              "time": 5704.69999999553,
+              "position": 0
+            },
+            {
+              "event": "waiting",
+              "time": 5722.5999999940395,
+              "position": 0
+            },
+            {
+              "event": "canplay",
+              "time": 6888.5,
+              "position": 0
+            },
+            {
+              "event": "waiting",
+              "time": 8875.5,
+              "position": 1.937805
+            },
+            {
+              "event": "canplay",
+              "time": 11637.69999999553,
+              "position": 1.992021
+            },
+            {
+              "event": "seeking",
+              "time": 12126.19999999553,
+              "position": 6.421499
+            },
+            {
+              "event": "waiting",
+              "time": 12127.09999999404,
+              "position": 6.421499
+            },
+            {
+              "event": "seeked",
+              "time": 16522.79999999702,
+              "position": 6.421499
+            },
+            {
+              "event": "canplay",
+              "time": 16523.5,
+              "position": 6.421499
+            },
+            {
+              "event": "waiting",
+              "time": 18135.09999999404,
+              "position": 7.969792
+            },
+            {
+              "event": "canplay",
+              "time": 20671.79999999702,
+              "position": 8.031832
+            },
+            {
+              "event": "pause",
+              "time": 20995.29999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 20995.59999999404,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 22509.29999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "waiting",
+              "time": 22509.5,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 25496.19999999553,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 25496.29999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 25497,
+              "position": 18.26204
+            },
+            {
+              "event": "waiting",
+              "time": 25497.09999999404,
+              "position": 18.26204
+            }
+          ],
+          "framesAdvanced": 0
+        },
+        "5": {
+          "paused": false,
+          "time": 21.22443,
+          "ready": 4,
+          "rate": 1,
+          "frames": 136,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 843.1999999955297,
+              "position": 13.439300104901195
+            },
+            {
+              "event": "waiting",
+              "time": 843.2999999970198,
+              "position": 13.439300104901195
+            },
+            {
+              "event": "seeking",
+              "time": 970,
+              "position": 13.4393
+            },
+            {
+              "event": "seeked",
+              "time": 999.3999999985099,
+              "position": 13.4393
+            },
+            {
+              "event": "canplay",
+              "time": 999.6999999955297,
+              "position": 13.4393
+            },
+            {
+              "event": "pause",
+              "time": 2729.2999999970198,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 2729.2999999970198,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 2793.6999999955297,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 2793.7999999970198,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 4243.5999999940395,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "6": {
+          "paused": false,
+          "time": 21.225999,
+          "ready": 4,
+          "rate": 1,
+          "frames": 330,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 615.2000000029802,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 5132.5,
+              "position": 0
+            },
+            {
+              "event": "pause",
+              "time": 20420.70000000298,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 20420.80000000447,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 20484.80000000447,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 20485,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 21934,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "7": {
+          "paused": false,
+          "time": 21.207538,
+          "ready": 4,
+          "rate": 1,
+          "frames": 329,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 1024.3999999985099,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 4860.70000000298,
+              "position": 0.003843
+            },
+            {
+              "event": "pause",
+              "time": 20123.89999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 20124,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 20190.39999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 20190.60000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 21638.70000000298,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "8": {
+          "paused": false,
+          "time": 21.208981,
+          "ready": 4,
+          "rate": 1,
+          "frames": 329,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 2494.8000000044703,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 4569.4000000059605,
+              "position": 0.006832
+            },
+            {
+              "event": "pause",
+              "time": 19831.90000000596,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 19832,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 19899,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 19899.10000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 21346,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "9": {
+          "paused": false,
+          "time": 18.258941,
+          "ready": 1,
+          "rate": 1,
+          "frames": 86,
+          "status": "Buffering",
+          "events": [
+            {
+              "event": "play",
+              "time": 4278.5,
+              "position": 0
+            },
+            {
+              "event": "waiting",
+              "time": 4278.70000000298,
+              "position": 0
+            },
+            {
+              "event": "canplay",
+              "time": 6888.60000000149,
+              "position": 0
+            },
+            {
+              "event": "waiting",
+              "time": 8873.80000000447,
+              "position": 1.936825
+            },
+            {
+              "event": "canplay",
+              "time": 11713.30000000447,
+              "position": 1.991021
+            },
+            {
+              "event": "seeking",
+              "time": 12138.80000000447,
+              "position": 7.877899
+            },
+            {
+              "event": "waiting",
+              "time": 12139.70000000298,
+              "position": 7.877899
+            },
+            {
+              "event": "seeking",
+              "time": 16433.90000000596,
+              "position": 8.084104
+            },
+            {
+              "event": "seeked",
+              "time": 16436.5,
+              "position": 8.084104
+            },
+            {
+              "event": "canplay",
+              "time": 16436.80000000447,
+              "position": 8.084104
+            },
+            {
+              "event": "waiting",
+              "time": 18392.90000000596,
+              "position": 9.972519
+            },
+            {
+              "event": "pause",
+              "time": 19533.90000000596,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 19534,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 21048.70000000298,
+              "position": 15.273969
+            },
+            {
+              "event": "waiting",
+              "time": 21049.10000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 24032.20000000298,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 24032.80000000447,
+              "position": 15.274523
+            },
+            {
+              "event": "seeking",
+              "time": 24033.20000000298,
+              "position": 18.258941
+            },
+            {
+              "event": "waiting",
+              "time": 24033.40000000596,
+              "position": 18.258941
+            }
+          ],
+          "framesAdvanced": 0
+        },
+        "10": {
+          "paused": false,
+          "time": 21.2237,
+          "ready": 4,
+          "rate": 1,
+          "frames": 260,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 187.39999999850988,
+              "position": 5.355600169748068
+            },
+            {
+              "event": "waiting",
+              "time": 187.39999999850988,
+              "position": 5.355600169748068
+            },
+            {
+              "event": "seeking",
+              "time": 321.3999999985099,
+              "position": 5.3556
+            },
+            {
+              "event": "seeked",
+              "time": 355.5,
+              "position": 5.3556
+            },
+            {
+              "event": "canplay",
+              "time": 355.79999999701977,
+              "position": 5.3556
+            },
+            {
+              "event": "pause",
+              "time": 10154,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 10154.19999999553,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 10220.19999999553,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 10220.39999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 11669.59999999404,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "11": {
+          "paused": false,
+          "time": 21.205508,
+          "ready": 4,
+          "rate": 1,
+          "frames": 249,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 238.89999999850988,
+              "position": 5.699700122073293
+            },
+            {
+              "event": "waiting",
+              "time": 239,
+              "position": 5.699700122073293
+            },
+            {
+              "event": "seeking",
+              "time": 623,
+              "position": 5.6997
+            },
+            {
+              "event": "seeked",
+              "time": 666.6000000014901,
+              "position": 5.6997
+            },
+            {
+              "event": "canplay",
+              "time": 666.8999999985099,
+              "position": 5.6997
+            },
+            {
+              "event": "pause",
+              "time": 9859.30000000447,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 9859.39999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 9927.10000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 9927.39999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 11373.89999999851,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "12": {
+          "paused": false,
+          "time": 21.212149,
+          "ready": 4,
+          "rate": 1,
+          "frames": 109,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "seeking",
+              "time": 1161.3000000044703,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 1192.3000000044703,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 1192.8000000044703,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 1727.1000000014901,
+              "position": 15.277188
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "13": {
+          "paused": false,
+          "time": 21.217636,
+          "ready": 4,
+          "rate": 1,
+          "frames": 215,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 603.6000000014901,
+              "position": 6.670300007633865
+            },
+            {
+              "event": "waiting",
+              "time": 603.7000000029802,
+              "position": 6.670300007633865
+            },
+            {
+              "event": "seeking",
+              "time": 2106.2000000029802,
+              "position": 6.6703
+            },
+            {
+              "event": "seeked",
+              "time": 2134.39999999851,
+              "position": 6.6703
+            },
+            {
+              "event": "canplay",
+              "time": 2134.7000000029802,
+              "position": 6.6703
+            },
+            {
+              "event": "waiting",
+              "time": 3396.2999999970198,
+              "position": 7.913106
+            },
+            {
+              "event": "canplay",
+              "time": 3522.7000000029802,
+              "position": 7.967321
+            },
+            {
+              "event": "pause",
+              "time": 9255.29999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 9255.29999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 9322.89999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 9323,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 10771.70000000298,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 38
+        },
+        "14": {
+          "paused": false,
+          "time": 18.23854,
+          "ready": 1,
+          "rate": 1,
+          "frames": 32,
+          "status": "Buffering",
+          "events": [
+            {
+              "event": "play",
+              "time": 1161.8999999985099,
+              "position": 7.562100034333765
+            },
+            {
+              "event": "waiting",
+              "time": 1161.8999999985099,
+              "position": 7.562100034333765
+            },
+            {
+              "event": "seeking",
+              "time": 5589.60000000149,
+              "position": 7.5621
+            },
+            {
+              "event": "seeked",
+              "time": 5626.5,
+              "position": 7.5621
+            },
+            {
+              "event": "canplay",
+              "time": 5626.79999999702,
+              "position": 7.5621
+            },
+            {
+              "event": "waiting",
+              "time": 6056,
+              "position": 7.950466
+            },
+            {
+              "event": "pause",
+              "time": 8926.60000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 8926.60000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 10448.69999999553,
+              "position": 15.273969
+            },
+            {
+              "event": "waiting",
+              "time": 10449.39999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 13411.79999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 13412,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 13412.29999999702,
+              "position": 18.23854
+            },
+            {
+              "event": "waiting",
+              "time": 13412.39999999851,
+              "position": 18.23854
+            }
+          ],
+          "framesAdvanced": 0
+        }
+      }
+    },
+    {
+      "name": "All 15 viewers recover after bandwidth returns",
+      "pass": true,
+      "details": "unrecovered=none",
+      "snapshots": {
+        "0": {
+          "paused": false,
+          "time": 45.851702,
+          "ready": 4,
+          "rate": 1,
+          "frames": 692,
+          "status": "Host",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 454.59999999403954,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 6857.39999999851,
+              "position": 0.012312
+            },
+            {
+              "event": "pause",
+              "time": 22162.39999999851,
+              "position": 15.274641
+            },
+            {
+              "event": "play",
+              "time": 23679.5,
+              "position": 15.34
+            }
+          ],
+          "framesAdvanced": 31
+        },
+        "1": {
+          "paused": false,
+          "time": 45.787101,
+          "ready": 4,
+          "rate": 1,
+          "frames": 711,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 599.9000000059605,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 6582.10000000149,
+              "position": 0.001131
+            },
+            {
+              "event": "pause",
+              "time": 21854.5,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 21854.60000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 21885.20000000298,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 21885.40000000596,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 23368.90000000596,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 30
+        },
+        "2": {
+          "paused": false,
+          "time": 45.788211,
+          "ready": 4,
+          "rate": 1,
+          "frames": 699,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 999.3999999985099,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 6280.29999999702,
+              "position": 0.001031
+            },
+            {
+              "event": "pause",
+              "time": 21555,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 21555.10000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 21608,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 21608.10000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 23070,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 30
+        },
+        "3": {
+          "paused": false,
+          "time": 45.779649,
+          "ready": 4,
+          "rate": 1,
+          "frames": 698,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 2468.39999999851,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 6001,
+              "position": 0.011609
+            },
+            {
+              "event": "pause",
+              "time": 21276.80000000447,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 21277,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 21341.80000000447,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 21342,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 22791.80000000447,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 31
+        },
+        "4": {
+          "paused": false,
+          "time": 45.779801,
+          "ready": 4,
+          "rate": 1,
+          "frames": 443,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 5704.69999999553,
+              "position": 0
+            },
+            {
+              "event": "waiting",
+              "time": 5722.5999999940395,
+              "position": 0
+            },
+            {
+              "event": "canplay",
+              "time": 6888.5,
+              "position": 0
+            },
+            {
+              "event": "waiting",
+              "time": 8875.5,
+              "position": 1.937805
+            },
+            {
+              "event": "canplay",
+              "time": 11637.69999999553,
+              "position": 1.992021
+            },
+            {
+              "event": "seeking",
+              "time": 12126.19999999553,
+              "position": 6.421499
+            },
+            {
+              "event": "waiting",
+              "time": 12127.09999999404,
+              "position": 6.421499
+            },
+            {
+              "event": "seeked",
+              "time": 16522.79999999702,
+              "position": 6.421499
+            },
+            {
+              "event": "canplay",
+              "time": 16523.5,
+              "position": 6.421499
+            },
+            {
+              "event": "waiting",
+              "time": 18135.09999999404,
+              "position": 7.969792
+            },
+            {
+              "event": "canplay",
+              "time": 20671.79999999702,
+              "position": 8.031832
+            },
+            {
+              "event": "pause",
+              "time": 20995.29999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 20995.59999999404,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 22509.29999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "waiting",
+              "time": 22509.5,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 25496.19999999553,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 25496.29999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 25497,
+              "position": 18.26204
+            },
+            {
+              "event": "waiting",
+              "time": 25497.09999999404,
+              "position": 18.26204
+            },
+            {
+              "event": "seeked",
+              "time": 31082.19999999553,
+              "position": 18.262641
+            },
+            {
+              "event": "canplay",
+              "time": 31082.29999999702,
+              "position": 18.262756
+            },
+            {
+              "event": "seeking",
+              "time": 32127.29999999702,
+              "position": 24.89264
+            },
+            {
+              "event": "waiting",
+              "time": 32127.39999999851,
+              "position": 24.89264
+            },
+            {
+              "event": "seeked",
+              "time": 32136.39999999851,
+              "position": 24.89264
+            },
+            {
+              "event": "canplay",
+              "time": 32136.5,
+              "position": 24.89264
+            }
+          ],
+          "framesAdvanced": 31
+        },
+        "5": {
+          "paused": false,
+          "time": 45.792859,
+          "ready": 4,
+          "rate": 1,
+          "frames": 505,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 843.1999999955297,
+              "position": 13.439300104901195
+            },
+            {
+              "event": "waiting",
+              "time": 843.2999999970198,
+              "position": 13.439300104901195
+            },
+            {
+              "event": "seeking",
+              "time": 970,
+              "position": 13.4393
+            },
+            {
+              "event": "seeked",
+              "time": 999.3999999985099,
+              "position": 13.4393
+            },
+            {
+              "event": "canplay",
+              "time": 999.6999999955297,
+              "position": 13.4393
+            },
+            {
+              "event": "pause",
+              "time": 2729.2999999970198,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 2729.2999999970198,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 2793.6999999955297,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 2793.7999999970198,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 4243.5999999940395,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 30
+        },
+        "6": {
+          "paused": false,
+          "time": 45.794049,
+          "ready": 4,
+          "rate": 1,
+          "frames": 698,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 615.2000000029802,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 5132.5,
+              "position": 0
+            },
+            {
+              "event": "pause",
+              "time": 20420.70000000298,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 20420.80000000447,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 20484.80000000447,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 20485,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 21934,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 31
+        },
+        "7": {
+          "paused": false,
+          "time": 45.775168,
+          "ready": 4,
+          "rate": 1,
+          "frames": 697,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 1024.3999999985099,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 4860.70000000298,
+              "position": 0.003843
+            },
+            {
+              "event": "pause",
+              "time": 20123.89999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 20124,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 20190.39999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 20190.60000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 21638.70000000298,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 31
+        },
+        "8": {
+          "paused": false,
+          "time": 45.776222,
+          "ready": 4,
+          "rate": 1,
+          "frames": 697,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 2494.8000000044703,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 4569.4000000059605,
+              "position": 0.006832
+            },
+            {
+              "event": "pause",
+              "time": 19831.90000000596,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 19832,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 19899,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 19899.10000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 21346,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 31
+        },
+        "9": {
+          "paused": false,
+          "time": 45.787653,
+          "ready": 4,
+          "rate": 1,
+          "frames": 432,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 4278.5,
+              "position": 0
+            },
+            {
+              "event": "waiting",
+              "time": 4278.70000000298,
+              "position": 0
+            },
+            {
+              "event": "canplay",
+              "time": 6888.60000000149,
+              "position": 0
+            },
+            {
+              "event": "waiting",
+              "time": 8873.80000000447,
+              "position": 1.936825
+            },
+            {
+              "event": "canplay",
+              "time": 11713.30000000447,
+              "position": 1.991021
+            },
+            {
+              "event": "seeking",
+              "time": 12138.80000000447,
+              "position": 7.877899
+            },
+            {
+              "event": "waiting",
+              "time": 12139.70000000298,
+              "position": 7.877899
+            },
+            {
+              "event": "seeking",
+              "time": 16433.90000000596,
+              "position": 8.084104
+            },
+            {
+              "event": "seeked",
+              "time": 16436.5,
+              "position": 8.084104
+            },
+            {
+              "event": "canplay",
+              "time": 16436.80000000447,
+              "position": 8.084104
+            },
+            {
+              "event": "waiting",
+              "time": 18392.90000000596,
+              "position": 9.972519
+            },
+            {
+              "event": "pause",
+              "time": 19533.90000000596,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 19534,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 21048.70000000298,
+              "position": 15.273969
+            },
+            {
+              "event": "waiting",
+              "time": 21049.10000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 24032.20000000298,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 24032.80000000447,
+              "position": 15.274523
+            },
+            {
+              "event": "seeking",
+              "time": 24033.20000000298,
+              "position": 18.258941
+            },
+            {
+              "event": "waiting",
+              "time": 24033.40000000596,
+              "position": 18.258941
+            },
+            {
+              "event": "seeked",
+              "time": 29612.60000000149,
+              "position": 18.258941
+            },
+            {
+              "event": "canplay",
+              "time": 29612.70000000298,
+              "position": 18.258941
+            },
+            {
+              "event": "seeking",
+              "time": 30128.70000000298,
+              "position": 24.354241
+            },
+            {
+              "event": "waiting",
+              "time": 30129,
+              "position": 24.354241
+            },
+            {
+              "event": "seeked",
+              "time": 30131.90000000596,
+              "position": 24.354241
+            },
+            {
+              "event": "canplay",
+              "time": 30132,
+              "position": 24.354267
+            }
+          ],
+          "framesAdvanced": 31
+        },
+        "10": {
+          "paused": false,
+          "time": 45.790141,
+          "ready": 4,
+          "rate": 1,
+          "frames": 628,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 187.39999999850988,
+              "position": 5.355600169748068
+            },
+            {
+              "event": "waiting",
+              "time": 187.39999999850988,
+              "position": 5.355600169748068
+            },
+            {
+              "event": "seeking",
+              "time": 321.3999999985099,
+              "position": 5.3556
+            },
+            {
+              "event": "seeked",
+              "time": 355.5,
+              "position": 5.3556
+            },
+            {
+              "event": "canplay",
+              "time": 355.79999999701977,
+              "position": 5.3556
+            },
+            {
+              "event": "pause",
+              "time": 10154,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 10154.19999999553,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 10220.19999999553,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 10220.39999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 11669.59999999404,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 30
+        },
+        "11": {
+          "paused": false,
+          "time": 45.771933,
+          "ready": 4,
+          "rate": 1,
+          "frames": 618,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 238.89999999850988,
+              "position": 5.699700122073293
+            },
+            {
+              "event": "waiting",
+              "time": 239,
+              "position": 5.699700122073293
+            },
+            {
+              "event": "seeking",
+              "time": 623,
+              "position": 5.6997
+            },
+            {
+              "event": "seeked",
+              "time": 666.6000000014901,
+              "position": 5.6997
+            },
+            {
+              "event": "canplay",
+              "time": 666.8999999985099,
+              "position": 5.6997
+            },
+            {
+              "event": "pause",
+              "time": 9859.30000000447,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 9859.39999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 9927.10000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 9927.39999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 11373.89999999851,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 30
+        },
+        "12": {
+          "paused": false,
+          "time": 45.776985,
+          "ready": 4,
+          "rate": 1,
+          "frames": 478,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "seeking",
+              "time": 1161.3000000044703,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 1192.3000000044703,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 1192.8000000044703,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 1727.1000000014901,
+              "position": 15.277188
+            }
+          ],
+          "framesAdvanced": 30
+        },
+        "13": {
+          "paused": false,
+          "time": 45.783339,
+          "ready": 4,
+          "rate": 1,
+          "frames": 584,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 603.6000000014901,
+              "position": 6.670300007633865
+            },
+            {
+              "event": "waiting",
+              "time": 603.7000000029802,
+              "position": 6.670300007633865
+            },
+            {
+              "event": "seeking",
+              "time": 2106.2000000029802,
+              "position": 6.6703
+            },
+            {
+              "event": "seeked",
+              "time": 2134.39999999851,
+              "position": 6.6703
+            },
+            {
+              "event": "canplay",
+              "time": 2134.7000000029802,
+              "position": 6.6703
+            },
+            {
+              "event": "waiting",
+              "time": 3396.2999999970198,
+              "position": 7.913106
+            },
+            {
+              "event": "canplay",
+              "time": 3522.7000000029802,
+              "position": 7.967321
+            },
+            {
+              "event": "pause",
+              "time": 9255.29999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 9255.29999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 9322.89999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 9323,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 10771.70000000298,
+              "position": 15.273969
+            }
+          ],
+          "framesAdvanced": 30
+        },
+        "14": {
+          "paused": false,
+          "time": 45.760482,
+          "ready": 4,
+          "rate": 1,
+          "frames": 388,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 1161.8999999985099,
+              "position": 7.562100034333765
+            },
+            {
+              "event": "waiting",
+              "time": 1161.8999999985099,
+              "position": 7.562100034333765
+            },
+            {
+              "event": "seeking",
+              "time": 5589.60000000149,
+              "position": 7.5621
+            },
+            {
+              "event": "seeked",
+              "time": 5626.5,
+              "position": 7.5621
+            },
+            {
+              "event": "canplay",
+              "time": 5626.79999999702,
+              "position": 7.5621
+            },
+            {
+              "event": "waiting",
+              "time": 6056,
+              "position": 7.950466
+            },
+            {
+              "event": "pause",
+              "time": 8926.60000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 8926.60000000149,
+              "position": 15.273969
+            },
+            {
+              "event": "play",
+              "time": 10448.69999999553,
+              "position": 15.273969
+            },
+            {
+              "event": "waiting",
+              "time": 10449.39999999851,
+              "position": 15.273969
+            },
+            {
+              "event": "seeked",
+              "time": 13411.79999999702,
+              "position": 15.273969
+            },
+            {
+              "event": "canplay",
+              "time": 13412,
+              "position": 15.273969
+            },
+            {
+              "event": "seeking",
+              "time": 13412.29999999702,
+              "position": 18.23854
+            },
+            {
+              "event": "waiting",
+              "time": 13412.39999999851,
+              "position": 18.23854
+            },
+            {
+              "event": "seeked",
+              "time": 18999.10000000149,
+              "position": 18.239257
+            },
+            {
+              "event": "canplay",
+              "time": 18999.19999999553,
+              "position": 18.239359
+            },
+            {
+              "event": "seeking",
+              "time": 20143.39999999851,
+              "position": 24.96954
+            },
+            {
+              "event": "waiting",
+              "time": 20143.60000000149,
+              "position": 24.96954
+            },
+            {
+              "event": "seeked",
+              "time": 20151.69999999553,
+              "position": 24.96954
+            },
+            {
+              "event": "canplay",
+              "time": 20151.69999999553,
+              "position": 24.96954
+            }
+          ],
+          "framesAdvanced": 30
+        }
+      }
+    },
+    {
+      "name": "Real HLS delayed join across host pause",
+      "pass": true,
+      "details": "host paused=true; viewer paused=true; viewer readyState=4",
+      "snapshots": {
+        "host": {
+          "paused": true,
+          "time": 1.25814,
+          "ready": 4,
+          "rate": 1,
+          "frames": 24,
+          "status": "Host",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 326,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 1167.3999999985099,
+              "position": 0.01065
+            },
+            {
+              "event": "pause",
+              "time": 2478.5999999940395,
+              "position": 1.25814
+            }
+          ]
+        },
+        "viewer": {
+          "paused": true,
+          "time": 1.257918,
+          "ready": 4,
+          "rate": 1,
+          "frames": 22,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "seeking",
+              "time": 6349.79999999702,
+              "position": 1.257918
+            },
+            {
+              "event": "seeked",
+              "time": 6377.20000000298,
+              "position": 1.257918
+            },
+            {
+              "event": "canplay",
+              "time": 6377.60000000149,
+              "position": 1.257918
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Real HLS delayed join across host play",
+      "pass": true,
+      "details": "host paused=false; viewer paused=false; viewer readyState=4",
+      "snapshots": {
+        "host": {
+          "paused": false,
+          "time": 8.481154,
+          "ready": 4,
+          "rate": 1,
+          "frames": 132,
+          "status": "Host",
+          "events": [
+            {
+              "event": "canplay",
+              "time": 327.79999999701977,
+              "position": 0
+            },
+            {
+              "event": "play",
+              "time": 2455.60000000149,
+              "position": 0.018195
+            }
+          ]
+        },
+        "viewer": {
+          "paused": false,
+          "time": 8.149364,
+          "ready": 4,
+          "rate": 1,
+          "frames": 67,
+          "status": "Synced",
+          "events": [
+            {
+              "event": "play",
+              "time": 6175.89999999851,
+              "position": 4.99030000000447
+            },
+            {
+              "event": "waiting",
+              "time": 6175.89999999851,
+              "position": 4.99030000000447
+            },
+            {
+              "event": "seeking",
+              "time": 6331.60000000149,
+              "position": 4.9903
+            },
+            {
+              "event": "seeked",
+              "time": 6471.20000000298,
+              "position": 4.9903
+            },
+            {
+              "event": "canplay",
+              "time": 6471.60000000149,
+              "position": 4.9903
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Real browser autoplay denial",
+      "pass": null,
+      "details": "This Edge configuration allowed autoplay; denial not reproduced. Deterministic denial test covers the error path.",
+      "snapshot": {
+        "paused": false,
+        "time": 3.495909,
+        "ready": 4,
+        "rate": 1,
+        "frames": 57,
+        "status": "Synced",
+        "events": [
+          {
+            "event": "play",
+            "time": 166.89999999850988,
+            "position": 0
+          },
+          {
+            "event": "waiting",
+            "time": 167,
+            "position": 0
+          },
+          {
+            "event": "seeking",
+            "time": 319.19999999552965,
+            "position": 0.2851
+          },
+          {
+            "event": "seeked",
+            "time": 338.79999999701977,
+            "position": 0.2851
+          },
+          {
+            "event": "canplay",
+            "time": 339.1000000014901,
+            "position": 0.2851
+          }
+        ]
+      }
+    }
+  ]
+}

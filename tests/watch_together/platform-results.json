@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-09-08T17:59:46.937Z",
+  "sourceHash": "f18b5fbe29ba5c936c3d88eac069e94e549ba409a97feb49c5849098428c050f",
+  "hostOS": "win32",
+  "method": "Actual browser engines on Windows, device profiles explicitly emulated, real WebSockets, synthetic HLS, temporary SQLite; no Plex requests",
+  "capabilities": [
+    {
+      "profile": "macOS Safari profile / Windows WebKit",
+      "engineVersion": "26.5",
+      "paused": true,
+      "time": 0,
+      "ready": 0,
+      "frames": 0,
+      "status": "Buffering",
+      "transport": "websocket",
+      "hlsJs": false,
+      "nativeHls": "",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15",
+      "touch": 0,
+      "preload": "auto",
+      "buffered": []
+    },
+    {
+      "profile": "iPhone profile / Windows WebKit",
+      "engineVersion": "26.5",
+      "paused": true,
+      "time": 0,
+      "ready": 0,
+      "frames": 0,
+      "status": "Buffering",
+      "transport": "websocket",
+      "hlsJs": false,
+      "nativeHls": "",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Mobile/15E148 Safari/604.1",
+      "touch": 0,
+      "preload": "auto",
+      "buffered": []
+    },
+    {
+      "profile": "Android Chrome profile / desktop Chrome",
+      "engineVersion": "152.0.7977.82",
+      "paused": true,
+      "time": 0,
+      "ready": 0,
+      "frames": 0,
+      "status": "\n                            Synced\n                        ",
+      "transport": "websocket",
+      "hlsJs": true,
+      "nativeHls": "maybe",
+      "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Mobile Safari/537.36",
+      "touch": 1,
+      "preload": "metadata",
+      "buffered": []
+    }
+  ],
+  "results": [
+    {
+      "profile": "macOS Safari profile / Windows WebKit",
+      "name": "room and real WebSocket connection",
+      "pass": true,
+      "details": "actual template and JavaScript loaded"
+    },
+    {
+      "profile": "macOS Safari profile / Windows WebKit",
+      "name": "HLS playback",
+      "pass": null,
+      "details": "This Windows WebKit build has neither compatible MSE nor native HLS. macOS/iPhone decoding cannot be inferred."
+    },
+    {
+      "profile": "iPhone profile / Windows WebKit",
+      "name": "room and real WebSocket connection",
+      "pass": true,
+      "details": "actual template and JavaScript loaded"
+    },
+    {
+      "profile": "iPhone profile / Windows WebKit",
+      "name": "HLS playback",
+      "pass": null,
+      "details": "This Windows WebKit build has neither compatible MSE nor native HLS. macOS/iPhone decoding cannot be inferred."
+    },
+    {
+      "profile": "Android Chrome profile / desktop Chrome",
+      "name": "late/start playback and decoded frames",
+      "pass": true,
+      "details": "autoplay permitted"
+    },
+    {
+      "profile": "Android Chrome profile / desktop Chrome",
+      "name": "host pause corrects small drift and holds",
+      "pass": true,
+      "details": "target=2.4813s; viewer=2.4806s; preload=auto"
+    },
+    {
+      "profile": "Android Chrome profile / desktop Chrome",
+      "name": "refresh during host pause",
+      "pass": true,
+      "details": "aligned within 50ms of 2.4813s"
+    },
+    {
+      "profile": "Android Chrome profile / desktop Chrome",
+      "name": "reconnect after missing host play",
+      "pass": true,
+      "details": "resumed decoding with real Socket.IO reconnect"
+    },
+    {
+      "profile": "Android Chrome profile / desktop Chrome",
+      "name": "slow late join honors intervening pause",
+      "pass": true,
+      "details": "both viewers paused within 50ms of 10.4351s"
+    },
+    {
+      "profile": "Physical devices",
+      "name": "macOS Safari, iPhone Safari, Android Chrome",
+      "pass": null,
+      "details": "No physical device sessions were provided. Engine/device-profile emulation does not certify native media, autoplay, screen locking, or OS background behavior."
+    }
+  ]
+}

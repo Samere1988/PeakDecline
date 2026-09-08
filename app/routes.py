@@ -20,6 +20,8 @@ main_bp = Blueprint('main', __name__)
 # In-memory live state used for fast Socket.IO sync.
 # The Room database row is also updated on important state changes so refresh/rejoin works.
 room_states = {}
+room_revisions = {}
+playback_epoch = uuid.uuid4().hex
 
 # Grace periods prevent rooms/host ownership from changing during a normal browser refresh.
 ROOM_EMPTY_GRACE_SECONDS = 60
@@ -149,19 +151,29 @@ def _get_room_state_payload(room):
         "start_time": start_time,
         "offset": offset,
         "server_epoch": _now(),
+        "playback_epoch": playback_epoch,
+        "revision": room_revisions.get(room_id, 0),
+        "media_version": state.get("media_version", ""),
+        "playback_intent": status in ("playing", "buffering"),
+        "buffer_id": state.get("buffer_id"),
     }
 
 
-def _save_room_playback_state(room_id, status, offset=None, start_time=None):
+def _save_room_playback_state(room_id, status, offset=None, start_time=None,
+                              buffer_id=None, new_media=False):
     """Keep memory and database playback state aligned."""
     room_id = _room_key(room_id)
     start_time = float(start_time if start_time is not None else _now())
     offset = float(offset or 0.0)
 
+    previous = room_states.get(room_id, {})
+    room_revisions[room_id] = room_revisions.get(room_id, 0) + 1
     room_states[room_id] = {
         "start_time": start_time,
         "offset": offset,
         "status": status,
+        "media_version": uuid.uuid4().hex if new_media else previous.get("media_version", ""),
+        "buffer_id": buffer_id,
     }
 
     room = Room.query.get(int(room_id))
@@ -1438,59 +1450,10 @@ def set_room_media(room_id):
         current_epoch = _now()
 
 
-        room_states[
-            _room_key(room.id)
-        ] = {
-            'start_time':
-                current_epoch,
-
-            'offset':
-                view_offset,
-
-            'status':
-                'playing'
-        }
-
-
-        # -------------------------------------------------
-        # LOAD THE NEW STREAM FOR EVERYONE
-        # -------------------------------------------------
-
-        socketio.emit(
-            'media_updated',
-            {
-                'room_id':
-                    room.id,
-
-                'url':
-                    full_url,
-
-                'title':
-                    room.current_media_title,
-
-                'rating_key':
-                    str(rating_key),
-
-                'start_time':
-                    view_offset,
-
-                'offset':
-                    view_offset,
-
-                'status':
-                    'playing',
-
-                'is_playing':
-                    True,
-
-                'server_epoch':
-                    current_epoch
-            },
-            to=(
-                f'room_'
-                f'{_room_key(room.id)}'
-            )
-        )
+        _save_room_playback_state(room.id, 'playing', view_offset,
+                                  current_epoch, new_media=True)
+        socketio.emit('media_updated', _get_room_state_payload(room),
+                      to=f"room_{room.id}")
 
 
         return jsonify({
@@ -2019,110 +1982,93 @@ def get_room_next_episode(room_id, rating_key):
         }), 500
 
 # --- WATCH PARTY PLAYBACK SOCKET EVENTS ---
+def _playback_command(data):
+    if not isinstance(data, dict):
+        return None
+    try:
+        room_id = str(int(data.get('room_id')))
+        position = float(data.get('current_time', 0))
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not math.isfinite(position) or position < 0:
+        return None
+    if not _is_current_user_room_host(room_id):
+        return None
+    state = room_states.get(room_id, {})
+    if state.get('status') == 'game':
+        return None
+    if ('media_version' in data and
+            data['media_version'] != state.get('media_version', '')):
+        return None
+    return room_id, position
+
+
+def _broadcast_playback(room_id, event):
+    room = db.session.get(Room, int(room_id))
+    if room:
+        socketio.emit(event, _get_room_state_payload(room), to=f"room_{room_id}")
+
+
 @socketio.on('user_buffering')
 def handle_user_buffering(data):
-    room_id = _room_key(data.get('room_id'))
-    current_time = float(data.get('current_time', 0) or 0)
-    username = current_user.username if current_user.is_authenticated else "Guest"
-
-    # Current frontend only sends this from host. Keep backend protected too.
-    if not _is_current_user_room_host(room_id):
+    command = _playback_command(data)
+    if not command:
         return
-
-    _save_room_playback_state(room_id, 'paused', current_time)
-    socketio.emit('force_pause', {'user': username, 'offset': current_time}, to=f"room_{room_id}")
-
-@socketio.on('user_seek')
-def handle_user_seek(data):
-    room_id = _room_key(data.get('room_id'))
-
-    if not room_id:
+    room_id, position = command
+    state = room_states.get(room_id, {})
+    # A stall belongs to one authoritative revision and one playback episode.
+    if (state.get('status') != 'playing' or not data.get('buffer_id') or
+            data.get('revision') != room_revisions.get(room_id, 0)):
         return
+    _save_room_playback_state(room_id, 'buffering', position,
+                              buffer_id=data['buffer_id'])
+    _broadcast_playback(room_id, 'force_pause')
 
-    if not _is_current_user_room_host(room_id):
-        return
-
-    try:
-        current_time = float(
-            data.get('current_time', 0) or 0
-        )
-    except (TypeError, ValueError):
-        return
-
-    if current_time < 0:
-        return
-
-    is_playing = data.get('is_playing') is True
-
-    status = (
-        'playing'
-        if is_playing
-        else 'paused'
-    )
-
-    state = _save_room_playback_state(
-        room_id,
-        status,
-        current_time
-    )
-
-    socketio.emit(
-        'force_seek',
-        {
-            'offset': current_time,
-            'is_playing': is_playing,
-            'server_epoch': state['start_time']
-        },
-        to=f"room_{room_id}",
-        skip_sid=request.sid
-    )
 
 @socketio.on('buffer_resolved')
 def handle_buffer_resolved(data):
-    room_id = _room_key(data.get('room_id'))
-    current_time = float(data.get('current_time', 0) or 0)
-
-    if not _is_current_user_room_host(room_id):
+    command = _playback_command(data)
+    if not command:
         return
+    room_id, position = command
+    state = room_states.get(room_id, {})
+    if (state.get('status') != 'buffering' or not data.get('buffer_id') or
+            data.get('buffer_id') != state.get('buffer_id') or
+            data.get('revision') != room_revisions.get(room_id, 0)):
+        return
+    _save_room_playback_state(room_id, 'playing', position)
+    _broadcast_playback(room_id, 'force_play')
 
-    state = _save_room_playback_state(room_id, 'playing', current_time)
-    socketio.emit('force_play', {
-        'start_time': state['start_time'],
-        'server_epoch': state['start_time'],
-        'offset': current_time
-    }, to=f"room_{room_id}")
+
+@socketio.on('user_seek')
+def handle_user_seek(data):
+    command = _playback_command(data)
+    if not command:
+        return
+    room_id, position = command
+    _save_room_playback_state(room_id, 'playing' if data.get('is_playing') is True
+                              else 'paused', position)
+    _broadcast_playback(room_id, 'force_seek')
 
 
 @socketio.on('user_pause')
 def handle_user_pause(data):
-    room_id = _room_key(data.get('room_id'))
-    username = current_user.username if current_user.is_authenticated else "Guest"
-    current_time = float(data.get('current_time', 0) or 0)
-
-    if not _is_current_user_room_host(room_id):
+    command = _playback_command(data)
+    if not command:
         return
-
-    _save_room_playback_state(room_id, 'paused', current_time)
-    socketio.emit('force_pause', {
-        'user': username,
-        'offset': current_time
-    }, to=f"room_{room_id}")
+    room_id, position = command
+    _save_room_playback_state(room_id, 'paused', position)
+    _broadcast_playback(room_id, 'force_pause')
 
 
 @socketio.on('user_play')
 def handle_user_play(data):
-    room_id = _room_key(data.get('room_id'))
-    current_time = float(data.get('current_time', 0) or 0)
-
-    if not _is_current_user_room_host(room_id):
+    command = _playback_command(data)
+    if not command:
         return
-
-    state = _save_room_playback_state(room_id, 'playing', current_time)
-    socketio.emit('force_play', {
-        'start_time': state['start_time'],
-        'server_epoch': state['start_time'],
-        'offset': current_time
-    }, to=f"room_{room_id}")
+    room_id, position = command
+    _save_room_playback_state(room_id, 'playing', position)
+    _broadcast_playback(room_id, 'force_play')
 
 
 @socketio.on('host_started_game')
