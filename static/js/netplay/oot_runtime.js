@@ -61,6 +61,49 @@
   acquire(true);await new Promise(resolve=>unlock=resolve);
  });}else acquire(true);
  if(!await acquired)return;
+ // Runs in a worker from its source text, so it must not use this file's closure.
+ function extractWorker(){
+  self.onmessage=async({data})=>{
+   const log=[],keep=line=>{log.push(line);if(log.length>12)log.shift();};
+   const failed=()=>postMessage({error:'The original Ocarina of Time ROM could not be extracted.',log});
+   let rom;
+   try{const response=await fetch(data.romUrl);if(!response.ok)throw 0;rom=new Uint8Array(await response.arrayBuffer());}
+   catch{postMessage({error:'Could not load game data.'});return;}
+   // The extractor reports every asset; keep only the tail for failures.
+   self.Module={noInitialRun:true,locateFile:path=>data.buildUrl+path,print:keep,printErr:keep,onAbort:failed,
+    onRuntimeInitialized(){
+     try{
+      Module.FS.writeFile('/rom.z64',rom);rom=null;
+      if(Module.ccall('web_extract_rom','number',['string','string'],['/rom.z64','/oot.o2r'])!==0)return failed();
+      const bytes=Module.FS.readFile('/oot.o2r');postMessage({bytes:bytes.buffer},[bytes.buffer]);
+     }catch{failed();}
+    }};
+   importScripts(data.buildUrl+'soh.js');
+  };
+ }
+ // Native extraction runs for ~20 s without yielding. In this same-origin frame that
+ // would freeze the room page and its socket, so it gets a separate engine instance.
+ const extractRom=()=>new Promise((resolve,reject)=>{
+  const source=URL.createObjectURL(new Blob(['('+extractWorker+')()'],{type:'text/javascript'}));
+  const worker=new Worker(source);
+  const finish=()=>{worker.terminate();URL.revokeObjectURL(source);loading.signal.removeEventListener('abort',cancel);};
+  const cancel=()=>{finish();reject(new Error('Loading was cancelled.'));};
+  loading.signal.addEventListener('abort',cancel);
+  worker.onmessage=({data})=>{finish();if(data.log?.length)console.warn(data.log.join('\n'));data.error?reject(new Error(data.error)):resolve(data.bytes);};
+  worker.onerror=event=>{event.preventDefault();finish();reject(new Error('Could not load Ocarina of Time.'));};
+  worker.postMessage({buildUrl:new URL(document.body.dataset.buildUrl,location.href).href,romUrl:new URL(document.body.dataset.dataUrl,location.href).href});
+ });
+ // Cache extracted assets by runtime build and ROM URL, separately from saves.
+ // Extract before loading the page's engine so the two instances never overlap in memory.
+ const cacheKey=document.body.dataset.buildUrl+'oot-extracted-v1.o2r';
+ let cache,extracted;try{cache=await caches.open('oot-assets-v1');}catch{}
+ try{extracted=await (await cache?.match(cacheKey))?.arrayBuffer();}catch{}
+ if(!extracted){
+  status.textContent='Preparing Ocarina of Time…';
+  try{extracted=await extractRom();}catch(error){fail(error.message);return;}
+  if(closed)return;
+  if(cache)await cache.put(cacheKey,new Response(extracted)).catch(()=>{});
+ }
  const Module=window.Module={canvas,noInitialRun:true,
   locateFile:path=>document.body.dataset.buildUrl+path,
   print:message=>console.log(message),printErr:message=>console.warn(message),onAbort:fail,
@@ -70,19 +113,7 @@
     const fs=Module.FS;
     const fetchBytes=async url=>{const response=await fetch(url,{signal:loading.signal});if(!response.ok)throw new Error('Could not load game data.');return new Uint8Array(await response.arrayBuffer());};
     fs.writeFile('/soh.o2r',await fetchBytes(document.body.dataset.buildUrl+'soh.o2r'));
-    // Cache extracted assets by runtime build and ROM URL, separately from saves.
-    const cacheKey=document.body.dataset.buildUrl+'oot-extracted-v1.o2r';
-    let cache;try{cache=await caches.open('oot-assets-v1');}catch{}
-    const cached=await cache?.match(cacheKey);
-    if(cached)fs.writeFile('/oot.o2r',new Uint8Array(await cached.arrayBuffer()));
-    else{
-     status.textContent='Preparing Ocarina of Time…';
-     fs.writeFile('/rom.z64',await fetchBytes(document.body.dataset.dataUrl));
-     await new Promise(resolve=>setTimeout(resolve,50));
-     const result=Module.ccall('web_extract_rom','number',['string','string'],['/rom.z64','/oot.o2r']);
-     fs.unlink('/rom.z64');if(result!==0)throw new Error('The original Ocarina of Time ROM could not be extracted.');
-     if(cache)await cache.put(cacheKey,new Response(fs.readFile('/oot.o2r'))).catch(()=>{});
-    }
+    fs.writeFile('/oot.o2r',new Uint8Array(extracted));extracted=null;
     if(closed)return;
     // Explicit vanilla defaults; never configure the fork's external networking.
     fs.writeFile('/shipofharkinian.json',JSON.stringify({CVars:{gEnhancements:{TimeSavers:{}},gRemote:{Anchor:{Enabled:0}}}}));
