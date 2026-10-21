@@ -1,0 +1,74 @@
+diff --git a/src_rebuild/Game/C/loadsave.c b/src_rebuild/Game/C/loadsave.c
+index d62f17e..87c8e78 100644
+--- a/src_rebuild/Game/C/loadsave.c
++++ b/src_rebuild/Game/C/loadsave.c
+@@ -88,6 +88,9 @@ void ShowSavingWaitMessage(char *message, int height)
+ #ifndef PSX
+ void GetGameProfilePath(char* str)
+ {
++#ifdef __EMSCRIPTEN__
++ strcpy(str,"/save");return;
++#endif
+ 	char* homepath;
+ 
+ 	homepath = getenv(HOME_ENV); // "USERPROFILE"
+diff --git a/src_rebuild/utils/video_source/VideoPlayer.cpp b/src_rebuild/utils/video_source/VideoPlayer.cpp
+index e66519f..87fd938 100644
+--- a/src_rebuild/utils/video_source/VideoPlayer.cpp
++++ b/src_rebuild/utils/video_source/VideoPlayer.cpp
+@@ -455,7 +455,7 @@ void DrawFrame(ReadAVI::stream_format_t& stream_format, int frame_number, int cr
+ 
+ 	glUniform1i(g_FMVTextureLoc, 0);
+ 	glBindTexture(GL_TEXTURE_2D, g_FMVTexture);
+-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, image_w, image_h, 0, GL_RGB, GL_UNSIGNED_BYTE, g_FMVDecodedImageBuffer);
++	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_w, image_h, 0, GL_RGB, GL_UNSIGNED_BYTE, g_FMVDecodedImageBuffer);
+ 
+ 	GR_SetScissorState(0);
+ 	GR_EnableDepth(0);
+@@ -476,6 +476,25 @@ void DrawFrame(ReadAVI::stream_format_t& stream_format, int frame_number, int cr
+ 	PsyX_EndScene();
+ }
+ 
++#ifdef __EMSCRIPTEN__
++#include <string>
++EM_ASYNC_JS(int, PeakLoadMovie, (const char* filename, int movie), {
++    const path=UTF8ToString(filename);
++    try {
++        const response=await fetch(document.body.dataset.dataUrl+'/fmv/'+movie);
++        if(!response.ok)throw new Error('Cutscene download failed ('+response.status+').');
++        FS.mkdirTree(path.slice(0,path.lastIndexOf('/')));
++        FS.writeFile(path,new Uint8Array(await response.arrayBuffer()));
++        return 1;
++    }catch(error){Module.onAbort(error.message);return 0;}
++});
++struct PeakMovieFile {
++    std::string path;
++    explicit PeakMovieFile(const char* filename):path(filename){}
++    ~PeakMovieFile(){remove(path.c_str());}
++};
++#endif
++
+ void DoPlayFMV(RENDER_ARG* arg, int subtitles)
+ {
+ 	int fd = arg->render - (arg->render % 10);
+@@ -486,6 +505,10 @@ void DoPlayFMV(RENDER_ARG* arg, int subtitles)
+ 	sprintf(filename, "%sFMV\\%d\\RENDER%d.STR[0].avi", gDataFolder, fd, arg->render);
+ 	FS_FixPathSlashes(filename);
+ 
++#ifdef __EMSCRIPTEN__
++    if(!PeakLoadMovie(filename,arg->render))return;
++    PeakMovieFile downloadedMovie(filename);
++#endif
+ 	ReadAVI readAVI(filename);
+ 	
+ 	// also load subtitle file
+@@ -552,6 +575,9 @@ void DoPlayFMV(RENDER_ARG* arg, int subtitles)
+ 	// main loop
+ 	while (true)
+ 	{
++#ifdef __EMSCRIPTEN__
++        emscripten_sleep(1); // Let browser input, audio and spectator delivery advance.
++#endif
+ 		double delta = Util_GetHPCTime(&fmvTimer, 1);
+ 
+ 		if (delta > 1.0)

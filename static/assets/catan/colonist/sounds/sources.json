@@ -1,0 +1,295 @@
+{
+  "permission": "PeakDecline owner confirmed a license for Colonist assets in the task conversation.",
+  "source": "https://colonist.io",
+  "retrieved": "2026-09-16",
+  "assets": [
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_achievement_ck_progress.a6041ba5935a47b7a5b3.mp3",
+      "sha256": "66e38f476285b9bf0ea6e6c84398a57e4b7a140fd36ef4ff32bd0bdecd0ddeeb",
+      "file": "sfx_achievement_ck_progress.mp3",
+      "bytes": 37686
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_achievement_largest_army.ae919f6488a4e63c52fe.mp3",
+      "sha256": "03fb670a297e7b4669e108700d54764aad8b55c2a67da4a96337ba81c0bba1f4",
+      "file": "sfx_achievement_largest_army.mp3",
+      "bytes": 37686
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_achievement_longest_road.f73b7c0ccdd0df577bca.mp3",
+      "sha256": "c90eb944bcc9d719cf8790a89e9f41f1f8168c78888cf2df0f82289f6b5dc244",
+      "file": "sfx_achievement_longest_road.mp3",
+      "bytes": 37686
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_beginner_hint_activated.99512f2b1314db3489d6.mp3",
+      "sha256": "21a2432da2e5a40e0059acf52092975e2b00581bc28f09f38a96ce6a1fe725bf",
+      "file": "sfx_beginner_hint_activated.mp3",
+      "bytes": 4026
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_city_destroy.72dd3de3ddb780e2fb3c.mp3",
+      "sha256": "a348f7b07be661ba69dd43c63a5bec6303ce2271de89e0e82ef667e48c994851",
+      "file": "sfx_city_destroy.mp3",
+      "bytes": 11772
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_city_improvement.13c4b06a6bf61ca39459.mp3",
+      "sha256": "12e2a1eb6fe5fcc814e71a64401da061dd91922ec674e805f62dc3be39ea6d46",
+      "file": "sfx_city_improvement.mp3",
+      "bytes": 19296
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_city_place.ef88a7889150162d1350.mp3",
+      "sha256": "53750b39af00c4052e57ac512878953c809fe17781d2988db470a05f5c52b266",
+      "file": "sfx_city_place.mp3",
+      "bytes": 5921
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_city_wall_place.219aa0bd070ac4032644.mp3",
+      "sha256": "b6fce2fab1c7112013949e7304f88905d511179f889014fc3faf3aea6a724fab",
+      "file": "sfx_city_wall_place.mp3",
+      "bytes": 11772
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_click.9c3152cb7a312c82805e.mp3",
+      "sha256": "8cfa84b16278d074713ed100b9bd10de066496fee3a18c5d48c5efd03abe98c2",
+      "file": "sfx_click.mp3",
+      "bytes": 682
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_clock_tick.c0b0debac3d7298788e7.mp3",
+      "sha256": "668094a78a42973079ad01924db21e3c6e9326ba91529f1edbb60ff7551cf577",
+      "file": "sfx_clock_tick.mp3",
+      "bytes": 2374
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_devcard_bought.46ffc2c18d78b9b26aa1.mp3",
+      "sha256": "d96ee423b426263b41fdb3e0712919e0f9369993adb79a7099e86f27b83a172d",
+      "file": "sfx_devcard_bought.mp3",
+      "bytes": 21371
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_devcard_monopoly.8f00fbe4b24463a668b4.mp3",
+      "sha256": "45a0fa94d14fd24b0da143d7679b9cc3f7366ff041f2cbca45311ad1b39bc1d1",
+      "file": "sfx_devcard_monopoly.mp3",
+      "bytes": 37672
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_devcard_used.e75cc2960b64df57b35a.mp3",
+      "sha256": "dd44a53da061045e7c09d7256f3c9b7c82c2c804275e6b4521ee4e71ece7dda6",
+      "file": "sfx_devcard_used.mp3",
+      "bytes": 30149
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_dice_roll_1.72357fea36268b4d2746.mp3",
+      "sha256": "dc6bc588d2a18771aefcafb453432ec62c3a7454fb18cc6140d636e9cc619ded",
+      "file": "sfx_dice_roll_1.mp3",
+      "bytes": 8134
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_dice_roll_2.16053a8fd04ea7609f96.mp3",
+      "sha256": "6f309ad89ca3736ce66858b7212609cdb8a8c666ef97ad2c5ffe033ab04d922e",
+      "file": "sfx_dice_roll_2.mp3",
+      "bytes": 8134
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_dice_roll_3.61bd4619a24415ce2725.mp3",
+      "sha256": "f6f97fd6a948e5d87821b6f4bc6742ce05a4d43bcc41de069c8f6e447b708a38",
+      "file": "sfx_dice_roll_3.mp3",
+      "bytes": 8134
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_dice_roll_4.ac72a311905cf5bfad2a.mp3",
+      "sha256": "fb9e3607291ed0e1b8356e663639ab6b7656ed19c98b911aad05fb7484d9355f",
+      "file": "sfx_dice_roll_4.mp3",
+      "bytes": 8134
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_discard_broadcast.6161a89619b65cc63577.mp3",
+      "sha256": "f7131e3b6465e24b9ef01b4e8c8cc43e5873ae0420dc39a2a0ec45de74fbcef1",
+      "file": "sfx_discard_broadcast.mp3",
+      "bytes": 23057
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_discard_notification.f8b0f8122a6973c3d615.mp3",
+      "sha256": "68eb34fb0b35d1fec3be031727703225a0fc528991b1874bc4bf22159ed5adbc",
+      "file": "sfx_discard_notification.mp3",
+      "bytes": 30163
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_disconnect.5221e15ddb955d8ebb49.mp3",
+      "sha256": "5f56948e784a85ac5368414285f7252ae538ba801770c8fcabdc8929636f84e0",
+      "file": "sfx_disconnect.mp3",
+      "bytes": 3622
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_first_reminder.de262110f332233e6bab.mp3",
+      "sha256": "0b767ec66ecd124373cde903719802e644230466dfd4a3f01736ab35bc6fe61d",
+      "file": "sfx_first_reminder.mp3",
+      "bytes": 9094
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_game_started_guitar.2f90057d4fb02d884afa.mp3",
+      "sha256": "f9c08978ad284d523bc21e77f443c07707f7024eaabb398c1976b19c4d40f430",
+      "file": "sfx_game_started_guitar.mp3",
+      "bytes": 45503
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_game_started.361e1eda1fa0223d7a25.mp3",
+      "sha256": "308f77cd41122f8c34699c63828f68b3df9f31a918b70372ee20fe0bfca51211",
+      "file": "sfx_game_started.mp3",
+      "bytes": 37686
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_join_room.5961c5707bc03a482185.mp3",
+      "sha256": "f934a299f5a00c48d2fda8a17135b2275df449fa4da2aed86b81b4e7f93b7fd9",
+      "file": "sfx_join_room.mp3",
+      "bytes": 11590
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_knight_equip.b4884adc22ad2f5ac252.mp3",
+      "sha256": "584ffcc1df1122c1eaef6826abea39b4d93a69e4656d53ca2c2b59f0d1c4f122",
+      "file": "sfx_knight_equip.mp3",
+      "bytes": 5921
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_knight_place.604372b092e27ba0954a.mp3",
+      "sha256": "15b2cc3889ca5f268f69eabcdafd1be0fa428fda377d0636cdf77b11361e89bd",
+      "file": "sfx_knight_place.mp3",
+      "bytes": 5921
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_knight_upgrade.a8d6b3cf7c071b167732.mp3",
+      "sha256": "896e023b705cad65fe3a311cae8a24472a54ca79adaf207905a04d88bd805aae",
+      "file": "sfx_knight_upgrade.mp3",
+      "bytes": 5921
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_leave_room.471d70cdfe103a4afdce.mp3",
+      "sha256": "bce7fdcd34fc0f6052fe801aae181e1eb3a471e6318b509980fd8cc6f47e7eb9",
+      "file": "sfx_leave_room.mp3",
+      "bytes": 3334
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_message_notification.fe8a6a7ac76a97cc7ae4.mp3",
+      "sha256": "80ab7ba72431cc0be64684a07346e420fb83191e0002e8e178cf292b34be186b",
+      "file": "sfx_message_notification.mp3",
+      "bytes": 3334
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_metropolis_place.1be024ebfef9cda2091e.mp3",
+      "sha256": "e0005b4bfba781b5bda0e610a8a9bb237b616c8d1226f830c6d1ec3f8cdba25a",
+      "file": "sfx_metropolis_place.mp3",
+      "bytes": 23057
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_offer_acceptable.a5cb7ea299386e908402.mp3",
+      "sha256": "6ce74553bc20a4e26c0715155e1d61bde59b79d88451c95052aba90c033fe97f",
+      "file": "sfx_offer_acceptable.mp3",
+      "bytes": 5921
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_offer_accepted.1db63c4d77a3569babd7.mp3",
+      "sha256": "4efa01e5500eb2943bbea0afd88ddc5d25891db704439376bf20fcfb941e82b2",
+      "file": "sfx_offer_accepted.mp3",
+      "bytes": 6116
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_offer_not_acceptable.d7ca1b7b5f9dc94c6ec5.mp3",
+      "sha256": "34c7166a9e3352891065be571295d9555c6d50326133af1ee18ab19de1c2c609",
+      "file": "sfx_offer_not_acceptable.mp3",
+      "bytes": 5921
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_offer_rejected.9195821ea4c2ce7ae8a5.mp3",
+      "sha256": "3eb9a99eedc35d96c59c55333dc575891b35c396ee5c22a8615c757a9c1d018f",
+      "file": "sfx_offer_rejected.mp3",
+      "bytes": 6116
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_pirate_place.c32218267fdd6180b827.mp3",
+      "sha256": "3bb32f85d6eb1030c8a7cb12f629edcf88984d13623546ad8ab96f83757e5cba",
+      "file": "sfx_pirate_place.mp3",
+      "bytes": 15534
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_reconnect.7b7e2abb7694621b904f.mp3",
+      "sha256": "fd911a48a46550733bba1da8aa134dcd55f2761ce6b6e470bd91f75c45d08fc7",
+      "file": "sfx_reconnect.mp3",
+      "bytes": 3622
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_road_place.d101fe727f7ff45b8379.mp3",
+      "sha256": "7c6a80a950535aaa6802c1fdce2602eb2944c91871538f797a9781261e34a5fa",
+      "file": "sfx_road_place.mp3",
+      "bytes": 11772
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_robber_place.0636480d74972f958ca9.mp3",
+      "sha256": "368ba1c400dfbdccd92a4eb92f42ce32247a57998a9c0fa861e015a3bb1109bc",
+      "file": "sfx_robber_place.mp3",
+      "bytes": 15534
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_room_get_ready.4645252f794ab5277916.mp3",
+      "sha256": "e8c3aafd0b76d04366c188024af4b05fcb14f908e0b715f843e4ca0d51371c0b",
+      "file": "sfx_room_get_ready.mp3",
+      "bytes": 3718
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_room_setting_updated.26996274eec91bbe677d.mp3",
+      "sha256": "78d7a5d7023e4267cea5d5aea57e880661a3c4aa06cdd44bd7f3fd78d04c566b",
+      "file": "sfx_room_setting_updated.mp3",
+      "bytes": 3718
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_settlement_phase_ended_guitar.21440c801c97c0a7e291.mp3",
+      "sha256": "18339e1d6fb892daa7243f28fd649c40821dbe7a533e5d8a007b4729a472ac35",
+      "file": "sfx_settlement_phase_ended_guitar.mp3",
+      "bytes": 57903
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_settlement_phase_ended.7e282406bfa6bbac3eb7.mp3",
+      "sha256": "0190f0b2f7f640caf2bfc82e28e65dd7b1d3343e732c097fa6b239b2cbad7594",
+      "file": "sfx_settlement_phase_ended.mp3",
+      "bytes": 30163
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_settlement_place.c5c4ccb495e1499035b1.mp3",
+      "sha256": "9ae64fac3535e18db8b87995b8207a0fddc40a3bdfae777a5d9c01a3bcb6cbde",
+      "file": "sfx_settlement_place.mp3",
+      "bytes": 11772
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_ship_move.2c671d2aea50c68e2a87.mp3",
+      "sha256": "cba630b3ed6e2f052d3676c6e50ecd0254fe51696ac1b5eb06d8b0a4bafbf55f",
+      "file": "sfx_ship_move.mp3",
+      "bytes": 6022
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_ship_place.bce9c3babbf749b26fb7.mp3",
+      "sha256": "73680ba42c07931a7d5dc7f7213199acbb558b6725e10b9fe50bfd589a1563aa",
+      "file": "sfx_ship_place.mp3",
+      "bytes": 11772
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_victory.53cd54688682aff09802.mp3",
+      "sha256": "7bf478c1d8407373a8b9723aace874452cfeb7ee79a1d476514d7d8903a6eccd",
+      "file": "sfx_victory.mp3",
+      "bytes": 14901
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_vote_reminder.7373523cf3465ee3fd99.mp3",
+      "sha256": "d8912474533fab0b68e5a70304796384134d4d62fa31ad5a3e9741dd2175d2c3",
+      "file": "sfx_vote_reminder.mp3",
+      "bytes": 5921
+    },
+    {
+      "source": "https://cdn.colonist.io/dist/assets/sfx_your_turn.a14bdbd78995b7bec794.mp3",
+      "sha256": "3ada4192429abcf4aa553a7a2345078cccd0dd44946432dd73f50bff6ac787c6",
+      "file": "sfx_your_turn.mp3",
+      "bytes": 15622
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/RetroPortingToolKit/recomp-net",
+  "commit": "e2491d2a78e37fb18fca087ebc34ad8261caae9c",
+  "component": "portable input rings (not native session transport)",
+  "sha256": {
+    "include/recomp_net/config.h": "bc2694ca7c32a67080c57f1b428588d7e7dcfe66b24b531dd404bb068475cf35",
+    "include/recomp_net/input.h": "fc20dd97f642791c158e697be5295e1d7c7d7fb8f3061b03d9c22d13e04d48f8",
+    "include/recomp_net/types.h": "0486274d3082ee2170e58ab81ce6576a688bbe428cc78b61f6aec2b486e08d94",
+    "LICENSE": "cc98a0caf9b8279f318a1befb17b530433ad647375d789f211e0223d4697a882",
+    "src/input/rnet_rings.c": "67fdfb5030fd48cb19560b04631d319695d3e23683446e0d31faa95378ddd2c6",
+    "src/input/rnet_rings.h": "7c43a4ec487c1f506852d8d3f56a73f037d15aaa50f977048908724957371b31"
+  }
+}

@@ -1,0 +1,1477 @@
+{
+  "retrieved": "2026-09-24",
+  "sources": {
+    "gameBundle": "https://cdn.colonist.io/dist/js/shared.124dde6991b0f7b9af54.js",
+    "rulesPage": "https://colonist.io/catan-rules/cities-and-knights",
+    "spriteAtlasIndex": "https://cdn.colonist.io/dist/assets/game_spritesheet_0.eed8dd9beaec437fcf0c.json",
+    "spriteAtlasImage": "https://cdn.colonist.io/dist/assets/game_spritesheet_0.094536749cb2bc828533.webp"
+  },
+  "assets": [
+    {
+      "file": "barbarian_tracker_hex_attack.svg",
+      "source": "https://cdn.colonist.io/dist/assets/barbarian_tracker_hex_attack.f13765aff8dcd0333e3e.svg",
+      "sha256": "7ed8bd9a3b5e4c39bed5f6bb79a2afdc9e945b8ace34b972586e36e714829f18",
+      "bytes": 2686,
+      "category": "barbarians",
+      "viewBox": ""
+    },
+    {
+      "file": "barbarian_tracker_hex_step.png",
+      "source": "https://cdn.colonist.io/dist/assets/ck_barbarian_tracker_example.c527478dfd470fd53fa7.png",
+      "sha256": "6b759f5089ade1c0837b2ed65a0ec47dd9243909f5a231dbf5e13b5caaa0fd7d",
+      "bytes": 2345,
+      "category": "barbarians",
+      "derivedFrom": "ck_barbarian_tracker_example.png",
+      "crop": [
+        11,
+        6,
+        89,
+        97
+      ]
+    },
+    {
+      "file": "card_cloth.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_cloth.d0d158fa81f0eb0b0a3b.svg",
+      "sha256": "1a7fd96fe457b18f1ff33ba8e048f8ae027a30a92fa594e5754ec54bc6674df3",
+      "bytes": 9293,
+      "category": "commodities",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_coin.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_coin.fa1ec5179bfed0886c9d.svg",
+      "sha256": "c2992e225742c140f859067e8b9a4328d600281e0f8ce1fe6935c09d67a2a82f",
+      "bytes": 11368,
+      "category": "commodities",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_paper.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_paper.42eb7a7b91cc9cf155f3.svg",
+      "sha256": "bbf9d5967e2c1f6cf8270729358a8997b2b12e011f171dd5c1cef09e47a8dd04",
+      "bytes": 4913,
+      "category": "commodities",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_back.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_back.999e2100ec85897f785f.svg",
+      "sha256": "527306eb428e460b975ecee847bc9bc45bad18aeef606ddd672cabc8890a1ba3",
+      "bytes": 10008,
+      "category": "progress-cards",
+      "viewBox": ""
+    },
+    {
+      "file": "card_progress_politics_back.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_politics_back.fb615bb90ce2c66fe346.svg",
+      "sha256": "dd583585daa01b9593e943abd8f0ea00b71ef9624f05c378417834904c61048d",
+      "bytes": 19939,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_politics_bishop.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_politics_bishop.8f94776d21efcacfa196.svg",
+      "sha256": "79173898d1871977b754f4f411aea285db4fac0ae4b5eaec2dee678859e48ce0",
+      "bytes": 21535,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_politics_constitution.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_politics_constitution.86fdbdb04ea427c71409.svg",
+      "sha256": "2e0e35391e854f70c8873873c900c1430a2f5fabb2d7ecdca4254528968089be",
+      "bytes": 28085,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_politics_deserter.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_politics_deserter.8559ed0fe5d6e61c399d.svg",
+      "sha256": "8a6d0ffba6334940056a9ee09ad03b8cc00758e58246954d5cf03fff48bf8d4b",
+      "bytes": 16350,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_politics_diplomat.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_politics_diplomat.a8aebecc914f804e9308.svg",
+      "sha256": "bc0c70d7ac0139775a30583676667e271ec250e06db0c2f8bfd91aae9ae32ea9",
+      "bytes": 5408,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_politics_intrigue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_politics_intrigue.358a3e69a179ce765291.svg",
+      "sha256": "004ce4196fc8fccf08b9bea3b0a05dd95e8ba6373dd30d8d10e40e04c307375e",
+      "bytes": 17406,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_politics_saboteur.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_politics_saboteur.91dd28c2c711daa19a5a.svg",
+      "sha256": "88557c4e2997a47208805cbbc64683fd2ca427024ecbe1bef9e9fbcab35a1d24",
+      "bytes": 35474,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_politics_spy.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_politics_spy.19442bf93b99600979cb.svg",
+      "sha256": "4bdbf2118a816bb4a033e215614d367c33923fbe9e75692cbefaa2c958ffa1dc",
+      "bytes": 88766,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_politics_warlord.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_politics_warlord.fa116cf5a8b6b6082d2d.svg",
+      "sha256": "a2b193bc3d32ebb906dae3b570385a1b8889b59902bee9c7a8c836dc491e6201",
+      "bytes": 28065,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_politics_wedding.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_politics_wedding.2c9f495b42607cdf48b1.svg",
+      "sha256": "6dc9d7316b2b8bd32aadb9f2bd435b4f2bceca33c9294eb29c20f6bdefffc8a3",
+      "bytes": 40683,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_science_alchemist.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_science_alchemist.84e49fb459b1e915e039.svg",
+      "sha256": "4fd232cf2cab62d599b0ec49bc4ab5b96bbd8a82c62043eadc4a478c0bd6deb1",
+      "bytes": 13259,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_science_back.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_science_back.679df2124294270a9fdf.svg",
+      "sha256": "4716222dc8f6114e8e90ce4fa44723d04339d215d40cc11aea70f7a946119885",
+      "bytes": 20077,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_science_crane.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_science_crane.3b398a2d1bfa8d679dfe.svg",
+      "sha256": "21f0ef2796995d13d904de3c9431084405636a0369969866ba70485c0b6c54e3",
+      "bytes": 35370,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_science_engineer.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_science_engineer.74d8a72304f6de0ba9f6.svg",
+      "sha256": "8abff105c59eca46024516c84ac925b62b42f1bf1fd052c5cce3ab9291976ef3",
+      "bytes": 13748,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_science_inventor.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_science_inventor.975ce928d050685ef4a8.svg",
+      "sha256": "457062e215576d7b263e1d532f2d6f7d20788c6ef1f89d76218b94d14eb5c9ce",
+      "bytes": 12718,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_science_irrigation.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_science_irrigation.8e3b3e037cb13e3c6ccd.svg",
+      "sha256": "b32011136cc6c7cb79622ebae4ff060f1047e96c7aabf26c784832df12af78fa",
+      "bytes": 113560,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_science_medicine.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_science_medicine.2383b5ba0184a11b8a0a.svg",
+      "sha256": "69fce6d1b7717dd0b0fe85dd49d39fb6e5db88b6a11a3ce00f711b9803633711",
+      "bytes": 95461,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_science_mining.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_science_mining.57f4a09fa706b3f62909.svg",
+      "sha256": "1df901e6d903d03dbb2daccd9a3f595f98d5432667c02548c68ea04b6ebd92f9",
+      "bytes": 44781,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_science_printer.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_science_printer.bb781a2164021b032e8c.svg",
+      "sha256": "df9d6b9ae6724ac9c8431840876a965576d3973d6e92f74f6dd5aeb9b6ba735a",
+      "bytes": 28112,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_science_road_building.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_science_road_building.3f972a0989faf60df257.svg",
+      "sha256": "7cbae3ded8434c22dc3435f1d61d40454f126f79b0c98eb60786865e3740cfc3",
+      "bytes": 11021,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_science_smith.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_science_smith.4b4e3536542567a917bf.svg",
+      "sha256": "7f619605056f7f1d0e45a7e18b52dca0a2d831e1b35b45b7f1004efdbc1b6312",
+      "bytes": 28534,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_trade_back.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_trade_back.0198349da9287ab13eb1.svg",
+      "sha256": "ea925392c0456f7f14fb02d6f8df538a4444ced12dd40678abeaaa83ac4bb01f",
+      "bytes": 19867,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_trade_commercial_harbor.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_trade_commercial_harbor.928146af979e0e396be4.svg",
+      "sha256": "5e1cc03a9d7f030d6f9a7e44e0c17d8a1ca4fd7a6d3c81e46f02fefaa0ac3f99",
+      "bytes": 58486,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_trade_commodity_monopoly.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_trade_commodity_monopoly.385f8154b2e8fab61bf5.svg",
+      "sha256": "1e4cc34be1d4f9e1f3f04b77d34ad8d49620e4a1aab160fe733a049e82a7d330",
+      "bytes": 39607,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_trade_master_merchant.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_trade_master_merchant.ce137f115247a6cb678e.svg",
+      "sha256": "3ef2108ac5eb6b435402cac88b70057b135a56e49ca33cb253b464f066902c56",
+      "bytes": 53217,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_trade_merchant.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_trade_merchant.98ddd9f811d73325d94d.svg",
+      "sha256": "c63b2c38b44044938ab800b7a641833ec4109155bb2d8a2423d666e2bc57c626",
+      "bytes": 4901,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_trade_merchant_fleet.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_trade_merchant_fleet.7f798e55127b89f1c966.svg",
+      "sha256": "c9a285e9c4c4e8517752e5c641dc738e7bfc07e95eeca1ac8d3b6c23f21552f4",
+      "bytes": 19600,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "card_progress_trade_resource_monopoly.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_progress_trade_resource_monopoly.2e3904c38a24f239229c.svg",
+      "sha256": "e2078068eb2b77b517e3057f7e41d2bf263b346f651cf11354183d65c391c9b6",
+      "bytes": 40188,
+      "category": "progress-cards",
+      "viewBox": "0 0 292 407"
+    },
+    {
+      "file": "cities_and_knights.svg",
+      "source": "https://cdn.colonist.io/dist/assets/cities_and_knights.b88f54dbb5ad30f46de7.svg",
+      "sha256": "37f4e69310e03d9508486eb106681c9452685ebeb868cc4055c248807f6c5d9c",
+      "bytes": 102907,
+      "category": "emblem",
+      "viewBox": "0 0 65 64"
+    },
+    {
+      "file": "cities_and_knights_56player.svg",
+      "source": "https://cdn.colonist.io/dist/assets/cities_and_knights_56player.8d3009e523c0bbdd00ea.svg",
+      "sha256": "5a3b85db6a8c5983c516ab40c9ba15a3bfe1cc866eedec2a11abf2a5adfcf80d",
+      "bytes": 47960,
+      "category": "emblem",
+      "viewBox": "0 0 65 64"
+    },
+    {
+      "file": "city_wall_black.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_black.48c681c0690df06eb44f.svg",
+      "sha256": "b9c1c3c7192596826c68b74aa59043fb86033e74f53b802723d52400f40a4ba6",
+      "bytes": 2815,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_wall_blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_blue.b8235dda6d4fa0ab26cf.svg",
+      "sha256": "a128728dbba6ee6bb89e4b87f867d2e6847679304ba3103d64f88b71b4e89c5b",
+      "bytes": 3241,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_wall_bronze.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_bronze.3a964572b70d2b458c91.svg",
+      "sha256": "989524488eb85b710cb36d16bd1eac3f98411cb02211f4507bf24caae0726a01",
+      "bytes": 3172,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_wall_gold.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_gold.984963f350d61fa96331.svg",
+      "sha256": "331d289a9df93633269acb577ccb44d3f78ec078a4c5a7b160668a98e4b91363",
+      "bytes": 3278,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_wall_green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_green.6d64a1276d6823f48223.svg",
+      "sha256": "92d0a21679dc13a6dec4e672c54355c22cd777917a0516e60a1230903a106cb5",
+      "bytes": 3202,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_wall_mysticblue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_mysticblue.d7cc943ea55d20f7c7a8.svg",
+      "sha256": "ee623f0b94f13987af42d08932813c3338ac1bdff7daffabc665b08739357e85",
+      "bytes": 3173,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_wall_orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_orange.b757cd76678f5d71470a.svg",
+      "sha256": "2eb4b281c26116ec6999d82d13872c49564e4bdc3654e8515e47cecb0ebe26f3",
+      "bytes": 3095,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_wall_pink.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_pink.faf96df6cfa36a3c8146.svg",
+      "sha256": "341aab25998b9352ffd9cb4d35f9279f22bfb98ea7942866b96c98bad9f3ed9b",
+      "bytes": 3233,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_wall_purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_purple.2bbf47ba3b4f4684fb17.svg",
+      "sha256": "ed1cd88f6ce1247791b34ad50d960fb4a8c0dd2fbbfe2ad5292d6dadb87c775b",
+      "bytes": 3198,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_wall_red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_red.a7d0cd496c747715b6f3.svg",
+      "sha256": "64bf856670c95c61a107bc97b34f7331cc108eef59c41cd180d86615966d1ccc",
+      "bytes": 3188,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_wall_silver.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_silver.396d32811ce73c2cc28e.svg",
+      "sha256": "28439e14dc57f9dc7d3a98f8436b04edf78e21f349af4dce973480e8cf54840b",
+      "bytes": 3280,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_wall_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_wall_white.8224311ef29d6d210922.svg",
+      "sha256": "c3b33ae2ec127fb51018c4d87534849777fa89d27be34841682c835cd8b74a56",
+      "bytes": 2828,
+      "category": "city-walls",
+      "viewBox": ""
+    },
+    {
+      "file": "city_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_white.cca576079023a2bdc80f.svg",
+      "sha256": "ade1aee3585b9731de7ad9bb42a3ba659f7e4cc3ec82c9b13ca383429a2e8d64",
+      "bytes": 5827,
+      "category": "interface",
+      "viewBox": ""
+    },
+    {
+      "file": "ck_barbarian_tracker_example.png",
+      "source": "https://cdn.colonist.io/dist/assets/ck_barbarian_tracker_example.c527478dfd470fd53fa7.png",
+      "sha256": "d2e6d1b52a8be1db348907aca82d32321452b42aaea86fe00497ce75165a6b56",
+      "bytes": 6924,
+      "category": "barbarians"
+    },
+    {
+      "file": "dice_event_barbarian.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_event_barbarian.7e94f122cb8dd1d3bd98.svg",
+      "sha256": "2e7a7095305e52b60afe3f1cc25f0c57697140158dbd87afc0e3d325da6d9a52",
+      "bytes": 10318,
+      "category": "dice",
+      "viewBox": ""
+    },
+    {
+      "file": "dice_event_politics.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_event_politics.b1c46a6a3c1437381142.svg",
+      "sha256": "670baa951fffb69f960954da73bb65759de603671b7a18148a4ef0efe8c3c68e",
+      "bytes": 19978,
+      "category": "dice",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "dice_event_science.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_event_science.00858cf84bdfe317154d.svg",
+      "sha256": "adfc9658039f24a223cd9345c56927c73ab227372863b57b2e8e32d55d9d6c55",
+      "bytes": 20509,
+      "category": "dice",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "dice_event_trade.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_event_trade.99431534a1e93bf1516a.svg",
+      "sha256": "c310a1dde84fb06195888acad109c53a1f0dfbbf89f5dfe0045ad7e0e9335391",
+      "bytes": 20615,
+      "category": "dice",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "dice_red_1.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_red_1.7d2c41c4365b430c7d20.svg",
+      "sha256": "94558eb4b8b659b5d92b7d5c88fe8192f8c850c26b8a30b0a1957b15d4a48cb6",
+      "bytes": 1329,
+      "category": "dice",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "dice_red_2.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_red_2.c484643f7087f8dcb98d.svg",
+      "sha256": "6a9a8784c0552d04e9c6abc5f5558167a69dab2f3e6f4518a56f6ba903c01aec",
+      "bytes": 2854,
+      "category": "dice",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "dice_red_3.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_red_3.895fe5cb3cdd0567b824.svg",
+      "sha256": "27028e9386a296e8f8d311a6e03fd2c4bed0dee4f8c00e5fad7a9c0e2f68a88c",
+      "bytes": 3276,
+      "category": "dice",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "dice_red_4.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_red_4.6c02858d953864c2c9cf.svg",
+      "sha256": "7b353264c6d8a15581ee77887806afca4c97fadbebb658ab9f165457a448bcc3",
+      "bytes": 3729,
+      "category": "dice",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "dice_red_5.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_red_5.a762355ebd78a9a928b4.svg",
+      "sha256": "38886bafd75604eaf4b75fb7e862c6f53ab8e2ed51442e1ee54d57d3bfc753bb",
+      "bytes": 4149,
+      "category": "dice",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "dice_red_6.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_red_6.57d310132e9d3493a140.svg",
+      "sha256": "ea97e6da57b3e817a9f0ee7a791bc1f2db73972945ca3f3185e5cebd3bfcbc0c",
+      "bytes": 4603,
+      "category": "dice",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "icon_aqueduct.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_aqueduct.7ec47d3966199d588ffe.svg",
+      "sha256": "3b43149e584dbfc735911c74206ce57da83f236dad497d61433449cb9b0555db",
+      "bytes": 22576,
+      "category": "reference",
+      "viewBox": "0 0 752 748"
+    },
+    {
+      "file": "icon_barbarian_ship.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_barbarian_ship.680d808b50e4c4bb4a48.svg",
+      "sha256": "5a7cfe9298a23e97196781fd02dab6df5f1847d16ab3666fd926b7e0f984d9bd",
+      "bytes": 9238,
+      "category": "barbarians",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_book.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_book.74e42a5caf5ecc35edc2.svg",
+      "sha256": "4b47b16ccd0e6fb684eb3b9d03e645c243ea057034cc5ff27d8a87d2794bf8f3",
+      "bytes": 4624,
+      "category": "interface",
+      "viewBox": "0 0 64 64"
+    },
+    {
+      "file": "icon_defender.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_defender.479f0f4f6cbd89ba9cf8.svg",
+      "sha256": "ebdd53ab2a3558e8a5e3f2ed3dde7a806f9d9ade911e7f68756a6e51747c38f9",
+      "bytes": 1606,
+      "category": "barbarians",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_fortress.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_fortress.93f662e5033a3a3b7179.svg",
+      "sha256": "6fda0a7c4b52b8817d0ade49a1b5c337ebd31c30c8e6bd941d73c4bf503f8533",
+      "bytes": 22354,
+      "category": "reference",
+      "viewBox": "0 0 752 748"
+    },
+    {
+      "file": "icon_fullscreen_contract.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_fullscreen_contract.7af56c892561691f8505.svg",
+      "sha256": "aa6bed06a6bf0834b65f7e4f89443f583352f4627dddc5ecc06f721cfdd2fe9f",
+      "bytes": 9489,
+      "category": "interface",
+      "viewBox": "0 0 48 48"
+    },
+    {
+      "file": "icon_fullscreen_expand.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_fullscreen_expand.8142bdc24178fb978f67.svg",
+      "sha256": "f7f961dce00305de4989cc7216d154e9ebc9de97ab36cb5f46406b5a28250369",
+      "bytes": 10097,
+      "category": "interface",
+      "viewBox": "0 0 48 48"
+    },
+    {
+      "file": "icon_helmet.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_helmet.51aebe76ec0ebff615b7.svg",
+      "sha256": "037db8b5d478d89611a30bfdb47dd1e989c8d3a082abeefb7304f3eac738f5da",
+      "bytes": 6162,
+      "category": "reference",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_info.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_info.0f1a765945c77be429ac.svg",
+      "sha256": "25a66630dee7d123ba91679491a843d7cd678d3950be11a2d1cabf169b0ad288",
+      "bytes": 2283,
+      "category": "interface",
+      "viewBox": "0 0 48 48"
+    },
+    {
+      "file": "icon_longest_road.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_longest_road.5cfdeb3352b20463e64b.svg",
+      "sha256": "24b9ecdd0b2a3cab9b90050aa58ab324baf7e9c49d7bf6cf78ab308e9d46e13e",
+      "bytes": 11205,
+      "category": "interface",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "icon_merchant_black.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_black.23d3085d7c9f2bc643d1.svg",
+      "sha256": "606146e68c4ac941a5b97849e4fa6a7abd0e14cc96118dfe52b4dfc743598821",
+      "bytes": 3214,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_merchant_blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_blue.34deea466de9ce537dce.svg",
+      "sha256": "b9ee805a716fb5afbce6bc97e4d54ec0e64f37c67dc9a3ac425904745cd6079c",
+      "bytes": 3178,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_merchant_bronze.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_bronze.2db5564900399e5a4ebd.svg",
+      "sha256": "0572515afe62da394040db430a98eddfe20385b0f492e9cee5f14d1ded618b44",
+      "bytes": 3192,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_merchant_gold.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_gold.e8adb5c1af7f4016b494.svg",
+      "sha256": "1b1cd5c7e9a0fea759c46953701d4b12ae625e0cdc0b0df6755b83156009f6d1",
+      "bytes": 3185,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_merchant_green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_green.6bf7c73ffc7e3eded03b.svg",
+      "sha256": "51658484e1922ed24e61cf4baea6c24d30961ac849dfc03756b826febe193ba8",
+      "bytes": 3183,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_merchant_mysticblue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_mysticblue.a88c6fc56f06796a9255.svg",
+      "sha256": "823959941015cfcfc3190f41b5f7a8b0b4f294494263a952a76db4e8aa6b5c33",
+      "bytes": 3197,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_merchant_orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_orange.c9b72d3d42f402e65dc5.svg",
+      "sha256": "f9bad5dd98b20e0c9533ce21f960c5e04b919a7321855927679ecfc771691792",
+      "bytes": 3190,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_merchant_pink.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_pink.a7c02ca492c1d55bebd6.svg",
+      "sha256": "b8fa8270b9d6117a200a5b4821a2147334cc5b054d15adeb102316cedc4d26cd",
+      "bytes": 2189,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_merchant_purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_purple.c46c2a829736cedeb5d9.svg",
+      "sha256": "d7467cc554991afc7cc53688e034e0fdb61aac6416f6ee1529ad961bf82339c5",
+      "bytes": 3200,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_merchant_red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_red.772a79b33afee4832755.svg",
+      "sha256": "e442a7640ece218b65d5f2a4eb794f5697a8c6bfd3f48498b3779609caae509f",
+      "bytes": 3167,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_merchant_silver.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_silver.82dd86ab681507d3e1e8.svg",
+      "sha256": "45409a5c79a2820691523a04f4f4d791b2e3aff7e7fc97e6d8082b7c4286f8d2",
+      "bytes": 3198,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_merchant_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_merchant_white.c93f5f627ac64a69bd6e.svg",
+      "sha256": "35a491200a8bd5637104d7401ef700241c6b16f4c9f88f43be326810e5294374",
+      "bytes": 3212,
+      "category": "merchant",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_player.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_player.823fcffb830b912c3bc5.svg",
+      "sha256": "afaeec3f3ac58bfe8255455eec3956f02e048eb48ab0de05e8e09ed170757098",
+      "bytes": 3772,
+      "category": "interface",
+      "viewBox": "0 0 64 64"
+    },
+    {
+      "file": "icon_send.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_send.0395fe5de05351959b13.svg",
+      "sha256": "4d225310c9f8ba8e60617d8184f1042c33ff716a91b1ca86e2cf54a0edf5f9d0",
+      "bytes": 488,
+      "category": "interface",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_settings.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_settings.79564d9f7bfde870611f.svg",
+      "sha256": "8122803ed4e052f3fe0c7ab3d0dcbbc17251a28decb1a137735394133023910c",
+      "bytes": 10853,
+      "category": "interface",
+      "viewBox": "0 0 64 64"
+    },
+    {
+      "file": "icon_square_framed_politics.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_square_framed_politics.ecd63a7de3319a5288e6.svg",
+      "sha256": "840deabbc4c46139a81ddadedc2fb267f039ec13fb0ddff06cf90a0eeba8e296",
+      "bytes": 854,
+      "category": "reference",
+      "viewBox": "0 0 192 192"
+    },
+    {
+      "file": "icon_square_framed_science.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_square_framed_science.b51de4dedc05486569fb.svg",
+      "sha256": "5d0d0c4d4f37e9706e02891c3ece563895d3d8dbe0c95923a0c4b3b5886ee6d1",
+      "bytes": 862,
+      "category": "reference",
+      "viewBox": "0 0 192 192"
+    },
+    {
+      "file": "icon_square_framed_trade.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_square_framed_trade.28d7d5a642a8086def22.svg",
+      "sha256": "dc5fde6baae49eaa0ba362ddbb8689810626de046cb4745596afedbbf6ea8cb6",
+      "bytes": 859,
+      "category": "reference",
+      "viewBox": "0 0 192 192"
+    },
+    {
+      "file": "icon_swords.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_swords.be3d92632519cbdf2d33.svg",
+      "sha256": "1d78f16061577ae07c013bcfec922f450552d06e60fa02935c9fd951fd6114c1",
+      "bytes": 10548,
+      "category": "barbarians",
+      "viewBox": ""
+    },
+    {
+      "file": "icon_tradehouse.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_tradehouse.9616a035b64303216a30.svg",
+      "sha256": "a77ef15bfa7c74ff1e7c1ac44bb68df1c2854dad472292dd8b846f32703873f7",
+      "bytes": 22223,
+      "category": "reference",
+      "viewBox": "0 0 753 748"
+    },
+    {
+      "file": "knight_active_level1.png",
+      "source": "https://cdn.colonist.io/dist/assets/game_spritesheet_0.094536749cb2bc828533.webp",
+      "sha256": "6f96dee1465fe7de3befb42ae6b39437fdcdceda3e655fc4b62c1407f904de4b",
+      "bytes": 5353,
+      "category": "knights",
+      "atlasFrame": "knight_active_level1",
+      "frame": {
+        "x": 2318,
+        "y": 2260,
+        "w": 46,
+        "h": 142
+      },
+      "sourceSize": {
+        "w": 46,
+        "h": 142
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 46,
+        "h": 142
+      }
+    },
+    {
+      "file": "knight_level1_active_black.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_black.cf9ea1be25d60f69f6b7.svg",
+      "sha256": "81670ccd253ca3d20fbe6e8741ea73f602c2c42f91ea502e5e227a6e46c288a9",
+      "bytes": 6249,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_active_blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_blue.e81ed2239a2cae997e58.svg",
+      "sha256": "1813702e29d2950cd785df8bdc20d5840b87025f8cef6d53eda59f371d2622e1",
+      "bytes": 6245,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_active_bronze.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_bronze.01bd5895615929ab9a14.svg",
+      "sha256": "77df503a058e9322da8b90e9fe06867f80ff1b7dcf4d63f346656894e54c7bc4",
+      "bytes": 6248,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_active_gold.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_gold.e6d083c7de0f5a7d8188.svg",
+      "sha256": "17229da51c97ae6bc44f1ce2c3f2fa5425fa780b36a70aba37f972683ccf495d",
+      "bytes": 6248,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_active_green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_green.9ac96ee394a4f651d137.svg",
+      "sha256": "f8539dd39463addf621c4d8aa6c2e4fe9f099f9a9e4ed2f237733600311b1020",
+      "bytes": 6249,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_active_mysticblue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_mysticblue.97008f504adb4788e71c.svg",
+      "sha256": "3343b639b40685bac6274a2e68a85741df910838175c49fe341dd697387c16b8",
+      "bytes": 6277,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_active_orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_orange.dafdc2dd7f0479b69714.svg",
+      "sha256": "b22195d9d24cacd5f45628c7c0ddab26d9da0369109a95028dc793513e93781c",
+      "bytes": 6277,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_active_pink.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_pink.63f1a1d85e1b4f6ef618.svg",
+      "sha256": "7208307a384de78811cbe7f148e4f5d1adf242b4fe74a7b9bc6b3f821b36499d",
+      "bytes": 7698,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_active_purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_purple.d67ba2cdd5372a43dfa0.svg",
+      "sha256": "5c687d010f0bba308ece9b1280650c239263318e6d2d7686af09ccbcb89143ab",
+      "bytes": 6277,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_active_red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_red.c3f8cee3b33acb5380dc.svg",
+      "sha256": "f12c03d9ffa9e20e90bad70845c9f4ef4d38f5f5d8fd6b346a23d6f505b61916",
+      "bytes": 6248,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_active_silver.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_silver.69037099b19435065fde.svg",
+      "sha256": "f1a8eaf6cd9458817d5019c939e7d6ef0410d0ca810bfa6910b98ef68edca60e",
+      "bytes": 6855,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_active_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_active_white.c92efa08f11f54541c76.svg",
+      "sha256": "0f92ed08f37b99001f7cfb6e2b0a74ed8d36bae50d1ede56964a08efce8ea928",
+      "bytes": 6249,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_black.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_black.456cd3704a8bcde5defd.svg",
+      "sha256": "130837fe244e9d46eb571fd4d2d87a58c66a6c3faa6e3b974c7ffd6a28138afb",
+      "bytes": 6243,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_blue.d3bfa760722ab1dcdf65.svg",
+      "sha256": "23ff8c51cdfd967f6a339559023fc913e60e53ba37d255f3400276b47a59ac82",
+      "bytes": 6240,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_bronze.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_bronze.930281c927fdcf863946.svg",
+      "sha256": "be6ade03f04fda8cb34e062430721c579f1188af18484ba57742553b270b92f6",
+      "bytes": 6243,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_gold.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_gold.8b603be7d7373391d16f.svg",
+      "sha256": "bfec2e35c57a4c05ce082053282405ec380bc5eadf3722e379a27822e8cdca1e",
+      "bytes": 6243,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_green.b7621bd6217a3b877b7e.svg",
+      "sha256": "049f36ce5318730480eb806358ed0e9b6751874ca0687845534d385e58353b8b",
+      "bytes": 6244,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_mysticblue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_mysticblue.4be0cd1ca2192d885d8e.svg",
+      "sha256": "f14377f80be212e0069fb1c1e0b8ddc9b8a86e9b20684e54dc90260427f06613",
+      "bytes": 6244,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_orange.f7ef7762a682203c66aa.svg",
+      "sha256": "8fb20e950596f6db60e5ffdd61b48e2e82970226eafdd77301f734d0d91dfd8e",
+      "bytes": 6355,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_pink.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_pink.ce851c244a9775abae15.svg",
+      "sha256": "b3980cd17e7af5480cf21cf2b57e38d955629040584da8473024e256b2aad8c4",
+      "bytes": 7864,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_purple.cd740a2f10ca8a51d274.svg",
+      "sha256": "567d1855988b6f6538446e5b3ec131c0a24da8b83df891d0677c537e99693601",
+      "bytes": 6355,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_red.edd8c074adebbb34dac4.svg",
+      "sha256": "ba672902dc413e8e2c059fd9285acfe3561b1b38fb14b420667386cadbdce02f",
+      "bytes": 6243,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_silver.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_silver.8c3ce55cafdeed369416.svg",
+      "sha256": "9a38caa9834c3b8f0d3ea2210f2acfceaf48c78406c692ccedfec457b17b11b4",
+      "bytes": 6850,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level1_inactive_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level1_inactive_white.6260c1d303ee850b0d41.svg",
+      "sha256": "8216565262efb28df2f3493e420b5a45a47ad186135be5bd72a0416859f31710",
+      "bytes": 6244,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_black.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_black.aec38adee7733dbe83aa.svg",
+      "sha256": "24b7da73c1bac09942ce436e8005c732ae07d8eab6ac827215d87bfaa0768137",
+      "bytes": 10898,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_blue.ca3204eb4c318025f966.svg",
+      "sha256": "fde7124314ad5c16f448e3936ffeb393c6003337bb3adaa5752be7accef8666d",
+      "bytes": 10895,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_bronze.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_bronze.39966c740c2f7c365441.svg",
+      "sha256": "95a4edabe3fae8bbdada70d3a3ffa195289d1a188f117c75e1ca73b6edcad318",
+      "bytes": 10898,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_gold.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_gold.fd0f150fd4f1b74158fe.svg",
+      "sha256": "dd8d22d1168445eaa63c6d5c92a823d48f8480ea8abcb126927ba5c92484072c",
+      "bytes": 10898,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_green.4b67db78179d9a5dba61.svg",
+      "sha256": "d4aa46765198c8e3f00dc37df5bddf1beb27063e26525436a7946182dcd3278d",
+      "bytes": 10899,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_mysticblue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_mysticblue.73c1edbfc553b6aee053.svg",
+      "sha256": "714415531d4a1da0b017ab7fbb99368c9c21ac0714765c21bd07a7d2dd6314b5",
+      "bytes": 10899,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_orange.313f9dfe6c0b690e4cf3.svg",
+      "sha256": "024294c73e0457583f9eb7ed908957c85f7a72c3f2c7b1e131fadb41c73b3b76",
+      "bytes": 10899,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_pink.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_pink.e490bdcce900686629a7.svg",
+      "sha256": "ff41b6e8824b01749458cd7801610c71fd38224ff780e6cecd7e45d49dc9080c",
+      "bytes": 14198,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_purple.4523de6a93e37eedb387.svg",
+      "sha256": "d29ed3dbbd44558ab98114b489a45030be47669a65707844f42694fd412b5cde",
+      "bytes": 10899,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_red.960feab109087323c0ce.svg",
+      "sha256": "18c1f92b72921cc7fa539d456f180160c069a40c91f9efdce4e7fe41f853697d",
+      "bytes": 10898,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_silver.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_silver.f8b02a8e24623ade4982.svg",
+      "sha256": "80563f52637e3e9d56404de5278c99fb3d37e68a241f0237beea958f3c288426",
+      "bytes": 12133,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_active_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_active_white.cb4f2c63ad406b9bd089.svg",
+      "sha256": "bfb06485c3e33130acdec5155c73b711109e5765f0913b2883f894a9e46e11a1",
+      "bytes": 10899,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_black.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_black.08f9bfe34007a874e224.svg",
+      "sha256": "4093987c364780bfa2b23ee6ceab39090efb65f13869e9163c62d6d1afc9f7df",
+      "bytes": 10855,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_blue.ff296956aa880c833971.svg",
+      "sha256": "9f71392f6f960849fe7db178e12b27bb983f4a4e4490d6b9cae5d53569a8b873",
+      "bytes": 10852,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_bronze.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_bronze.fdd25be6764e9a2ba506.svg",
+      "sha256": "16b44984bd3650ca94d2358c132289b12d5d86ff63691484f263b1bb8767fec0",
+      "bytes": 10855,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_gold.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_gold.8559e5a1a627c50f3f1a.svg",
+      "sha256": "aa31604d747336f5ee606ee07997bc769a3571395324e10f28772093c66a5481",
+      "bytes": 10855,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_green.b9a84fd630fde5f35c74.svg",
+      "sha256": "e882ea1be9d05f7e2eebfe99ddc47da41e554705f22151988104a72141007fcd",
+      "bytes": 10856,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_mysticblue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_mysticblue.f7ef914ca48e6e129577.svg",
+      "sha256": "f71e9df2f003c198b98dbe0da1760dc258d959415c485e630aa08e1cd8aa88fb",
+      "bytes": 10856,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_orange.8073cf6b89d7fb1b11a5.svg",
+      "sha256": "4cbe3ca2649e261faa4a553880f35f42e0ed5715df5a9b0de5e85816dee4e958",
+      "bytes": 10856,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_pink.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_pink.cf0e3addcad4cc996b9b.svg",
+      "sha256": "fbf825220b1cf684ba5b12102945563ad5e5c4ea85472c13e4cb613e23895bc8",
+      "bytes": 14008,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_purple.3d6e8b963cd33e9598c6.svg",
+      "sha256": "019a95c188575cb2ec83a6bf3107598fbe74d4013f15c958c0bbc6f3c6b04b8a",
+      "bytes": 10856,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_red.f578ea3432e602160c56.svg",
+      "sha256": "efa17dfc0dd0955f8766c9a8934836f30d1bfaa2d04eb377f5b7dea3910333cb",
+      "bytes": 10855,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_silver.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_silver.ade9b5b8cc2772da5ced.svg",
+      "sha256": "30fa6e167d7f42e0953c2432b4de48e81aff84045bda34615a47c74ba635af27",
+      "bytes": 14266,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level2_inactive_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level2_inactive_white.d08e76a3871a9e6ff9e1.svg",
+      "sha256": "c135eecddf521ddcb03c283b2c909bafdad4588756e3b12a7c2140495386926b",
+      "bytes": 10856,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_black.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_black.335bf8306220ded73f98.svg",
+      "sha256": "b920a27a4dfc34ddab9e7d0437bd524d61e848fabb2201355db83d7ab84cdd16",
+      "bytes": 10505,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_blue.5e9d46ade18b568fbdfb.svg",
+      "sha256": "91735914a6f72bc32c2db7891abbb4925d4c14fd6298ed8810c82458fb0d167f",
+      "bytes": 10502,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_bronze.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_bronze.1f27fe71a7f7111db136.svg",
+      "sha256": "bc9d819f5083cb23feb7678423c3e7cc856f0a9a77a4d383d140b6c12a0baede",
+      "bytes": 10505,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_gold.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_gold.66e90d2385b08a2067a9.svg",
+      "sha256": "ad4b82ddbe2a0edf26869a3cb6235b032bd9f1d32459a5465cc982c9941a6465",
+      "bytes": 10505,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_green.c401f232f96ec0d865a9.svg",
+      "sha256": "c9fbb4cfe200985653482dbb7564d503ec2199bdf9b7081e1e6ed927eacb99a7",
+      "bytes": 10506,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_mysticblue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_mysticblue.09cff65e3f877a4e0454.svg",
+      "sha256": "bf93b5c6bed179611af7f997962a0d628b43220de8dd70b6fea412201eb089a2",
+      "bytes": 10506,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_orange.620a1e78ac42cf8d028b.svg",
+      "sha256": "5432dae6dd5cc505d759eb8e92e2f9dfa33423285f07ea0c2f34f577b6fee6eb",
+      "bytes": 10506,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_pink.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_pink.152fabe7bf7787e6b4e6.svg",
+      "sha256": "465db7a9a816de7f3db152af372683383cc66983c6253c1e0937ba8c5b57998e",
+      "bytes": 19642,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_purple.fd82776714c1af47b918.svg",
+      "sha256": "3b5912041e6b3baecf7d6c22542d34c7c3ab4a8441c9e4ebeaab6954365e7e7d",
+      "bytes": 10506,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_red.faf1f9a50b1bc6b4aefc.svg",
+      "sha256": "92901c335d16f2fed97d9aa3cb581cf3a8514cee08bd15c41695c59dcbfb2a3c",
+      "bytes": 10505,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_silver.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_silver.3942cce527e142b913e4.svg",
+      "sha256": "79d55aaac0ee0404df2afeb7d1787f57b3e0bf27959d0b1b40fbf8c90d64a170",
+      "bytes": 15898,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_active_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_active_white.38e5fde3a5d85e238aaa.svg",
+      "sha256": "ac78de9901b6bef2e72dacf388e1b03c38424cbd1deb58206589e43db7113aa5",
+      "bytes": 10506,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_black.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_black.022103aa9d59dbe1f3c1.svg",
+      "sha256": "a63459b85430f2f6951cb1c582c75ad5b9361cc7577f69d2391c900898d9f040",
+      "bytes": 10428,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_blue.33b844b15d7855d456fc.svg",
+      "sha256": "0bc286550d50e6aaa3fbb9d4d14a4f0d18e19565e87cbb237ff877f39d763c04",
+      "bytes": 10425,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_bronze.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_bronze.f64a490e885c953a8313.svg",
+      "sha256": "574786ee2479d7390797954dab4c557827b458e805610a09d98a50fb1fa87b70",
+      "bytes": 10428,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_gold.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_gold.8459950c30f93475e3dd.svg",
+      "sha256": "0c7410b26f92964d25480574d7d5a4a95a41c3ff030ee2ec91578bc06cbbeeba",
+      "bytes": 10428,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_green.63dd288c2b5af25f7b12.svg",
+      "sha256": "c391d323533a1dc374763b3ef5c9775251ca45ee692ab2f62ba8a91d03848ba1",
+      "bytes": 10429,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_mysticblue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_mysticblue.1b5ad7787cca0d9eed86.svg",
+      "sha256": "96d1ef5d74368f80270798ad4f15d817c48a8c7adf07d383179548700856d752",
+      "bytes": 10429,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_orange.6229d6bec541151d67b1.svg",
+      "sha256": "c4a534ec6ad34c4a94180f3a5acffcfac404b9d27cbda18a6659533b2cab9428",
+      "bytes": 10429,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_pink.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_pink.6cab8466546cf52d4ae8.svg",
+      "sha256": "dc72375c489cc508b0f119527c56400dbfcb060d018bab79e59ed3b897505fe9",
+      "bytes": 18703,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_purple.37c5afca6cc0bb1559ab.svg",
+      "sha256": "acd40d32ba1a4b6b6356fa95ccc87fabe59e672eae2fb491eb850ebe228bdf92",
+      "bytes": 10429,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_red.77914d75bedd26be9b79.svg",
+      "sha256": "f221d6dcb590a5f7775b2151313f82455e7df569aaf9ecbedecf202d6e81c546",
+      "bytes": 10428,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_silver.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_silver.8f0ad58e14b864c3abc9.svg",
+      "sha256": "101f0c905888d8852013c8b2efcd125cb0c165b957c3cfdd47662c0007400287",
+      "bytes": 15821,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_level3_inactive_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/knight_level3_inactive_white.7f89ea17cb06cee0f6ae.svg",
+      "sha256": "705c1913c4b99420b2680558374852e59b6198ced12171d990dc88c3d71cd1fa",
+      "bytes": 10429,
+      "category": "knights",
+      "viewBox": ""
+    },
+    {
+      "file": "knight_move_white.png",
+      "source": "https://cdn.colonist.io/dist/assets/game_spritesheet_0.094536749cb2bc828533.webp",
+      "sha256": "3017f417e724ecbbb3fcd5a8567a5a397186ac7cc34e6f457db6027e86c5397e",
+      "bytes": 48436,
+      "category": "knights",
+      "atlasFrame": "knight_move_white",
+      "frame": {
+        "x": 694,
+        "y": 2178,
+        "w": 317,
+        "h": 238
+      },
+      "sourceSize": {
+        "w": 317,
+        "h": 317
+      },
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 40,
+        "w": 317,
+        "h": 238
+      }
+    },
+    {
+      "file": "metropolis_politics.svg",
+      "source": "https://cdn.colonist.io/dist/assets/metropolis_politics.019fa9b62312f8d45314.svg",
+      "sha256": "303286249ea7ef482da725d45bd1602e54e21c240ae27f39573c3e0c4c3f7490",
+      "bytes": 27551,
+      "category": "metropolises",
+      "viewBox": "0 0 129 129"
+    },
+    {
+      "file": "metropolis_science.svg",
+      "source": "https://cdn.colonist.io/dist/assets/metropolis_science.a9d436136ce39a5ee1d4.svg",
+      "sha256": "09aa5121242274dd9b99f87b92904bde6f4bf3c1019f8142157906bd02112a5f",
+      "bytes": 24309,
+      "category": "metropolises",
+      "viewBox": "0 0 129 129"
+    },
+    {
+      "file": "metropolis_trade.svg",
+      "source": "https://cdn.colonist.io/dist/assets/metropolis_trade.ff1adabda27121403f8c.svg",
+      "sha256": "0b2533e38d8fcc563d5c1155289762bec103da06a31aea37d6555a04b61a29f1",
+      "bytes": 24307,
+      "category": "metropolises",
+      "viewBox": "0 0 129 129"
+    },
+    {
+      "file": "pageck_city_improvement_tracker.png",
+      "source": "https://cdn.colonist.io/dist/assets/pageck_city_improvement_tracker.96c8b18089c7244b9156.png",
+      "sha256": "7d11ea937d90be2e3d39e425a8e81018a02ead4db9953826dc06d3900db1057a",
+      "bytes": 119400,
+      "category": "reference"
+    },
+    {
+      "file": "pageck_how_to_get_progress_cards.png",
+      "source": "https://cdn.colonist.io/dist/assets/pageck_how_to_get_progress_cards.974152761446b9b88873.png",
+      "sha256": "e17b2effaf4313139de9fc56770e137bcf0ebbcfb6e1f67602c2852740443b83",
+      "bytes": 113511,
+      "category": "reference"
+    },
+    {
+      "file": "pageck_placing_knights.png",
+      "source": "https://cdn.colonist.io/dist/assets/pageck_placing_knights.09b259ab810ec9ad38b2.png",
+      "sha256": "f53efb4bdc72d893e227e31f1572b86333a1a077adfe8ee478bc8becbe6120c6",
+      "bytes": 38791,
+      "category": "reference"
+    },
+    {
+      "file": "player_bg_blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_blue.ccf3b0e2738233b4e592.svg",
+      "sha256": "6048f018ff1390e3943510a9da01c73514be1135a1b21984ea36b5da5cafad71",
+      "bytes": 1064,
+      "category": "interface",
+      "viewBox": ""
+    },
+    {
+      "file": "player_bg_green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_green.3caf586360d8a53b7520.svg",
+      "sha256": "006151c1bf313ca3bb59c9b592660c4c0cedb65f9048eaef66059962f0488a90",
+      "bytes": 1054,
+      "category": "interface",
+      "viewBox": ""
+    },
+    {
+      "file": "player_bg_orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_orange.501a7e983f1b0c42c2b0.svg",
+      "sha256": "a2bd1603dc91527ce9db46edb40a98c7eec344e91bb0d3cd87f730da8f148369",
+      "bytes": 1118,
+      "category": "interface",
+      "viewBox": ""
+    },
+    {
+      "file": "player_bg_red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_red.e23255a1eaac03a05c9d.svg",
+      "sha256": "af87b19c8a8a6813d3c73f8455a41e3c34eae0441deaaf780f0903735bbbd952",
+      "bytes": 1083,
+      "category": "interface",
+      "viewBox": ""
+    },
+    {
+      "file": "road_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/road_white.78e66baab120779d5c30.svg",
+      "sha256": "a3726163e50fb8f1d8df007c4ac102e3435f8f9bfd4d8777a384dd67f067e517",
+      "bytes": 1205,
+      "category": "interface",
+      "viewBox": "0 0 40 194"
+    },
+    {
+      "file": "settlement_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/settlement_white.a642a431b4bb73d63dae.svg",
+      "sha256": "4813b6425f06918fea95f910491b251342536731c70f55ccb1ab7aa58cec1427",
+      "bytes": 6054,
+      "category": "interface",
+      "viewBox": "0 0 128 128"
+    },
+    {
+      "file": "stat_metropolis.svg",
+      "source": "https://cdn.colonist.io/dist/assets/stat_metropolis.408a13b348e8b28bd903.svg",
+      "sha256": "35ed80a6c071cd9834661625db3c614fbc919d9f4b4c2c73a7be482d0a1ee94b",
+      "bytes": 75787,
+      "category": "metropolises",
+      "viewBox": "0 0 100 100"
+    },
+    {
+      "file": "player_bg_purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_purple.a8e5b6b5a7aadb278f99.svg",
+      "sha256": "b969e59a22db953999e39c876cdb242fc198326e008b1ab02d4bc0a1c2bfc75c",
+      "bytes": 1074,
+      "category": "players",
+      "viewBox": ""
+    },
+    {
+      "file": "player_bg_white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_white.0c947f6527948c64d15e.svg",
+      "sha256": "24eacad5e621d8c37cea3552105068b636a24ea2661b06e9110c1ca17dacb837",
+      "bytes": 742,
+      "category": "players",
+      "viewBox": "0 0 112.3 112.3"
+    }
+  ]
+}

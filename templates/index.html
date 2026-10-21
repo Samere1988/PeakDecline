@@ -1,36 +1,43 @@
 {% extends "base.html" %}
-
+{% block site_navigation %}{% endblock %}
 {% block title %}Peak Decline - Home{% endblock %}
-
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">{% endblock %}
+{% macro icon(kind) -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if kind == 'tv' %}<rect x="3" y="7" width="18" height="14" rx="2"/><path d="m7 2 5 5 5-5"/>
+{% elif kind == 'users' %}<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/><circle cx="9" cy="7" r="4"/>
+{% elif kind == 'film' %}<rect x="2" y="3" width="20" height="18" rx="2"/><path d="M7 3v18M17 3v18M2 8h5M2 16h5M17 8h5M17 16h5"/>
+{% elif kind == 'game' %}<path d="M6 7h12a3 3 0 0 1 3 2.5l1 8a2 2 0 0 1-3.3 1.7L16 17H8l-2.7 2.2A2 2 0 0 1 2 17.5l1-8A3 3 0 0 1 6 7Z"/><path d="M6 11v4M4 13h4M16 12h.01M19 14h.01"/>
+{% elif kind == 'logout' %}<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5M21 12H9"/>
+{% else %}<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/>{% endif %}
+</svg>
+{%- endmacro %}
+{% macro card(endpoint, label, kind) -%}
+<a class="portal-card{% if kind == 'logout' %} portal-logout{% endif %}" href="{{ url_for(endpoint) }}"><span class="portal-icon">{{ icon(kind) }}</span><span class="portal-label">{{ label }}</span><svg class="portal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>
+{%- endmacro %}
 {% block content %}
-<div class="landing-container">
-    <div class="brand-title">
-        <img src="{{ url_for('static', filename='img/logo.png') }}" class="brand-logo" alt="Peak Decline">
-    </div>
-
-    <div class="menu-grid">
-        <a href="{{ url_for('main.live_tv') }}" class="menu-card">
-            Live TV
-        </a>
-
-        <a href="{{ url_for('main.plex_landing') }}" class="menu-card">
-            Plex Watch Together
-        </a>
-
-        <a href="/games" class="menu-card">
-            Games
-        </a>
-
-        {# Show Login card only if user is not logged in #}
-        {% if not current_user.is_authenticated %}
-        <a href="{{ url_for('auth.login') }}" class="menu-card login-highlight">
-            Login
-        </a>
-        {% else %}
-        <a href="{{ url_for('auth.logout') }}" class="menu-card">
-            Logout ({{ current_user.username }})
-        </a>
-        {% endif %}
-    </div>
+<div class="home-portal">
+    <header class="portal-header"><span class="portal-status"><span aria-hidden="true"></span>Online</span>{% if current_user.is_authenticated %}<a class="portal-account" href="{{ url_for('auth.profile') }}"><img class="user-avatar" src="{{ current_user.avatar_url }}" alt="">{{ current_user.username }}</a>{% else %}<a class="portal-account" href="{{ url_for('auth.login') }}">Login</a>{% endif %}</header>
+    <main class="portal-main">
+        <h1 class="portal-brand"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Peak Decline"></h1>
+        <nav class="portal-grid" aria-label="Main navigation">
+            {{ card('main.live_tv', 'Live TV', 'tv') }}
+            {{ card('main.plex_landing', 'Plex Watch Together', 'users') }}
+            {{ card('main.plex_requests', 'Plex Requests', 'film') }}
+            {{ card('main.games', 'Games', 'game') }}
+            {% if is_monitoring_owner() %}
+            {{ card('launcher_downloads.index', 'Windows Launcher', 'game') }}
+            {{ card('monitoring.homepage', 'Server Dashboard', 'tv') }}
+            {{ card('monitoring.kuma', 'Uptime Kuma', 'users') }}
+            {% endif %}
+            {% if current_user.is_authenticated %}
+            {{ card('auth.profile', 'Profile', 'user') }}
+            {{ card('auth.logout', 'Logout', 'logout') }}
+            {% else %}
+            {{ card('auth.login', 'Login', 'user') }}
+            {{ card('auth.register', 'Register', 'user') }}
+            {% endif %}
+        </nav>
+    </main>
 </div>
 {% endblock %}

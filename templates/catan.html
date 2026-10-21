@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}CATAN Room · PeakDecline{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/catan.css', v='shared-ui-v1') }}">
+{% if online %}<link rel="stylesheet" href="{{ url_for('static', filename='css/plex.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/catan-rooms.css', v='room-list-v3') }}">{% endif %}
+{% endblock %}
+
+{% block content %}
+<main class="catan-app" data-player-name="{{ player_name|e }}" data-online="{{ 'true' if online else 'false' }}">
+    {% if playtest_links %}
+    <section class="online-panel" aria-label="Local testing controls">
+        <strong>Testing sandbox · {{ player_name|e }}</strong>
+        <p>These four links control separate test players. Open each in a tab, then start the game from the Red seat. This room is separate from the live service.</p>
+        <div class="room-form">{% for seat in playtest_links %}<a class="secondary-button" href="{{ seat.url|e }}" target="_blank" rel="noopener">{{ seat.name|e }}</a>{% endfor %}</div>
+    </section>
+    {% endif %}
+    <header class="catan-topbar">
+        <div>
+            <a class="back-link" href="{{ url_for('main.games') }}">← Games</a>
+            <h1>CATAN Room</h1>
+        </div>
+            <div class="room-status">LOCAL HOTSEAT · 4 SEATS</div>
+    </header>
+
+    {% if online %}
+    <section id="online-panel" class="catan-room-browser">
+        <div class="connection-bar"><p id="online-notice" role="status">Connecting to game rooms…</p><button id="back-lobby" class="btn-cancel" hidden>← All games</button></div>
+        <div id="online-rooms">
+            <div class="plex-header"><div class="header-title"><h1>Open games</h1><span>Take a seat, watch a game, or start your own</span></div><button id="open-create-room" class="create-btn">+ Create Room</button></div>
+            <div class="room-form"><button id="refresh-rooms" class="btn-cancel">Refresh rooms</button></div>
+            <div id="room-list" class="rooms-grid"></div>
+        </div>
+        <dialog id="create-room-dialog" class="catan-dialog"><form id="create-room-form"><h2 id="create-room-title" tabindex="-1">Create a game</h2><label for="room-name">Room name</label><input id="room-name" class="modal-input" maxlength="60" placeholder="Enter a game name" required><fieldset class="game-mode-choices"><legend>Game mode</legend><label><input type="radio" name="game-mode" value="base" checked><span><strong>Base game</strong><small>Classic resources, roads, and development cards</small></span></label><label><input type="radio" name="game-mode" value="cities-knights"><span><strong>Cities & Knights</strong><small>Commodities, progress cards, and barbarian attacks</small></span></label></fieldset><fieldset id="base-map-choices" class="game-mode-choices"><legend>Map and players</legend><label><input type="radio" name="game-map" value="base" checked><span><strong>Base map 3-4 players</strong><small>19 tiles</small></span></label><label><input type="radio" name="game-map" value="base-56"><span><strong>Base map 5-6 players</strong><small>30 tiles · Special Build Phase</small></span></label></fieldset><label class="public-choice"><input id="test-room" type="checkbox"> Private test: control all player seats yourself</label><p>Players will meet you at the board.</p><div class="modal-actions"><button id="cancel-create-room" type="button" class="btn-cancel">Cancel</button><button id="create-room" class="btn-submit">Create room</button></div></form></dialog>
+        <dialog id="join-choice" class="catan-dialog"><h2 id="join-choice-title">Join game</h2><p id="join-choice-description"></p><div class="modal-actions"><button id="choose-play" class="btn-submit">Join to play</button><button id="choose-spectate" class="btn-cancel">Spectate</button><button id="cancel-join" class="btn-cancel">Cancel</button></div></dialog>
+    </section>
+    {% endif %}
+    <section class="catan-layout" {% if online %}hidden{% endif %}>
+        <div class="board-panel">
+            <div class="board-toolbar">
+                <div>
+                    <span class="eyebrow">PeakDecline Board Room</span>
+                    <strong id="turn-label">Player 1's turn</strong>
+                </div>
+                <div class="toolbar-actions">
+                    <button id="sound-toggle" class="secondary-button" aria-label="Game sound effects" aria-pressed="true">Sound on</button>
+                    <button id="new-game" class="secondary-button">New game</button>
+                    <button id="roll-dice" class="primary-button">Roll dice</button>
+                </div>
+            </div>
+            <div id="dice-display" class="dice-display" role="status" aria-label="Dice result"></div>
+            <div id="board" class="catan-board" aria-label="CATAN game board"></div>
+            <div id="game-message" class="game-message" role="status">Roll the dice to begin.</div>
+            <div id="phase-actions" class="phase-actions"></div>
+            <section class="bottom-controls" aria-label="Hand and play controls">
+                <div class="bottom-hand">
+                    <div class="card-heading"><h2 id="hand-title">Your hand</h2><span id="hand-count">0 cards</span></div>
+                    <div id="resources" class="resource-grid"></div>
+                    <div id="dev-cards" class="dev-card-count"></div>
+                    <div id="development-hand" aria-label="Development cards"></div>
+                </div>
+                <div class="bottom-build">
+                    <div class="card-heading"><h2>Build & play</h2><span id="victory-points">0 VP</span></div>
+                    <div class="action-tray">
+                        <button id="open-trade" class="action-tile" title="Open maritime trade"><img src="{{ url_for('static', filename='assets/catan/colonist/trade.svg') }}" alt=""><span>Trade</span></button>
+                        <button id="buy-development" class="action-tile" disabled title="Buy development card: 1 wheat, 1 sheep, 1 ore"><img src="{{ url_for('static', filename='assets/catan/colonist/card-development.svg') }}" alt=""><span>Buy card</span></button>
+                        <button class="build-button action-tile" data-build="road" title="Build road: 1 wood, 1 brick"><img class="build-piece-image" data-piece="road" alt=""><b data-supply="road">15</b><span>Road</span></button>
+                        <button class="build-button action-tile" data-build="settlement" title="Build settlement: 1 wood, 1 brick, 1 wheat, 1 sheep"><img class="build-piece-image" data-piece="settlement" alt=""><b data-supply="settlement">5</b><span>Settlement</span></button>
+                        <button class="build-button action-tile" data-build="city" title="Build city: 2 wheat, 3 ore"><img class="build-piece-image" data-piece="city" alt=""><b data-supply="city">4</b><span>City</span></button>
+                        <button id="end-turn" class="action-tile" title="End turn"><img src="{{ url_for('static', filename='assets/catan/colonist/hourglass.svg') }}" alt=""><span>End turn</span></button>
+                    </div>
+                    <div id="development-options" hidden></div>
+                </div>
+            </section>
+        </div>
+
+        <aside class="catan-sidebar">
+            {% if online %}
+            <section id="online-room" class="sidebar-card room-seating" hidden>
+                <div class="card-heading"><h2 id="online-title"></h2><span id="room-mode-label"></span><span id="room-phase-label"></span></div><p id="online-help"></p>
+                <ul id="room-members"></ul><div id="seat-options"></div><div id="test-seat-options" hidden></div>
+                <div class="room-form"><button id="ready-room" class="btn-submit">Ready</button><button id="reshuffle-map" class="btn-cancel" type="button" hidden>Reshuffle map</button><button id="start-room" class="btn-submit">Start game</button><button id="rematch-room" class="btn-submit" hidden>Rematch</button></div>
+                <form id="catan-change-game" class="room-form" hidden><label for="catan-next-mode">Next game</label><select id="catan-next-mode"><option value="base">Base game</option><option value="cities-knights">Cities &amp; Knights</option></select><label for="catan-next-map">Map</label><select id="catan-next-map"><option value="base">3–4 players</option><option value="base-56">5–6 players</option></select><button type="submit">Choose game</button></form>
+                <details id="room-management"><summary>Room options</summary><div class="room-form"><button id="claim-host" hidden>Become host</button><button id="return-room-lobby" hidden>Close game and return everyone to lobby</button><button id="close-abandoned" hidden>Close abandoned match</button><button id="leave-room">Leave room</button></div></details>
+            </section>
+            <section id="chat-panel" class="sidebar-card room-chat-panel"><div class="card-heading"><h2>Room chat</h2><span>Players & spectators</span></div><div id="room-chat" role="log" aria-live="polite" aria-relevant="additions"></div><form id="chat-form"><input id="chat-message" aria-label="Chat message" placeholder="Say something…" maxlength="500" autocomplete="off"><button class="btn-submit">Send</button></form><details><summary>Move history</summary><pre id="room-history"></pre></details></section>
+            {% endif %}
+            <section class="sidebar-card bank-card"><div class="card-heading"><h2>Bank</h2></div><div id="bank-resources" class="bank-resources"></div></section>
+            <section class="sidebar-card game-players">
+                <div class="card-heading"><h2>Players</h2><span id="game-status">4 seats</span></div>
+                <div id="players" class="players-list"></div>
+            </section>
+            <section id="trade-panel" class="sidebar-card">
+                <div class="card-heading"><h2>Maritime trade</h2></div>
+                <div class="trade-selects"><label>Give<select id="trade-from"></select></label><label>Receive<select id="trade-to"></select></label></div>
+                <p id="trade-rate" class="build-hint"></p>
+                <button id="trade-button" class="primary-button">Trade 4 for 1</button>
+                {% if online %}<hr><h3>Trade with players</h3><div id="offer-resources" class="offer-resources"><span>Resource</span><span>Give</span><span>Want</span>{% for resource in ['wood','brick','wheat','sheep','ore'] %}<label for="offer-give-{{ resource }}">{{ resource|capitalize }}</label><input id="offer-give-{{ resource }}" aria-label="Give {{ resource }}" type="number" min="0" max="19" value="0"><input id="offer-want-{{ resource }}" aria-label="Want {{ resource }}" type="number" min="0" max="19" value="0">{% endfor %}</div><button id="offer-trade">Offer trade</button><div id="player-offers"></div>{% endif %}
+            </section>
+        </aside>
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/catan-engine.js', v='game-fixes-v2') }}"></script><script src="{{ url_for('static', filename='js/catan-ui.js', v='shared-ui-v2') }}"></script>
+<script src="{{ url_for('static', filename='js/catan-audio.js', v='sounds-v1') }}"></script>
+{% if online %}<script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script><script src="{{ url_for('static', filename='js/catan-online.js', v='profile-pictures-v3') }}"></script><script src="{{ url_for('static', filename='js/catan-trading.js', v='game-fixes-v3') }}"></script>{% endif %}
+<script src="{{ url_for('static', filename='js/catan.js', v='shared-ui-v2') }}"></script>
+<script src="{{ url_for('static', filename='js/catan-base-rules.js', v='base-rules-v1') }}"></script>
+{% if online %}<script src="{{ url_for('static', filename='js/catan-cities-knights.js', v='shared-ui-v2') }}"></script><script src="{{ url_for('static', filename='js/catan-cities-knights-rules.js', v='rules-v4') }}"></script>{% endif %}
+{% endblock %}

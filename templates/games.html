@@ -11,38 +11,42 @@
 <div class="arcade-container">
     <div class="arcade-header">
         <h1>PeakDecline Games</h1>
-        <p>Pick a game to play while hanging out in the watch party.</p>
+        <p>A quick race or a retro favorite. Find your next break between shows.</p>
     </div>
 
     <div class="games-grid">
+        <a href="/games/gta5" class="game-card">
+            <div class="game-icon">V</div>
+            <div class="game-title">Grand Theft Auto V</div>
+            <p class="game-desc">Explore Los Santos or start the story, right in your browser.</p>
+            <span class="game-meta">Single player · Story and sandbox</span>
+            <div class="play-btn">Play GTA V</div>
+        </a>
 
-        <!-- NEW: The Emulator Hub -->
-        <a href="{{ url_for('main.emulator') }}" class="game-card">
+        <a href="{{ url_for('main.retro_games') }}" class="game-card mario-kart-card">
             <div class="game-icon">RETRO</div>
-            <div class="game-title">Emulator Hub</div>
-            <div class="play-btn">Play Now</div>
+            <div class="game-title">Retro Games</div>
+            <p class="game-desc">Choose a game, create a lobby, and play with friends. Mario Kart 64 is ready to race.</p>
+            <span class="game-meta">Online · Players and spectators</span>
+            <div class="play-btn">Retro Games</div>
         </a>
 
         <!-- UPDATED: The Derby -->
         <a href="{{ url_for('main.peakdecline_derby') }}" class="game-card">
             <div class="game-icon">RACE</div>
             <div class="game-title">PeakDecline Derby</div>
+            <p class="game-desc">Ten horses, a changing lead, and one winner. Pick your runner and chase an upset with play credits.</p>
+            <span class="game-meta">Solo · About 20 seconds per race</span>
             <div class="play-btn">Play Now</div>
         </a>
 
-        <!-- Disabled: Poker -->
-        <div class="game-card disabled">
-            <div class="game-icon">CARDS</div>
-            <div class="game-title">Texas Hold'em</div>
-            <div class="play-btn">Coming Soon</div>
-        </div>
-
-        <!-- Disabled: Darts -->
-        <div class="game-card disabled">
-            <div class="game-icon">DARTS</div>
-            <div class="game-title">Dart Board</div>
-            <div class="play-btn">Coming Soon</div>
-        </div>
+        <a href="{{ url_for('main.catan_room') }}" class="game-card catan-card">
+            <div class="game-icon catan-icon">◈</div>
+            <div class="game-title">CATAN</div>
+            <p class="game-desc">Find an open game, build with friends, or join the table to watch and chat.</p>
+            <span class="game-meta">Online · 3–4 players · Spectators welcome</span>
+            <div class="play-btn">Find a Game</div>
+        </a>
 
     </div>
 </div>

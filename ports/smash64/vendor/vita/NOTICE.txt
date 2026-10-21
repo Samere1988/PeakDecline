@@ -1,0 +1,13 @@
+Rollback and deterministic digest sources from:
+https://github.com/robin994/ssb-decomp-re-vita
+Commit: f0288553da4d6fd8d3fef2bbc2a591af66e918e5
+Line endings are normalized to LF; source content is unchanged.
+Original paths: src/sys/netrollback.{c,h}, src/sys/netsync.{c,h}
+Authors: robin994 and the BattleShip / Smash decompilation contributors.
+
+These are game-specific sources from the decompilation submodule. The parent
+BattleShip port's MIT grant does not extend to this submodule; no replacement
+license or ownership claim is made here. Preserve upstream attribution.
+
+prepare_rollback.py generates explicitly modified browser copies. The generic
+PeakNet rollback scheduler is separate code and includes no game memory layout.

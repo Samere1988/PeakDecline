@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super Smash Bros.</title><style>
+html,body{margin:0;width:100%;height:100%;background:#080c12;color:#fff;font-family:system-ui}
+canvas{display:block;width:100%;height:100%;object-fit:contain}#status{position:absolute;left:1rem;top:1rem}
+</style></head><body data-save-key="{{ current_user.get_id() }}"><canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Super Smash Bros."></canvas>
+<p id="status" role="status">Loading Super Smash Bros.…</p>
+<script src="{{ url_for('static', filename='js/netplay/game_audio.js') }}"></script>
+<script src="/static/js/account_sync.js?v=1"></script>
+<script>
+(() => {
+    'use strict';
+    let started = false, bound = false, failed = false;
+    window.resumePeakGameAudio = () => {
+        const audio = window.SDL2?.audioContext;
+        if (audio?.state === 'suspended') audio.resume().catch(() => {});
+    };
+    window.startPeakGame = () => {
+        if (started || !window.peakGameBridge) return;
+        started = true;
+        const bridge = window.peakGameBridge, players = bridge.players;
+        const fail = error => {
+            if (failed) return;
+            failed = true;
+            const message = error?.message || String(error);
+            document.getElementById('status').textContent = message;
+            bridge.failed(message);
+        };
+        if (!Number.isInteger(players) || players < 1 || players > 4) return fail(new Error('Invalid Smash player count.'));
+        window.addEventListener('error', event => fail(event.error || event.message));
+        window.addEventListener('unhandledrejection', event => fail(event.reason));
+        window.Module = {
+            canvas: document.getElementById('canvas'), noInitialRun: true,
+            peakMenus: true,
+            peakNativeFlow: true,
+            locateFile: name => {{ build_url|tojson }} + name,
+            print: text => console.log(text), printErr: text => console.warn(text),
+            onAbort: fail,
+            peakAdvance() {
+                if (failed) return false;
+                try {
+                    if (!bound) {
+                        bridge.loaded(options => createSmashRollbackAdapter(Module, options));
+                        bound = true;
+                        document.getElementById('status').hidden = true;
+                    }
+                    return bridge.begin();
+                } catch (error) { fail(error); return false; }
+            },
+            peakComplete() {
+                if (failed) return false;
+                try { return bridge.complete(); } catch (error) { fail(error); return false; }
+            },
+            readPorts(ptr) {
+                for (let slot = 0; slot < 4; ++slot) {
+                    const offset = (ptr >> 2) + slot * 4;
+                    HEAP32[offset] = slot < players ? 2 : 1;
+                    HEAP32[offset + 1] = HEAP32[offset + 2] = HEAP32[offset + 3] = 0;
+                }
+            },
+            preRun: [() => {
+                // Restore the original US startup: N64 logo, opening movie, then title.
+                // The upstream PC port otherwise skips the N64 logo.
+                ENV.SSB64_SAVE_PATH = '/ssb64_save.bin';
+                ENV.SSB64_START_SCENE = '27';
+                ENV.SSB64_TITLE_BRAND = '0'; // Keep the original Super Smash Bros. title artwork.
+                ENV.SSB64_BOOT_BATTLE = players === 1 ? '-1,8,4,0,-1,-1' : '-1,-1,4,0,-1,-1';
+                ENV.SSB64_BOOT_SLOTS = players === 1 ? 'hcoo' : 'h'.repeat(players) + 'o'.repeat(4 - players);
+                ENV.SSB64_VS_INTRO = '0';
+                addRunDependency('peak-assets');
+                const files = ['BattleShip.o2r', 'BattleShip.o2r.recipe', 'f3d.o2r', 'gamecontrollerdb.txt', 'config.yml',
+                    'assets/custom/fonts/Montserrat-Regular.ttf', 'assets/custom/fonts/Inconsolata-Regular.ttf'];
+                Promise.all(files.map(async name => {
+                    const response = await fetch({{ build_url|tojson }} + name);
+                    if (!response.ok) throw new Error('Smash game data could not be loaded: ' + name);
+                    FS.mkdirTree('/' + name.split('/').slice(0, -1).join('/'));
+                    FS.writeFile('/' + name, new Uint8Array(await response.arrayBuffer()));
+                })).then(async () => {await PeakSaves.fs(Module,{game:'smash64',paths:{'ssb64_save.bin':'/ssb64_save.bin'},bridge});removeRunDependency('peak-assets');}).catch(fail);
+            }],
+            onRuntimeInitialized() { Module.callMain([]); }
+        };
+        const adapter = document.createElement('script');
+        adapter.src = {{ build_url|tojson }} + 'rollback_adapter.js';
+        adapter.onerror = () => fail(new Error('Smash rollback adapter could not be downloaded.'));
+        adapter.onload = () => {
+            const script = document.createElement('script');
+            script.src = {{ build_url|tojson }} + 'BattleShip.js';
+            script.onerror = () => fail(new Error('Smash could not be downloaded.'));
+            document.body.append(script);
+        };
+        document.body.append(adapter);
+    };
+})();
+</script></body></html>

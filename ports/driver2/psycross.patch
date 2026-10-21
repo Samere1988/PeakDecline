@@ -1,0 +1,32 @@
+diff --git a/src/PsyX_main.cpp b/src/PsyX_main.cpp
+index f558b40..c724cc1 100644
+--- a/src/PsyX_main.cpp
++++ b/src/PsyX_main.cpp
+@@ -943,6 +943,9 @@ void PsyX_Sys_DoDebugKeys(int nKey, char down)
+ 
+ void PsyX_UpdateInput()
+ {
++#ifdef __EMSCRIPTEN__
++ EM_ASM({window.peakNativeTicks=(window.peakNativeTicks||0)+1;});
++#endif
+ 	// also poll events here
+ 	PsyX_Sys_DoPollEvent();
+ 
+diff --git a/src/pad/PsyX_pad.cpp b/src/pad/PsyX_pad.cpp
+index d073549..8dd7e88 100644
+--- a/src/pad/PsyX_pad.cpp
++++ b/src/pad/PsyX_pad.cpp
+@@ -209,6 +209,13 @@ void PsyX_Pad_InternalPadUpdates()
+ 			pad = (LPPADRAW)controller->padData;
+ 
+ 			PsyX_Pad_UpdateGameControllerInput(controller->gc, pad);
++#ifdef __EMSCRIPTEN__
++            if(i==0 && EM_ASM_INT({return !!window.peakReadPad;})) {
++                pad->status=0;pad->id=0x41;
++                *(u_short*)pad->buttons=EM_ASM_INT({const p=window.peakReadPad();const b=p.buttons;return 65535 ^ ((p.y>20?16:0)|(p.y< -20?64:0)|(p.x< -20?128:0)|(p.x>20?32:0)|(b&0x8000?16384:0)|(b&0x4000?32768:0)|(b&0x2000?8192:0)|(b&0x1000?8:0)|(b&0x20?1024:0)|(b&0x10?2048:0)|(b&8?4096:0)|(b&4?1:0));});
++                continue;
++            }
++#endif
+ 
+ 			ushort test = *(u_short*)pad->buttons;
+ 

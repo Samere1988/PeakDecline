@@ -71,7 +71,8 @@ window.showFolders = function() {
 
 // ... keep your window.loadGame function below here exactly as it was! ...
 // The function that dynamically boots the console
-window.loadGame = function(core, romPath) {
+window.loadGame = async function(core, romPath) {
+    try { await PeakPrepareEmulatorSave(core,romPath); } catch(error) { PeakSaves.status(error.message); return; }
     // Hide the standby text
     document.getElementById('placeholder-text').style.display = 'none';
 
@@ -88,14 +89,14 @@ window.loadGame = function(core, romPath) {
     window.EJS_player = '#game';
     window.EJS_core = core;       // 'snes', 'n64', or 'psx'
     window.EJS_color = '#007BFF'; // Updated to PeakDecline Blue to match your new logo
-    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/4.2.3/data/';
 
     // Construct the full URL to your static folder
     window.EJS_gameUrl = '/static/' + romPath;
 
     // Inject the EmulatorJS engine script into the page
     const script = document.createElement('script');
-    script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+    script.src = 'https://cdn.emulatorjs.org/4.2.3/data/loader.js';
     document.body.appendChild(script);
 
     // Highlight the TV screen border to show it's active

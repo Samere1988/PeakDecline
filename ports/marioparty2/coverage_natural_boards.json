@@ -1,0 +1,47 @@
+[
+  {
+    "key": "board-WesternLand",
+    "kind": "board",
+    "id": 0,
+    "section": 64,
+    "ticks": 24000,
+    "title": "Western Land",
+    "natural": true
+  },
+  {
+    "key": "board-PirateLand",
+    "kind": "board",
+    "id": 1,
+    "section": 67,
+    "ticks": 24000,
+    "title": "Pirate Land",
+    "natural": true
+  },
+  {
+    "key": "board-HorrorLand",
+    "kind": "board",
+    "id": 2,
+    "section": 69,
+    "ticks": 24000,
+    "title": "Horror Land",
+    "natural": true
+  },
+  {
+    "key": "board-SpaceLand",
+    "kind": "board",
+    "id": 3,
+    "section": 71,
+    "ticks": 24000,
+    "title": "Space Land",
+    "natural": true
+  },
+  {
+    "key": "board-MysteryLand",
+    "kind": "board",
+    "id": 4,
+    "section": 73,
+    "ticks": 24000,
+    "title": "Mystery Land",
+    "natural": true
+  }
+]

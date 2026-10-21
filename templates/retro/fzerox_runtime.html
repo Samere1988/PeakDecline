@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F-Zero X</title><style>
+html,body{margin:0;width:100%;height:100%;background:#080c12;color:#fff;font-family:system-ui}
+canvas{display:block;width:100%;height:100%;object-fit:contain}#status{position:absolute;left:1rem;top:1rem}
+</style></head><body data-save-key="{{ current_user.get_id() }}"><canvas id="canvas" width="640" height="480" tabindex="0" aria-label="F-Zero X"></canvas>
+<p id="status" role="status">Loading F-Zero X…</p>
+<script src="{{ url_for('static', filename='js/netplay/game_audio.js') }}"></script>
+<script src="/static/js/account_sync.js?v=1"></script>
+<script>
+(() => {
+    'use strict';
+    let started = false;
+    window.resumePeakGameAudio = () => {
+        const audio = window.Module?.SDL2?.audioContext;
+        if (audio?.state === 'suspended') audio.resume().catch(() => {});
+    };
+    window.startPeakGame = () => {
+        if (started || !window.peakGameBridge) return;
+        started = true;
+        const fail = error => {
+            const message = error?.message || String(error);
+            document.getElementById('status').textContent = message;
+            window.peakGameBridge.failed(message);
+        };
+        if (!crossOriginIsolated || typeof SharedArrayBuffer === 'undefined') {
+            fail(new Error('F-Zero X requires HTTPS and browser cross-origin isolation.'));
+            return;
+        }
+        window.addEventListener('error', event => fail(event.error || event.message));
+        window.addEventListener('unhandledrejection', event => fail(event.reason));
+        window.Module = {
+            canvas: document.getElementById('canvas'), noInitialRun: true,
+            locateFile: name => {{ build_url|tojson }} + name,
+            print: text => console.log(text), printErr: text => console.error(text),
+            onAbort: message => fail(new Error(message)),
+            onRuntimeInitialized: async () => {
+                try {
+                    const response = await fetch({{ rom_url|tojson }});
+                    if (!response.ok) throw new Error('F-Zero X game data could not be loaded.');
+                    const bytes = new Uint8Array(await response.arrayBuffer());
+                    if (bytes.length !== 16777216) throw new Error('F-Zero X game data is incomplete.');
+                    Module.FS.writeFile('/game.z64', bytes);
+                    await PeakSaves.fs(Module,{game:'fzerox',paths:{'sram.bin':'/saves/fzerox.sav'},bridge:window.peakGameBridge});
+                    Module.callMain([]);
+                    document.getElementById('status').hidden = true;
+                } catch (error) { fail(error); }
+            }
+        };
+        const script = document.createElement('script');
+        script.src = {{ build_url|tojson }} + 'fzerox.js';
+        script.onerror = () => fail(new Error('F-Zero X could not be downloaded.'));
+        document.body.append(script);
+    };
+})();
+</script></body></html>

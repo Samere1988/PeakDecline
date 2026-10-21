@@ -1,0 +1,12 @@
+<section id="perfectdark-play-area" class="mk64-play-area" hidden data-runtime-url="{{ url_for('main.retro_game_runtime',game_id='perfectdark') }}">
+ <div class="mk64-game-heading"><h1 data-game-title>Perfect Dark</h1></div>
+ <div class="retro-frame-shell game-viewport">
+  <button data-game-fullscreen class="mk64-fullscreen" type="button" aria-label="Enter fullscreen">⛶ Fullscreen</button>
+  <div data-game-frame class="retro-game-frame game-surface"></div>
+ </div>
+ <p data-fullscreen-status role="status"></p>
+ <div class="mk64-volume-control"><label for="perfectdark-volume">Game volume</label><input id="perfectdark-volume" data-game-volume type="range" min="0" max="100" value="70" aria-label="Game volume"><output data-game-volume-value for="perfectdark-volume">70%</output></div>
+ <p data-save-status role="status"></p>
+ <p class="mk64-controls">Click the game to capture controls. WASD move/menu · Mouse aim · Enter confirm · Backspace back · Tab Start/pause · Left click fire · Right click aim · R reload · E use · Q/Z change weapon · F secondary fire. Esc releases the mouse.</p>
+  {% set controller_id = 'perfectdark' %}{% include 'retro/controller_setup.html' %}
+</section>

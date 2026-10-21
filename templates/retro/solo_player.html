@@ -1,0 +1,17 @@
+<section id="{{ game.id }}-play-area" class="mk64-play-area" hidden data-solo-engine="{{ game.id }}" data-title="{{ game.title }}" data-runtime-url="{{ url_for('main.retro_game_runtime', game_id=game.id) }}">
+ <div class="mk64-game-heading"><h1 data-game-title>{{ game.title }}</h1></div>
+ <div class="retro-frame-shell game-viewport">
+  <button data-game-fullscreen class="mk64-fullscreen" type="button" aria-label="Enter fullscreen">⛶ Fullscreen</button>
+  <div data-game-frame class="retro-game-frame game-surface"></div>
+ </div>
+ <p data-fullscreen-status role="status"></p>
+ <div class="mk64-volume-control"><label for="{{ game.id }}-volume">Game volume</label><input id="{{ game.id }}-volume" data-game-volume type="range" min="0" max="100" value="70"><output for="{{ game.id }}-volume">70%</output><button data-enable-audio class="mk64-secondary" type="button">Enable sound</button></div>
+ <p data-engine-status class="mk64-description" role="status"></p>
+ <div data-player-tools>
+  <p class="mk64-controls">WASD move · X confirm / A · C B · Z third action · Enter Start · Q/E shoulder buttons. Controller mappings are configurable below.</p>
+  <button data-export-save class="mk64-secondary" type="button">Export Save</button>
+  <button data-import-save-button class="mk64-secondary" type="button">Import Save</button><input data-import-save type="file" accept=".json,application/json" hidden>
+  <p data-save-status role="status">Save in-game to keep your progress. Account sync status appears here.</p>
+  <div id="{{ game.id }}-controller-controls" data-controller-controls>{% set controller_id = game.id %}{% include 'retro/controller_setup.html' %}</div>
+ </div>
+</section>

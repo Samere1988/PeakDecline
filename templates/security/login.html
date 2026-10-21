@@ -9,6 +9,7 @@
         <p>Access your Peak Decline account</p>
 
         <form method="POST" action="{{ url_for('auth.login') }}">
+            <input type="hidden" name="next" value="{{ request.args.get('next', request.form.get('next', '')) }}">
             <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" name="email" id="email" required placeholder="your@email.com">

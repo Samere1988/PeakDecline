@@ -20,18 +20,24 @@
     {'id': 10, 'horse': '#FFCC80', 'jockey': '#FFFFFF', 'name': 'White'}
 ] %}
 
-<div class="game-container">
+<div class="game-container" data-phase="ready">
     <a href="{{ url_for('main.games') }}" class="hub-link">← Back to Arcade</a>
-    <h2 style="margin-top: 0;">🏆 PeakDecline Derby (10-Horse Pro)</h2>
+    <header class="derby-heading">
+        <div><p class="eyebrow">PEAKDECLINE RACING CLUB / NIGHT MEETING</p>
+        <h1>THE <em>DERBY.</em></h1>
+        <p class="game-intro">Under the lights. Down to the wire.</p></div>
+        <div class="meeting-seal" aria-hidden="true"><span>PD</span><small>RACING CLUB</small><b>★ ★ ★</b></div>
+    </header>
+    <div class="meeting-info"><span><i></i> TEN RUNNERS</span><span>SOLO RACING</span><span>PLAY CREDITS ONLY</span><span>9× TOTAL RETURN</span></div>
 
     <div class="betting-dashboard">
         <div class="bet-group">
-            <label>Current Bankroll</label>
-            <div class="bankroll-display" id="bankroll-display">$1000</div>
+            <span>Play credits</span>
+            <div class="bankroll-display" id="bankroll-display">1,000</div>
         </div>
 
         <div class="bet-group">
-            <label>Select Horse to Win (9x Payout)</label>
+            <label for="horse-select">Your pick</label>
             <select id="horse-select" class="bet-input">
                 {% for r in racers %}
                 <option value="{{ r.id }}">Horse #{{ r.id }} ({{ r.name }})</option>
@@ -40,53 +46,78 @@
         </div>
 
         <div class="bet-group">
-            <label>Wager Amount ($)</label>
-            <input type="number" id="bet-amount" class="bet-input" value="100" min="10" step="10" style="width: 120px;">
+            <label for="bet-amount">Stake in credits</label>
+            <input type="number" id="bet-amount" class="bet-input" value="100" min="10" step="10">
         </div>
     </div>
 
-    <div id="race-announcer">Place your bets!</div>
-
-    <div class="race-track-wrapper">
+    <section class="stadium" aria-label="Derby race track">
+        <div class="broadcast-bar"><span class="broadcast-brand">PD <b>SPORTS</b></span><span id="race-phase">AT THE GATES</span><span class="broadcast-detail">THE NIGHT DERBY · 10 RUNNERS</span></div>
+        <div class="stadium-scenery" aria-hidden="true">
+            <div class="floodlight floodlight-left"></div><div class="floodlight floodlight-right"></div>
+            <div class="stadium-moon"></div>
+            <div class="grandstand"><div class="stand-roof"></div><div class="crowd"></div><div class="stand-sign">P E A K D E C L I N E <span>R A C I N G   C L U B</span></div></div>
+            <div class="course-rail"></div>
+        </div>
+        <div class="track-markers" aria-hidden="true"><span>START</span><span>¼</span><span>½</span><span>¾</span><span>FINISH</span></div>
+        <div class="race-track-wrapper">
         <div class="finish-line"></div>
+        <div id="track-overlay" class="track-overlay" hidden aria-hidden="true"><span id="overlay-caption">GET READY</span><strong id="overlay-value">3</strong></div>
 
         {% for r in racers %}
-        <div class="lane">
-            <div class="horse" id="horse-{{ r.id }}" style="width: 50px; height: 50px; --horse-color: {{ r.horse }}; --jockey-color: {{ r.jockey }};">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-
-                    <g transform="translate(100, 0) scale(-1, 1)">
-
-                        <path d="M 75 50 L 80 75 L 85 75" stroke="var(--horse-color)" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.6"/>
-                        <path d="M 40 50 L 35 75 L 30 75" stroke="var(--horse-color)" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.6"/>
-                        <path d="M 80 40 Q 95 40 90 60" stroke="#222" stroke-width="4" fill="none"/>
-
-                        <rect x="30" y="35" width="50" height="25" rx="12" fill="var(--horse-color)"/>
-                        <path d="M 40 45 L 25 20 L 10 25 L 15 35 L 30 50 Z" fill="var(--horse-color)"/>
-                        <circle cx="18" cy="24" r="2" fill="#fff"/><circle cx="17" cy="24" r="1" fill="#000"/>
-                        <path d="M 30 20 L 40 35" stroke="#222" stroke-width="5"/>
-
-                        <path d="M 70 50 L 75 80 L 80 80" stroke="var(--horse-color)" stroke-width="6" stroke-linecap="round" fill="none"/>
-                        <path d="M 35 50 L 30 80 L 25 80" stroke="var(--horse-color)" stroke-width="6" stroke-linecap="round" fill="none"/>
-
-                        <path d="M 55 45 L 65 20 L 50 20 Z" fill="var(--jockey-color)"/>
-                        <circle cx="55" cy="15" r="7" fill="var(--jockey-color)"/>
-                        <circle cx="51" cy="17" r="3" fill="#fcdbb6"/>
-                        <path d="M 55 25 L 45 35 L 25 30" stroke="var(--jockey-color)" stroke-width="2" fill="none"/>
-                        <path d="M 50 45 L 45 60 L 52 60" stroke="#fff" stroke-width="4" fill="none" stroke-linejoin="round"/>
-                        <rect x="42" y="38" width="16" height="16" fill="#fff" rx="2" stroke="#333" stroke-width="1"/>
-
-                    </g> <text x="50" y="50" font-family="Arial, sans-serif" font-weight="900" font-size="12" text-anchor="middle" fill="#000">{{ r.id }}</text>
+        <div class="lane" data-horse="{{ r.id }}">
+            <span class="lane-number">{{ r.id }}</span>
+            <div class="horse" id="horse-{{ r.id }}" style="--horse-color: {{ r.horse }}; --jockey-color: {{ r.jockey }};">
+                <span class="horse-dust" aria-hidden="true"></span>
+                <svg viewBox="0 0 140 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="coat-{{ r.id }}" x2="0.3" y2="1"><stop stop-color="var(--horse-color)"/><stop offset="1" stop-color="#171914"/></linearGradient>
+                    </defs>
+                    <ellipse class="horse-shadow" cx="69" cy="81" rx="45" ry="5" fill="#100e0b" opacity=".3"/>
+                    <g class="horse-body">
+                        <path class="horse-tail" d="M36 42 Q16 28 8 48 Q22 39 30 53" fill="#211b19"/>
+                        <g class="leg leg-back-far" stroke="#392e26" stroke-width="6" stroke-linecap="round" fill="none"><path d="M43 54 L28 66 L40 79"/><path d="M40 79h7" stroke="#17191a" stroke-width="5"/></g>
+                        <g class="leg leg-front-far" stroke="#392e26" stroke-width="5" stroke-linecap="round" fill="none"><path d="M91 51 L103 65 L92 78"/><path d="M92 78h7" stroke="#17191a"/></g>
+                        <path d="M29 47 C30 30 53 33 70 36 C80 36 87 30 93 22 L105 24 L105 43 Q98 49 94 57 C76 67 59 58 47 59 Q32 61 29 47Z" fill="url(#coat-{{ r.id }})" stroke="#1b191a" stroke-width="1.2"/>
+                        <path d="M83 39 Q89 20 99 16 L104 24 L91 42" fill="#211b19"/>
+                        <path d="M95 28 L99 13 L104 18 L108 12 L110 23 L128 33 Q132 40 124 43 L108 36 L99 42" fill="var(--horse-color)" stroke="#2a2422" stroke-width="1.2"/>
+                        <path d="M111 25L124 34L120 37L109 29" fill="#f4ead6" opacity=".7"/>
+                        <circle cx="111" cy="26" r="1.8" fill="#111"/><circle cx="111.5" cy="25.5" r=".5" fill="white"/>
+                        <path d="M122 31l-4 10M104 24l-3 11 20 4M105 35Q90 48 77 31" fill="none" stroke="#e4c38b" stroke-width="1.2"/>
+                        <g class="leg leg-back" stroke="var(--horse-color)" stroke-width="6" stroke-linecap="round" fill="none"><path d="M43 52 L52 66 L34 78"/><path d="M34 78h-7" stroke="#161b1c" stroke-width="5"/></g>
+                        <g class="leg leg-front" stroke="var(--horse-color)" stroke-width="5.5" stroke-linecap="round" fill="none"><path d="M88 53 L80 68 L99 78"/><path d="M99 78h7" stroke="#161b1c" stroke-width="5"/></g>
+                        <path d="M52 38h27l-3 20H54Z" fill="var(--jockey-color)" stroke="#f4e9cd" stroke-width="1"/>
+                        <text x="65" y="52" font-family="Arial,sans-serif" font-weight="900" font-size="13" text-anchor="middle" fill="white" stroke="#000" stroke-width=".4" paint-order="stroke">{{ r.id }}</text>
+                        <g class="jockey">
+                            <path d="M58 32L73 17Q80 15 87 24L78 34Z" fill="var(--jockey-color)" stroke="#171b24" stroke-width="1.3"/>
+                            <path d="M73 18l5 5-10 10-5-3Z" fill="white" opacity=".85"/>
+                            <path d="M82 25L90 33L102 32" fill="none" stroke="var(--jockey-color)" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M71 34L60 42L72 49" fill="none" stroke="#f2e9d6" stroke-width="5" stroke-linecap="round"/>
+                            <path d="M71 47l6 3-4 3-7-4" fill="#172025"/>
+                            <circle cx="89" cy="15" r="6" fill="#e7af83"/>
+                            <path d="M82 14a7 7 0 0 1 14 0l-1 2H81Z" fill="var(--jockey-color)"/><path d="M92 14h7" stroke="#222b32" stroke-width="2"/>
+                        </g>
+                    </g>
                 </svg>
+                <span class="winner-crown" aria-hidden="true">♛</span>
             </div>
         </div>
         {% endfor %}
     </div>
 
+        <div class="course-apron" aria-hidden="true"><span>PEAKDECLINE</span><span>THE NIGHT DERBY</span><span>PEAKDECLINE</span></div>
+        <div class="race-toolbar"><span id="race-progress">Ready at the gates</span><span id="race-stats">0 races · 0 wins</span></div>
+        <div class="race-meter" aria-hidden="true"><span id="race-meter-fill"></span></div>
+    </section>
+    <div class="commentary-panel"><span class="commentary-label">RACE CALL</span><div id="race-announcer" role="status" aria-live="polite">Pick a horse and lock in your stake.</div></div>
     <div class="game-ui">
-        <button id="btn-start" class="btn-play">🏁 Lock Bet & Start Race</button>
-        <button id="btn-reset" class="btn-play" style="background: #444; display: none;">🔄 Next Race</button>
+        <button id="btn-start" class="btn-play">Lock stake & start race →</button>
+        <button id="btn-reset" class="btn-play" style="display: none;">Next race →</button>
+        <button id="btn-pause" class="btn-secondary" hidden>Pause race</button>
     </div>
+    <section class="race-results" aria-label="Race standings"><h2 id="standings-title">The field</h2><ol id="race-standings"></ol></section>
+    <p class="credit-note">Every runner has equal odds. Winning stakes return 9× in play credits.</p>
+    <p class="credit-note" id="save-note">Credits and results are saved to your account. A refresh during a race forfeits the stake.</p>
 </div>
 {% endblock %}
 {% block scripts %}

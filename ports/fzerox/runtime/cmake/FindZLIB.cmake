@@ -1,0 +1,11 @@
+# zlib is compiled by Emscripten's port manager for this target.
+set(ZLIB_FOUND TRUE)
+set(ZLIB_VERSION_STRING 1.3.1)
+set(ZLIB_INCLUDE_DIR "${EMSCRIPTEN_ROOT_PATH}/cache/sysroot/include")
+set(ZLIB_INCLUDE_DIRS "${ZLIB_INCLUDE_DIR}")
+set(ZLIB_LIBRARY "-sUSE_ZLIB=1")
+set(ZLIB_LIBRARIES ZLIB::ZLIB)
+if(NOT TARGET ZLIB::ZLIB)
+  add_library(ZLIB::ZLIB INTERFACE IMPORTED GLOBAL)
+  set_target_properties(ZLIB::ZLIB PROPERTIES INTERFACE_LINK_OPTIONS "-sUSE_ZLIB=1")
+endif()

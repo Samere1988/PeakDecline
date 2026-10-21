@@ -1,0 +1,41 @@
+{
+  "status": "verified and installed",
+  "old_runtime_sha256": "7d0df9eac01f4ed2813b9964e066c8cba913e063f4d1187e373e28b9c9dc6c2c",
+  "candidate_runtime_sha256": "5522aa3727ee5b43ec5cfc4782385d50f83d10919788e2dec2172e90dc50e78d",
+  "fixes": [
+    {
+      "cases": [
+        "board-WesternLand"
+      ],
+      "cause": "Call at 0x800B1878 targeted a leading NOP at 0x800B1840; the extracted function started at 0x800B1844, leaving a one-NOP synthetic function that returned before computing vector length.",
+      "change": "Include the original leading NOP in the extracted function, with pinned instruction and boundary checks. No train gameplay patch or disabled numerical assertion.",
+      "regression": "Original vector math entry points tested on known vectors; controller-only replay reaches Western Land turn two at tick 13333."
+    },
+    {
+      "cases": [
+        "mg-20-LookAway",
+        "mg-24-Archerival",
+        "mg-69-DizzyDancing"
+      ],
+      "cause": "The original display lists use RGBA-tagged 8-bit texels with palette lookup enabled. The renderer incorrectly treated these as unsupported direct RGBA data.",
+      "change": "Route indexed 4/8-bit RGBA descriptors through the palette decoder when lookup is enabled.",
+      "regression": "Actual WebGL pixels match CI-tagged textures in 4/8-bit modes, show both palette colours and change after a palette replacement."
+    }
+  ],
+  "checks": [
+    "Hosted OS/process, audio, FPU conversions, vector math, palette pixels: passed",
+    "19200-frame independent player/spectator frame bridge: passed",
+    "Isolated shared lobby with four players and spectator: passed",
+    "Western Land controller-only path: 13333 frames continuously rendered after board entry, turn two reached, every sampled and final checksum matches presentation-skipped replay",
+    "All 72 continuously rendered cases match independent replay hashes, stages, final state and completion tick",
+    "Installed HTTP assets verified through the production runtime route in an isolated four-player plus spectator lobby"
+  ],
+  "live_server_restarted": false,
+  "summary": {
+    "PASS": 69,
+    "VISUAL_ISSUE": 3
+  },
+  "installed_build": "instance/marioparty2/build",
+  "previous_build": "instance/marioparty2/build-before-crash-fix-2026-10-10",
+  "service_pid_before_and_after": 7725
+}

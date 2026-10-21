@@ -1,0 +1,16 @@
+{
+  "MKart360": {
+    "url": "https://github.com/sirdankz/MKart360.git",
+    "commit": "aeef740f2132bfc91ca767dad824570df42ce920"
+  },
+  "emsdk": {
+    "url": "https://github.com/emscripten-core/emsdk.git",
+    "commit": "e566f7bdcc7735f44037911c24b87a58a3c93145"
+  },
+  "emscripten_version": "4.0.10",
+  "MK64Reloaded": {
+    "release": "v2026.04.03",
+    "url": "https://github.com/GhostlyDark/MK64-Reloaded/releases/download/v2026.04.03/mk64-reloaded-v2026.04.03-sk-hd.o2r",
+    "sha256": "98d852481dbbd1ca378b79ca2146486848118879da9aa4612769eaaee6dba685"
+  }
+}

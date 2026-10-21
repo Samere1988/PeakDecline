@@ -1,0 +1,2 @@
+# Add to the existing application environment for local YouTube playback.
+yt-dlp[default]==2026.8.19

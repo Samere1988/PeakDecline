@@ -44,9 +44,7 @@
 
                     <div class="room-users">
                         <div class="user-avatars">
-                            <div class="user-avatar host-avatar-icon" title="Host: {{ room.host.username }}">
-                                {{ room.host.username[0]|upper }}
-                            </div>
+                            <img class="user-avatar host-avatar-icon" src="{{ room.host.avatar_url }}" alt="" title="Host: {{ room.host.username }}">
                         </div>
                         <span>Hosted by {{ room.host.username }}</span>
                     </div>

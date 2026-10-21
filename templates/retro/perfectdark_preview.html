@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfect Dark preview · Peak Decline</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/game_viewport.css') }}">
+<style>
+html,body{margin:0;background:#080c12;color:#edf2f7;font-family:system-ui}main{max-width:960px;margin:24px auto;padding:0 16px}
+a{color:#8dd6ff}h1{font-size:1.5rem}.screen{position:relative;aspect-ratio:4/3;background:#000;width:100%;overflow:hidden}
+.screen:fullscreen{height:100%;width:100%;display:flex;align-items:center;justify-content:center}
+canvas{display:block;width:100%;height:100%;object-fit:contain;outline:none}.screen:fullscreen canvas{width:min(100vw,133.333vh);height:min(100vh,75vw)}
+#fullscreen{position:absolute;right:12px;top:12px;z-index:2}button{padding:8px 14px;cursor:pointer}label{display:inline-flex;align-items:center;gap:8px;margin:12px}#status{min-height:1.5em}
+.game-control-idle{opacity:0;pointer-events:none}#fullscreen:focus{opacity:1;pointer-events:auto}
+</style></head><body><main>
+<a href="{{ url_for('main.retro_games') }}">← Retro Games</a>
+<h1>Perfect Dark <small>— browser preview</small></h1>
+<p>Solo preview. Multiplayer and spectators are not connected yet.</p>
+<button id="start" type="button">Start Perfect Dark</button>
+<label>Volume <input id="volume" aria-label="Volume" type="range" min="0" max="100" value="70"></label>
+<p id="status" role="status">Ready to start.</p>
+<div class="screen" id="screen"><canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Perfect Dark"></canvas>
+<button id="fullscreen" type="button">⛶ Fullscreen</button></div>
+<details><summary>Controls</summary><p>Enter: confirm · Tab: Start / pause · Escape: release mouse · WASD: move · Mouse: look · Left click: fire · Right click: aim · E: use · R: reload. Controller bindings are available in the game’s options.</p></details>
+</main><script src="{{ url_for('static', filename='js/game_fullscreen.js') }}"></script>
+<script>window.PeakNet = window.PeakNet || {};</script>
+<script src="{{ url_for('static', filename='js/netplay/fps_input.js') }}"></script>
+<script src="{{ url_for('static', filename='js/netplay/perfectdark_engine.js') }}"></script>
+<script>
+(() => {
+    'use strict';
+    const canvas = document.getElementById('canvas'), status = document.getElementById('status');
+    const volume = document.getElementById('volume'), start = document.getElementById('start');
+    let started = false;
+    const fail = message => { status.textContent = 'Perfect Dark could not start: ' + message; window.peakPdError = String(message); };
+    GameFullscreen.create({area: document.getElementById('screen'), button: document.getElementById('fullscreen'), status, focusGame: () => canvas.focus()});
+    try { const saved = Number(localStorage.getItem('perfectdark-volume') ?? 70); if (Number.isFinite(saved)) volume.value = String(Math.max(0, Math.min(100, saved))); } catch (_) {}
+    volume.addEventListener('input', () => {
+        if (window.Module?.peakAudioGain) Module.peakAudioGain.gain.value = Number(volume.value) / 100;
+        try { localStorage.setItem('perfectdark-volume', volume.value); } catch (_) {}
+    });
+    start.addEventListener('click', () => {
+        if (started) return;
+        started = true; start.disabled = true;
+        const audio = new AudioContext({sampleRate: 22020}), gain = audio.createGain();
+        gain.gain.value = Number(volume.value) / 100; gain.connect(audio.destination); audio.resume().catch(() => {});
+        status.textContent = 'Loading Perfect Dark…';
+        const controlled = window.peakPdLaunchOptions?.controlled === true;
+        const players = window.peakPdLaunchOptions?.players || 1;
+        const seed = window.peakPdLaunchOptions?.seed || 1;
+        window.Module = {
+            canvas, pdCanvasWidth: 640, pdCanvasHeight: 480, pdCanvasResizePending: true, pdAudioContext: audio, peakAudioGain: gain, pdMouseDeltaX: 0, pdMouseDeltaY: 0,
+            arguments: ['--basedir', '/data', '--savedir', '/save', '--no-crash-handler', ...(controlled ? ['--peak-controlled'] : [])],
+            locateFile: name => {{ build_url|tojson }} + name,
+            print: text => console.log(text), printErr: text => { console.error(text); if (/FATAL|Aborted|RuntimeError/.test(text)) fail(text); }, onAbort: fail,
+            preRun: [() => {
+                Module.FS.mkdir('/data'); Module.FS.mkdir('/save');
+                // Fresh in-memory save preserves the original startup sequence.
+                Module.FS.writeFile('/save/pd.ini', '[Video]\nDefaultWidth=640\nDefaultHeight=480\nDecoupledRendering=0\n[Game]\nSkipIntro=0\n');
+                Module.addRunDependency('peak-rom');
+                fetch({{ rom_url|tojson }}).then(async response => {
+                    if (!response.ok) throw new Error('Game data download failed (' + response.status + ').');
+                    const data = new Uint8Array(await response.arrayBuffer());
+                    if (data.length !== 33554432 || data[0] !== 0x80 || data[1] !== 0x37 || data[0x3e] !== 0x45 || data[0x3f] !== 1) throw new Error('Expected the US Rev 1 game data.');
+                    Module.FS.writeFile('/data/pd.ntsc-final.z64', data, {canOwn: true});
+                    Module.removeRunDependency('peak-rom');
+                }).catch(error => fail(error.message));
+            }],
+            onRuntimeInitialized: () => {
+                status.textContent = ''; canvas.focus(); window.peakPdReady = true;
+                if (controlled) {
+                    if (Module._peakPdConfigure(players, seed) !== 1) { fail('Invalid controlled-engine configuration.'); return; }
+                    setTimeout(() => {
+                        try { window.peakPdEngine = new PeakNet.PerfectDarkEngine(Module, players); }
+                        catch (error) { fail(error.message); }
+                    }, 0);
+                }
+            }
+        };
+        const script = document.createElement('script'); script.src = {{ build_url|tojson }} + 'pd.js';
+        script.onerror = () => fail('The runtime download failed.'); document.body.append(script);
+    });
+    document.addEventListener('mousemove', event => {
+        if (document.pointerLockElement === canvas && window.Module) {
+            Module.pdMouseDeltaX += event.movementX; Module.pdMouseDeltaY += event.movementY;
+        }
+    });
+    window.addEventListener('pagehide', () => window.Module?.pdAudioContext?.close().catch(() => {}));
+})();
+</script></body></html>

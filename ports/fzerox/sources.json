@@ -1,0 +1,16 @@
+{
+  "decomp": {
+    "url": "https://github.com/inspectredc/fzerox.git",
+    "commit": "4b00f36ceeabfe657866a7d02f3411545b5f55eb"
+  },
+  "G-Diffuser": {
+    "url": "https://github.com/Zorkats/G-Diffuser.git",
+    "commit": "5d6d1841d1e11e8d039de33c369a7ce6ecfffa2d"
+  },
+  "ported_decomp": {
+    "url": "https://github.com/Zorkats/fzerox.git",
+    "commit": "f556d9409737e61016a58ab2bd684b52d51ee057"
+  },
+  "rom_md5": "753437d0d8ada1d12f3f9cf0f0a5171f",
+  "emscripten_version": "4.0.10"
+}

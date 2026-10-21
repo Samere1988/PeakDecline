@@ -1,0 +1,285 @@
+.catan-app .ck-panel { display: none; }
+.catan-app.cities-knights-mode .ck-panel { display: block; }
+.catan-app.cities-knights-mode .ck-panel[hidden] { display: none; }
+.catan-app.cities-knights-mode #buy-development,
+.catan-app.cities-knights-mode .action-cost-anchor:has(#buy-development),
+.catan-app.cities-knights-mode #development-hand,
+.catan-app.cities-knights-mode #development-options,
+.catan-app:not(.cities-knights-mode) #ck-wall-action { display: none; }
+
+/* Keep the board, hand, and four seats in view. Scroll only the selected tool. */
+.catan-app.board-first.cities-knights-mode .catan-layout { grid-template-columns: minmax(0, 1fr) clamp(360px, 21vw, 560px); }
+.catan-app.board-first.cities-knights-mode .board-panel,
+.catan-app.board-first.cities-knights-mode .catan-board { background: #126b98; }
+.catan-app.board-first.cities-knights-mode .catan-sidebar { position: relative; overflow: hidden; gap: 5px; }
+.catan-app.board-first.cities-knights-mode.base-six-mode .catan-sidebar { overflow-y: auto; scrollbar-width: thin; }
+.catan-app.board-first.cities-knights-mode .move-summary { display: flex; flex: 1 1 0; min-height: 0; }
+.catan-app.board-first.cities-knights-mode .room-chat-panel { flex: 1 1 0; min-height: 0; overflow: hidden; }
+.catan-app.board-first.cities-knights-mode .room-chat-panel .chat-toggle[open] { position: static; z-index: auto; display: flex; flex: 1 1 auto; flex-direction: column; width: auto; max-width: none; min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.catan-app.board-first.cities-knights-mode .room-chat-panel .chat-toggle > summary { flex: 0 0 auto; }
+.catan-app.board-first.cities-knights-mode .room-chat-panel #room-chat { flex: 1 1 auto; min-height: 0; height: auto; }
+.catan-app.board-first.cities-knights-mode #chat-form { flex: 0 0 auto; margin: 4px 0 0; }
+.catan-app.board-first.cities-knights-mode .bank-card { display: block; flex: 0 0 auto; padding: 5px 8px; }
+.catan-app.cities-knights-mode .bank-card > .card-heading { display: none; }
+.catan-app.cities-knights-mode #bank-resources { display: block; }
+.ck-bank-stock { grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 3px; }
+.ck-bank-progress { display: flex; justify-content: center; gap: 9px; margin-top: 5px; }
+.ck-bank-progress .ck-bank-card { width: 56px; }
+.catan-app.board-first.cities-knights-mode .game-players { flex: 0 0 auto; padding: 3px; }
+.ck-seat .seat-stats { grid-template-columns:repeat(2,minmax(0,1fr)) 43px 46px; }
+.ck-seat .seat-resource-cards img, .ck-seat .seat-special-cards img { height:51px; }
+.ck-improvement-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(5, 1fr); gap: 1px; width: 43px; height: 58px; padding: 2px; border: 1px solid #828887; box-sizing: border-box; background: #38404a url('/static/assets/catan/colonist/cities-knights/pageck_city_improvement_tracker.png') center / 100% 100% no-repeat; }
+.ck-improvement-cell { background: #c9ceca; opacity: .95; }
+.ck-improvement-cell.filled { background: transparent; }
+.ck-seat-strength { display: grid; gap: 3px; font-size: 11px; }
+.ck-seat-strength > span { display: flex; align-items: center; justify-content: space-between; gap: 1px; }
+.ck-seat-strength img { width: 24px; height: 24px; object-fit: contain; }
+
+/* Barbarian path sits in the open water at the left edge of the board. */
+.catan-app.board-first.cities-knights-mode #ck-barbarian-track { position: absolute; z-index: 8; top: 50%; left: 8px; transform: translateY(-50%); width: 155px; pointer-events: none; }
+.ck-track-heading { width: 107px; margin-bottom: 4px; padding: 3px 5px; border-radius: 4px; background: #162333c9; color: white; font: 700 10px/1.2 Arial,sans-serif; text-align: center; }
+.ck-track-heading b { color: #ffdc80; }
+.ck-track-steps { display: grid; grid-template-rows: repeat(8, 55px); }
+.ck-track-step { position: relative; display: flex; align-items: center; width: 155px; height: 55px; }
+.ck-track-step:nth-child(even) .ck-track-hex { margin-left: 18px; }
+.ck-track-hex { display: block; width: 56px; height: 64px; flex: none; }
+.ck-track-hex img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.ck-track-step.current .ck-track-hex { filter: drop-shadow(0 0 5px #f6df99); }
+.ck-track-forces { position: absolute; z-index: 1; left: 0; top: -5px; display: flex; align-items: center; gap: 5px; }
+.ck-track-step:nth-child(even) .ck-track-forces { left: 18px; }
+.ck-force { position: relative; display: block; width: 61px; height: 64px; pointer-events: auto; cursor: help; }
+.ck-force-ship { width: 64px; }
+.ck-force img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.ck-force b { position: absolute; right: 0; bottom: 0; min-width: 21px; padding: 3px; border-radius: 50%; background: #49617b; color: white; font: 700 16px/1 Arial,sans-serif; text-align: center; }
+.ck-force-tooltip { display: none; position: absolute; z-index: 20; top: 54px; left: 8px; width: 205px; padding: 8px 10px; border: 1px solid #d7bc78; border-radius: 6px; background: #263039; color: #fff; box-shadow: 0 6px 18px #0009; font: 12px/1.35 Arial,sans-serif; white-space: normal; }
+.ck-force-tooltip strong { display: block; margin-bottom: 3px; color: #ffe0a1; }
+.ck-force:hover .ck-force-tooltip,.ck-force:focus-visible .ck-force-tooltip { display: block; }
+.ck-force:focus-visible { outline: 2px solid #ffe0a1; border-radius: 6px; }
+.ck-build-cost-tooltip .ck-cost-row + .ck-cost-row { margin-top: 7px; padding-top: 7px; border-top: 1px solid #ffffff35; }
+.ck-build-cost-tooltip .ck-cost-row strong { display: block; font-size: 11px; }
+
+.catan-app.board-first.cities-knights-mode #ck-rule-tools { position: absolute; z-index: 12; top: 8px; left: 10px; display: flex; flex-direction: column; gap: 5px; }
+#ck-rule-tools button { display: grid; place-items: center; width: 43px; height: 43px; padding: 5px; border: 0; border-radius: 9px; background: transparent; cursor: pointer; }
+#ck-rule-tools button:hover, #ck-rule-tools button:focus-visible { background: #ffffff28; outline: 2px solid #f5d891; }
+#ck-rule-tools img { display: block; width: 35px; height: 35px; object-fit: contain; filter: drop-shadow(0 1px 2px #12334d); }
+.catan-app.board-first.cities-knights-mode #ck-settings-menu { position: absolute; z-index: 15; top: 11px; left: 60px; min-width: 155px; padding: 9px; border: 2px solid #665469; border-radius: 7px; background: #211b28; box-shadow: 0 6px 20px #0009; color: #dce7e5; }
+#ck-settings-menu strong { display: block; margin-bottom: 7px; font-size: 12px; }
+#ck-settings-menu button { display: block; width: 100%; margin-top: 4px; border: 1px solid #ffffff18; border-radius: 4px; padding: 6px; background: #2d3b44; color: #dce7e5; text-align: left; cursor: pointer; }
+.ck-rules-dialog { width: min(760px, calc(100vw - 24px)); max-height: calc(100dvh - 30px); padding: 0; border: 2px solid #665469; border-radius: 10px; background: #211b28; color: #f2f4f2; box-shadow: 0 18px 55px #000b; }
+.ck-rules-dialog::backdrop { background: #071927bc; }
+.ck-rules-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: #211b28; }
+.ck-rules-dialog header span { font-size: 11px; color: #d7ecf6; }
+.ck-rules-dialog h2 { margin: 2px 0 0; font-size: 19px; }
+.ck-rules-dialog header button { width: 30px; height: 30px; border: 1px solid #d2e4ed; border-radius: 5px; background: #ffffff1f; color: white; font-size: 22px; cursor: pointer; }
+.ck-rules-tabs { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; padding: 7px 12px; background: #141417b3; }
+.ck-rules-tabs button { padding: 7px 12px; border: 0; border-radius: 5px; background: transparent; color: #d3dfe8; cursor: pointer; }
+.ck-rules-tabs button[aria-selected="true"] { background: #4a192c77; color: white; }
+.ck-rules-tabs a { margin-left: auto; color: #a5dbf1; font-size: 12px; }
+.ck-rules-scroll { max-height: calc(100dvh - 160px); overflow: auto; padding: 14px 18px 22px; font-size: 13px; line-height: 1.5; }
+.ck-rules-dialog[data-view="quick"] .ck-rules-full,
+.ck-rules-dialog[data-view="full"] .ck-rules-quick { display: none; }
+.ck-rules-dialog h3 { margin: 0 0 6px; color: #f3d28c; font-size: 15px; }
+.ck-rules-dialog p { margin: 6px 0 12px; }
+.ck-rules-dialog ol { padding-left: 22px; }
+.ck-rules-costs { display: grid; grid-template-columns: minmax(95px, .6fr) 1.4fr; gap: 4px 10px; margin: 10px 0 16px; }
+.ck-rules-costs span, .ck-rules-costs b { padding: 5px 7px; background: #ffffff0c; }
+.ck-rules-index { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0 18px; }
+.ck-rules-index a { padding: 5px 8px; border-radius: 5px; background: #2d3b44; color: #f4f7fa; text-decoration: none; }
+.ck-rules-full > section { margin: 0 0 14px; padding: 10px 0 4px; border-top: 1px solid #ffffff2a; scroll-margin-top: 8px; }
+.ck-rules-card-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 12px; padding: 0; list-style: none; }
+.ck-rules-card-list li { display: grid; grid-template-columns: 110px 1fr; gap: 5px; padding: 5px; border-radius: 4px; background: #ffffff0a; }
+.ck-rules-card-list strong { color: #f4d28d; }
+.ck-rules-source { margin-top: 16px; padding-top: 12px; border-top: 1px solid #ffffff35; }
+.ck-rules-source a { color: #a5dbf1; }
+
+.catan-app.board-first.cities-knights-mode #ck-required-choice { position: absolute; z-index: 31; left: 50%; bottom: 164px; transform: translateX(-50%); width: min(460px, calc(100% - 20px)); max-height: min(360px, calc(100% - 190px)); overflow: auto; box-sizing: border-box; padding: 12px; border: 3px solid #126b98; border-radius: 9px; background: #f2eee4; color: #243943; box-shadow: 0 12px 35px #0009; }
+#ck-required-choice[hidden] { display: none !important; }
+#ck-required-choice h3 { margin: 0 0 9px; font-size: 16px; }
+#ck-required-choice form[hidden] { display: none; }
+.ck-required-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(66px, 1fr)); gap: 7px; }
+.catan-app #ck-required-choice .ck-required-cards button { min-width: 0; padding: 5px; border: 2px solid #8db6c4; border-radius: 6px; background: #dce9e9; color: #1c3441; cursor: pointer; }
+.ck-required-cards button:hover, .ck-required-cards button:focus-visible { outline: 2px solid #e2a239; background: #fff4d6; }
+.ck-required-cards img { display: block; width: 100%; height: 75px; object-fit: contain; }
+.ck-required-cards span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+
+.catan-app.board-first.cities-knights-mode #ck-workspace { display: none; flex-direction: column; position: absolute; z-index: 30; right: 8px; bottom: 178px; width: min(500px, calc(100% - 16px)); height: auto; max-height: min(470px, calc(100% - 240px)); min-height: 0; overflow: hidden; padding: 0; border: 3px solid #126b98; border-radius: 10px; background: #f2eee4; color: #243943; box-shadow: 0 8px 30px #0b203ab8; }
+.catan-app.board-first.cities-knights-mode.ck-tools-open #ck-workspace { display: flex; }
+.catan-app.board-first.cities-knights-mode #ck-workspace #ck-hand,
+.catan-app.board-first.cities-knights-mode #ck-workspace #ck-actions { padding: 10px; }
+.catan-app.board-first.cities-knights-mode #ck-workspace .ck-progress-card { background: #fffaf0; }
+.catan-app.board-first.cities-knights-mode #ck-workspace .ck-form select { background: white; color: #243943; border-color: #8caebd; }
+.ck-workspace-heading { display: flex; justify-content: space-between; align-items: center; min-height: 39px; padding: 4px 10px; background: #e3edf0; color: #243943; font-size: 14px; }
+.ck-workspace-heading button { width: 29px; height: 29px; padding: 0; border: 1px solid #8caebd; border-radius: 5px; background: #d2e2e8; color: #243943; font-size: 23px; line-height: 1; cursor: pointer; }
+.catan-app.cities-knights-mode #ck-actions,
+.catan-app.cities-knights-mode #ck-hand { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 11px; scrollbar-width: thin; }
+.ck-panel h2, .ck-panel h3 { margin: 0 0 9px; font-size: 13px; }
+.ck-panel p { margin: 8px 0; font-size: 11px; line-height: 1.4; }
+.ck-panel button, .ck-panel select, .ck-panel input { font: inherit; }
+.ck-panel button { cursor: pointer; border: 1px solid #ffffff18; border-radius: 6px; padding: 7px 9px; background: #2d3b44; color: #dce7e5; }
+.ck-panel .ck-form button[type="submit"] { background: linear-gradient(135deg,#ff4444,#c92525); border-color: #ff4444; color: white; }
+.ck-panel button:disabled { opacity: .5; cursor: not-allowed; }
+.ck-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 5px 7px; margin: 7px 0 13px; }
+.ck-form label { display: grid; gap: 3px; min-width: 0; font-size: 10px; }
+.ck-form select, .ck-form input { width: 100%; min-width: 0; min-height: 33px; box-sizing: border-box; padding: 5px; border: 1px solid #665469; border-radius: 5px; background: #211b28; color: white; }
+.ck-form select[multiple] { min-height: 110px; }
+.ck-form button[type="submit"] { align-self: end; min-height: 33px; white-space: nowrap; }
+.ck-improve { padding-bottom: 3px; border-bottom: 1px solid #ffffff1e; }
+.ck-improve strong { display: block; font-size: 11px; }
+.ck-card { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.ck-card img { width: 34px; height: 47px; object-fit: contain; }
+.ck-card b { font-size: 12px; }
+.ck-card small { font-size: 10px; opacity: .72; }
+.ck-decks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin: 8px 0 16px; }
+.ck-deck { position: relative; min-width: 0; text-align: center; border-radius: 8px; padding: 5px; background: #ffffff10; }
+.ck-deck img { display: block; width: 100%; height: 105px; object-fit: contain; }
+.ck-deck strong, .ck-deck span { display: block; font-size: 11px; }
+.ck-deck span { color: #d6b977; }
+.ck-progress-hand { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 7px; }
+.ck-progress-hand:has(.ck-progress-card[open]) .ck-progress-card:not([open]) { display: none; }
+.ck-progress-card { min-width: 0; border: 1px solid #a39785; border-radius: 7px; padding: 5px; background: #eee6d6; color: #293746; }
+.ck-progress-card[open] { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(85px, 125px) minmax(0, 1fr); gap: 5px 12px; border: 0; background: transparent; }
+.ck-progress-card summary { cursor: pointer; list-style: none; display: grid; gap: 3px; }
+.ck-progress-card summary img { width: 100%; max-height: 115px; object-fit: contain; }
+.ck-progress-card summary span { text-align: center; font-weight: 700; font-size: 11px; }
+.ck-progress-card[open] summary { grid-column: 1; grid-row: 1 / span 3; align-content: start; }
+.ck-progress-card[open] summary img { max-height: 185px; }
+.ck-progress-card[open] .ck-form { grid-column: 2; margin: 0 0 8px; }
+.ck-progress-card[open] .ck-form label { font-size: 11px; }
+.ck-progress-card .ck-form select, .ck-progress-card .ck-form input { color: #253447; background: white; border-color: #b9ae99; }
+
+/* The hand and primary actions stay in the same compact dock as the base game. */
+.catan-app.board-first.cities-knights-mode .bottom-controls { background: #211b28; }
+.catan-app.board-first.cities-knights-mode .bottom-hand { overflow-x: auto; overflow-y: hidden; border-radius: 4px; padding: 0 5px; background: transparent; }
+.catan-app.board-first.cities-knights-mode #ck-commodities { display: flex; flex: none; gap: 3px; align-items: center; padding: 0 0 0 5px; border-left: 1px solid #ffffff3b; }
+.catan-app.board-first.cities-knights-mode #ck-commodities .ck-card { position: relative; width: 43px; height: 66px; }
+.catan-app.board-first.cities-knights-mode .ck-trade-commodity { display: inline-flex; flex: none; cursor: pointer; }
+.catan-app.board-first.cities-knights-mode .ck-trade-commodity:focus-visible { outline: 2px solid #ffe2a1; border-radius: 4px; }
+.catan-app.board-first.cities-knights-mode #ck-commodities .ck-card img { width: 43px; height: 62px; }
+.catan-app.board-first.cities-knights-mode #ck-commodities .ck-card b { position: absolute; top: 2px; right: 1px; padding: 2px 4px; border-radius: 0 0 0 5px; background: #285ea8; color: white; }
+.catan-app.board-first.cities-knights-mode #ck-progress-dock { display: flex; flex: none; gap: 3px; align-items: center; padding-left: 5px; border-left: 1px solid #c9c5bd; }
+.catan-app.board-first.cities-knights-mode #ck-progress-dock:empty { display: none; }
+.catan-app.board-first.cities-knights-mode #ck-quick-actions,
+.catan-app.board-first.cities-knights-mode #ck-knight-context,
+.catan-app.board-first.cities-knights-mode #ck-action-options { position: absolute; z-index: 18; display: flex; gap: 5px; }
+.catan-app.board-first.cities-knights-mode #ck-quick-actions { bottom: 93px; }
+.catan-app.board-first.cities-knights-mode #ck-quick-actions { right: 9px; }
+.catan-app.board-first.cities-knights-mode #ck-knight-context,
+.catan-app.board-first.cities-knights-mode #ck-action-options { right: 255px; bottom: 171px; }
+.catan-app.board-first.cities-knights-mode #ck-knight-context[hidden],
+.catan-app.board-first.cities-knights-mode #ck-action-options[hidden] { display: none; }
+.catan-app.board-first.cities-knights-mode .board-toolbar #sound-toggle { display: none; }
+.catan-app.board-first.cities-knights-mode .ck-quick-tile { position: relative; display: grid; place-items: center; width: 72px; height: 72px; padding: 7px; border: 0; border-radius: 10px; background: transparent url('/static/assets/catan/colonist/action-background.svg') center / 100% 100% no-repeat; box-shadow: none; cursor: pointer; }
+.catan-app.board-first.cities-knights-mode .ck-quick-tile img { display: block; width: 53px; height: 53px; object-fit: contain; }
+.catan-app.board-first.cities-knights-mode .ck-quick-tile b { position: absolute; top: 0; right: 3px; border-radius: 3px; padding: 1px 3px; background: #285ea8; color: white; font-size: 12px; }
+.catan-app.board-first.cities-knights-mode .ck-quick-tile:disabled { opacity: .5; cursor: not-allowed; }
+.catan-app.board-first.cities-knights-mode .ck-quick-tile.ck-unaffordable { opacity: .5; }
+.catan-app.board-first.cities-knights-mode .ck-quick-tile[aria-expanded="true"] { outline: 3px solid #ffdf8e; outline-offset: 1px; }
+.ck-option-arrow { position: absolute; right: 4px; bottom: 9px; color: #edf7fc; font: 700 33px/1 Arial,sans-serif; text-shadow: 0 1px 2px #406b7b; }
+.ck-option-square { width: 38px; height: 38px; border: 4px solid #5c8996; background: #9fd0df; box-sizing: border-box; }
+.catan-app.board-first.cities-knights-mode .ck-quick-tile:focus-visible,
+.catan-app.board-first.cities-knights-mode .action-tray .action-tile:focus-visible { outline: 3px solid #ffdb70; outline-offset: 2px; }
+.catan-app.board-first.cities-knights-mode .game-message:empty { display: none; }
+
+/* The shared Base-game trade menu accommodates the three commodity cards. */
+.catan-app.board-first.cities-knights-mode #trade-panel.negotiated-trading { width: min(620px, calc(100vw - 22px)); right: calc(clamp(360px, 21vw, 560px) + 18px); top: 82px; max-height: calc(100dvh - 94px); }
+.catan-app.board-first.cities-knights-mode .trade-card-row { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; }
+
+.ck-board-knight, .ck-board-wall, .ck-board-metropolis, .ck-board-merchant { position: absolute; transform: translate(-50%, -50%); object-fit: contain; z-index: 8; }
+.ck-board-wall, .ck-board-metropolis, .ck-board-merchant { pointer-events: none; }
+.ck-board-knight { width: 6%; height: 7%; z-index: 11; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.ck-board-knight-rival { pointer-events: none; cursor: default; }
+.ck-board-knight img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.ck-board-knight.selected, .ck-board-knight:focus-visible { outline: 3px solid #ffe27b; outline-offset: 2px; border-radius: 50%; }
+.ck-board-wall { width: 8%; height: 8%; z-index: 7; }
+.ck-board-metropolis { width: 6%; height: 6%; z-index: 10; }
+.ck-board-merchant { width: 5%; height: 6%; z-index: 9; }
+.ck-map-option { position: absolute; z-index: 25; transform: translate(-50%, -50%); min-width: 23px; height: 23px; padding: 1px 3px; border: 2px solid #fff; border-radius: 50%; background: #2877cf; color: #fff; font: 700 11px/1 sans-serif; box-shadow: 0 1px 5px #0008; cursor: pointer; }
+.ck-map-option:hover, .ck-map-option:focus-visible { background: #eb9d2c; outline: 2px solid #16385d; }
+.ck-build-target { position: absolute; z-index: 27; transform: translate(-50%,-50%); display: grid; place-items: center; width: 35px; height: 35px; padding: 0; border: 3px solid #fff; border-radius: 50%; background: #2aabdee0; color: white; box-shadow: 0 0 0 4px #ffe2a184, 0 2px 8px #000a; font: 700 24px/1 Arial,sans-serif; cursor: pointer; }
+.ck-build-target:hover,.ck-build-target:focus-visible { background: #efad37; outline: 2px solid #193b55; }
+.catan-app.board-first.cities-knights-mode #ck-build-prompt { position: absolute; z-index: 28; bottom: 100px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 9px; width: max-content; max-width: calc(100% - 18px); padding: 7px 9px; border: 1px solid #d7bc78; border-radius: 6px; background: #162333ed; color: #fff; font-size: 12px; box-sizing: border-box; }
+#ck-build-prompt[hidden] { display: none !important; }
+#ck-build-prompt button { flex: none; padding: 4px 7px; border: 1px solid #bccbd5; border-radius: 4px; background: #344f60; color: white; cursor: pointer; }
+
+/* Match the reference layout at desktop game sizes: about 79% board and 21% status. */
+@media (min-width: 1500px) and (min-height: 900px) {
+  .catan-app.board-first.cities-knights-mode #ck-build-prompt { bottom: 120px; }
+  .catan-app.board-first.cities-knights-mode .bottom-controls { height: 108px; min-height: 108px; }
+  .catan-app.board-first.cities-knights-mode .bottom-hand { height: 96px; }
+  .catan-app.board-first.cities-knights-mode #resources .resource { width: 56px; flex-basis: 56px; }
+  .catan-app.board-first.cities-knights-mode .bottom-controls .resource-card-image { width: 56px; height: 82px; }
+  .catan-app.board-first.cities-knights-mode #ck-commodities .ck-card { width: 56px; height: 83px; }
+  .catan-app.board-first.cities-knights-mode #ck-commodities .ck-card img { width: 56px; height: 81px; }
+  .catan-app.board-first.cities-knights-mode .bottom-build { width: 670px; }
+  .catan-app.board-first.cities-knights-mode #ck-quick-actions { bottom: 119px; }
+  .catan-app.board-first.cities-knights-mode .ck-quick-tile { width: 100px; height: 100px; }
+  .catan-app.board-first.cities-knights-mode .ck-quick-tile img { width: 72px; height: 72px; }
+  .catan-app.board-first.cities-knights-mode #ck-knight-context,
+  .catan-app.board-first.cities-knights-mode #ck-action-options { right: 220px; bottom: 225px; }
+  .catan-app.board-first.cities-knights-mode .game-message { bottom: 116px; }
+  .catan-app.board-first.cities-knights-mode .phase-actions:not(:empty) { bottom: 145px; }
+  .catan-app.board-first.cities-knights-mode #ck-workspace { bottom: 228px; width: min(480px, calc(100% - 16px)); }
+  .catan-app.board-first.cities-knights-mode .ck-bank-progress .ck-bank-card { width: 67px; }
+  .catan-app.board-first.cities-knights-mode .ck-improvement-grid { width: 54px; height: 76px; }
+  .catan-app.board-first.cities-knights-mode .ck-seat-strength { font-size: 14px; }
+  .catan-app.board-first.cities-knights-mode .ck-seat-strength img { width: 29px; height: 29px; }
+  .catan-app.board-first.cities-knights-mode .ck-seat .seat-stats { grid-template-columns:repeat(2,minmax(0,1fr)) 54px 56px; }
+}
+
+@media (min-width: 801px) and (max-height: 690px) {
+  .catan-app.board-first.cities-knights-mode #ck-barbarian-track { transform: translateY(-50%) scale(.75); transform-origin: center left; }
+  .catan-app.board-first.cities-knights-mode .room-chat-panel { min-height: 70px; }
+  .ck-bank-progress .ck-bank-card { width: 47px; }
+  .ck-improvement-grid { width: 37px; height: 44px; }
+  .ck-seat-strength img { width: 21px; height: 21px; }
+  .ck-seat .seat-stats { grid-template-columns:repeat(2,minmax(0,1fr)) 37px 34px; }
+  .ck-seat .seat-resource-cards img, .ck-seat .seat-special-cards img { height:42px; }
+}
+@media (min-width: 801px) and (max-height: 800px) {
+  .catan-app.board-first.cities-knights-mode #ck-rule-tools { flex-direction: row; }
+}
+
+@media (max-width: 1100px) {
+  .catan-app.board-first.cities-knights-mode .catan-layout { grid-template-columns: minmax(0, 1fr) 330px; }
+  .catan-app.board-first.cities-knights-mode #ck-commodities .ck-card { width: 36px; }
+  .catan-app.board-first.cities-knights-mode #ck-commodities .ck-card img { width: 36px; height: 55px; }
+}
+@media (max-width: 800px) {
+  .catan-app.board-first.cities-knights-mode .catan-layout { grid-template-columns: minmax(0, 1fr); }
+  .catan-app.board-first.cities-knights-mode #ck-barbarian-track { top: auto; bottom: 130px; left: 5px; transform: scale(.45); transform-origin: bottom left; }
+  .catan-app.board-first.cities-knights-mode #ck-rule-tools { top: 39px; left: 5px; }
+  #ck-rule-tools button { width: 35px; height: 35px; padding: 4px; }
+  #ck-rule-tools img { width: 27px; height: 27px; }
+  .catan-app.board-first.cities-knights-mode .catan-sidebar { display: none; position: fixed; inset: 36px 5px 5px; padding: 8px; z-index: 35; background: #19171f; }
+  .catan-app.board-first.cities-knights-mode.sidebar-open .catan-sidebar { display: flex; }
+  .catan-app.board-first.cities-knights-mode.trading .catan-sidebar { display: none; }
+  .catan-app.board-first.cities-knights-mode #trade-panel.negotiated-trading { right: 8px; top: 60px; max-height: calc(100dvh - 70px); }
+  .catan-app.board-first.cities-knights-mode #ck-quick-actions { bottom: 128px; }
+  .catan-app.board-first.cities-knights-mode #ck-knight-context,
+  .catan-app.board-first.cities-knights-mode #ck-action-options { right: min(205px, 24vw); bottom: 191px; }
+  .catan-app.board-first.cities-knights-mode #ck-workspace { bottom: 245px; }
+  .catan-app.board-first.cities-knights-mode .ck-quick-tile { width: 56px; height: 56px; padding: 4px; border-width: 2px; }
+  .catan-app.board-first.cities-knights-mode .ck-quick-tile img { width: 42px; height: 42px; }
+}
+@media (max-width: 560px) {
+  .catan-app.board-first.cities-knights-mode #ck-required-choice { bottom: 215px; max-height: calc(100% - 240px); }
+  .catan-app.board-first.cities-knights-mode #ck-build-prompt { bottom: 215px; font-size: 11px; }
+  .ck-rules-scroll { padding: 12px; }
+  .ck-rules-card-list { grid-template-columns: 1fr; }
+  .catan-app.board-first.cities-knights-mode .dice-display .die { width: 22px; height: 22px; max-width: 22px; max-height: 22px; }
+  .catan-app.board-first.cities-knights-mode .action-tray .action-tile img { width: 28px; height: 28px; }
+  .catan-app.board-first.cities-knights-mode .bottom-hand { gap: 4px; }
+  .catan-app.board-first.cities-knights-mode .ck-quick-tile { width: 46px; height: 46px; }
+  .catan-app.board-first.cities-knights-mode .ck-quick-tile img { width: 35px; height: 35px; }
+  .catan-app.board-first.cities-knights-mode #ck-knight-context,
+  .catan-app.board-first.cities-knights-mode #ck-action-options { right: auto; left: max(8px, calc(100% - 270px)); bottom: 186px; }
+  .catan-app.board-first.cities-knights-mode #ck-workspace { bottom: 235px; }
+  .ck-option-square { width: 29px; height: 29px; border-width: 3px; }
+  .ck-option-arrow { right: 1px; bottom: 4px; font-size: 23px; }
+  .catan-app.board-first.cities-knights-mode #ck-commodities .ck-card { width: 32px; height: 55px; }
+  .catan-app.board-first.cities-knights-mode #ck-commodities .ck-card img { width: 32px; height: 52px; }
+}
+@media (max-width: 560px) {
+  .ck-progress-card[open] { grid-template-columns: minmax(72px, 92px) minmax(0, 1fr); gap: 5px 7px; }
+  .ck-progress-card[open] .ck-form { grid-template-columns: minmax(0, 1fr); }
+}

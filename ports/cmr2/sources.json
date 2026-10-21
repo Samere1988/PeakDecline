@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/pablocpas/OpenCMR2.git",
+  "commit": "75aaa7fdc024a417361ae1fcb377e570bebfa646",
+  "sdl": {"repository": "https://github.com/FriedaUCG/SDL.git", "commit": "cb37b0c0629160d37a2043f76ef7d2cc7a7f3c40"},
+  "dawn": {"release": "v20261009.190412", "commit": "c943ea32b614ff53e4fe410fc8f4968b6b8fe46d"},
+  "emscripten": "4.0.18",
+  "license": "GPL-3.0; preserve bundled SDL, ENet and Bink decoder notices"
+}

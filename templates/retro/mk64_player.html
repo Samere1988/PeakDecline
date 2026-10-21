@@ -1,0 +1,26 @@
+<div id="mk64-room-browser" hidden></div><div id="mk64-lobby" hidden></div><button id="mk64-start" hidden type="button">Play</button>
+<section id="mk64-play-area" class="mk64-play-area" aria-label="Mario Kart game" hidden>
+  <div class="mk64-game-heading"><div><h1 id="mk64-play-title">Mario Kart 64</h1></div><button id="mk64-restart" class="mk64-secondary" type="button" hidden>Restart game for everyone</button></div>
+  <div id="mk64-game" class="mk64-game game-viewport" aria-label="Mario Kart 64 game area" data-build-url="{{ url_for('main.retro_game_asset', game_id='mk64', filename='mk64.js') }}" data-rom-url="{{ url_for('static', filename='roms/N64/Mario Kart 64 (U) [!].z64') }}">
+    <canvas class="game-surface" id="mk64-canvas" width="1920" height="1080" tabindex="0" aria-label="Mario Kart 64. Use a controller or the keyboard to race." hidden></canvas>
+    <p id="mk64-message" role="status">Ready to play.</p>
+    {% from 'retro/n64_touch.html' import controls with context %}
+    {{ controls('mk64') }}
+    <button id="mk64-fullscreen" class="mk64-fullscreen" type="button" aria-label="Enter fullscreen" title="Enter fullscreen">⛶ Fullscreen</button>
+    <button id="mk64-touch-menu" class="mk64-touch-menu" type="button" aria-label="Touch control settings" aria-expanded="false" aria-controls="mk64-touch-settings" hidden>•••</button>
+    <div id="mk64-touch-settings" class="mk64-touch-settings" aria-label="Touch control settings" hidden>
+      <div class="mk64-touch-settings-heading"><strong>Touch controls</strong><button id="mk64-touch-settings-close" type="button" aria-label="Close touch settings">×</button></div>
+      <label><input id="mk64-touch-visible" type="checkbox" checked> Show controls</label>
+      <label for="mk64-touch-opacity">Opacity <output id="mk64-touch-opacity-value">75%</output></label>
+      <input id="mk64-touch-opacity" type="range" min="25" max="100" value="75">
+      <label for="mk64-touch-size">Button size <output id="mk64-touch-size-value">100%</output></label>
+      <input id="mk64-touch-size" type="range" min="70" max="150" value="100">
+    </div>
+  </div>
+  <p id="mk64-runtime-status" class="mk64-description" role="status"></p>
+<section class="mk64-controls-panel" aria-label="Controls">
+  <div class="mk64-volume-control"><label for="mk64-volume">Game volume</label><input id="mk64-volume" type="range" min="0" max="100" value="100" aria-label="Game volume"><output id="mk64-volume-value" for="mk64-volume">100%</output></div>
+  <p class="mk64-controls">Keyboard: <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> joystick · <kbd>Enter</kbd> Start · <kbd>X</kbd> A · <kbd>C</kbd> B · <kbd>Z</kbd> Z · <kbd>S</kbd> R</p>
+  {% set controller_id = 'mk64' %}{% include 'retro/controller_setup.html' %}
+</section>
+</section>

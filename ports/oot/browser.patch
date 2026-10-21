@@ -1,0 +1,168 @@
+diff --git a/soh/CMakeLists.txt b/soh/CMakeLists.txt
+index eb4fa29..4de855e 100644
+--- a/soh/CMakeLists.txt
++++ b/soh/CMakeLists.txt
+@@ -633,8 +633,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+                 -sMIN_WEBGL_VERSION=2
+                 -sFULL_ES2=1
+                 -sFORCE_FILESYSTEM=1
+-                -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,FS,allocateUTF8
+-                -sEXPORTED_FUNCTIONS=_main,_web_otr_loaded,_web_get_otr_status,_web_save_to_idb,_web_fs_init,_web_is_idbfs_ready,_web_idbfs_ready_ptr,_web_extract_rom,_web_get_rom_version,_web_configure_anchor,_web_wants_text_input,_malloc,_free
++                -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,FS,allocateUTF8,callMain
++                -sEXPORTED_FUNCTIONS=_main,_peak_oot_pause,_peak_oot_resume,_web_otr_loaded,_web_get_otr_status,_web_save_to_idb,_web_fs_init,_web_is_idbfs_ready,_web_idbfs_ready_ptr,_web_extract_rom,_web_get_rom_version,_web_configure_anchor,_web_wants_text_input,_malloc,_free
+                 -lidbfs.js
+                 -lwebsocket.js
+                 --shell-file=${CMAKE_CURRENT_SOURCE_DIR}/soh/web/shell.html
+diff --git a/soh/soh/OTRGlobals.cpp b/soh/soh/OTRGlobals.cpp
+index a3f4472..b63694b 100644
+--- a/soh/soh/OTRGlobals.cpp
++++ b/soh/soh/OTRGlobals.cpp
+@@ -1625,14 +1625,6 @@ extern "C" void InitOTR(int argc, char* argv[]) {
+     srand(now);
+ 
+ #ifdef __EMSCRIPTEN__
+-    // Web QoL defaults: faster gameplay (cutscenes are still skippable manually)
+-    CVarRegisterInteger(CVAR_ENHANCEMENT("TextSpeed"), 5);
+-    CVarRegisterInteger(CVAR_ENHANCEMENT("FastChests"), 1);
+-    CVarRegisterInteger(CVAR_ENHANCEMENT("FastDrops"), 1);
+-    CVarRegisterInteger(CVAR_ENHANCEMENT("ClimbSpeed"), 1);
+-    CVarRegisterInteger(CVAR_ENHANCEMENT("FasterBlockPush"), 1);
+-    CVarRegisterInteger(CVAR_ENHANCEMENT("MweepSpeed"), 1);
+-
+     // Shrink ImGui on web for less obtrusive menus
+     // Index 0 = 0.75x scale (only if user hasn't changed it from default)
+     if (CVarGetInteger(CVAR_SETTING("ImGuiScale"), defaultImGuiScale) == (int)defaultImGuiScale) {
+@@ -1879,6 +1871,7 @@ extern "C" void Graph_ProcessGfxCommands(Gfx* commands) {
+     // Only process on game tick frames (fraction=1.0), not interpolation re-renders.
+     if (gWebInterpolationFraction >= 1.0f) {
+         OTRAudio_ProcessInline();
++        EM_ASM({ window.peakNativeTicks = (window.peakNativeTicks || 0) + 1; });
+     }
+ #else
+     {
+diff --git a/soh/soh/web/web_main.cpp b/soh/soh/web/web_main.cpp
+index 708ecdd..0147307 100644
+--- a/soh/soh/web/web_main.cpp
++++ b/soh/soh/web/web_main.cpp
+@@ -8,6 +8,7 @@
+ #include <emscripten/html5.h>
+ 
+ #include "web_main.h"
++#include "variables.h"
+ #include "soh/Extractor/Extract.h"
+ #include <ship/utils/binarytools/BitConverter.h>
+ #include <libultraship/libultraship.h>
+@@ -60,18 +61,13 @@ EM_JS(int, web_touch_buttons, (), {
+ #include <libultraship/libultra/controller.h>
+ 
+ extern "C" void WebTouchGamepad_MergeInput(OSContPad* pad) {
+-    if (!web_touch_active()) return;
+-
+-    // Merge buttons (OR with existing)
+-    pad->button |= (uint16_t)web_touch_buttons();
+-
+-    // Merge stick (touch overrides if non-zero)
+-    int sx = web_touch_stick_x();
+-    int sy = web_touch_stick_y();
+-    if (sx != 0 || sy != 0) {
+-        pad->stick_x = (int8_t)sx;
+-        pad->stick_y = (int8_t)sy;
+-    }
++    // The website owns controller selection and mappings, including raw N64 pads.
++    // Replace SDL's gamepad state to prevent duplicate/default bindings.
++    pad->err_no = 0;
++    pad->right_stick_x = pad->right_stick_y = 0;
++    pad->button = EM_ASM_INT({ return window.peakReadPad().buttons; });
++    pad->stick_x = EM_ASM_INT({ return window.peakPad.x; });
++    pad->stick_y = EM_ASM_INT({ return window.peakPad.y; });
+ }
+ 
+ // ---- Anchor config from URL hash (read JS globals set by shell.html) ----
+@@ -92,42 +88,12 @@ EM_JS(const char*, web_anchor_config_get, (const char* key), {
+ 
+ // Called from OTRGlobals.cpp after the CVar system is ready
+ void web_apply_anchor_config() {
+-    if (!web_has_anchor_config()) return;
+-
+-    char* room  = (char*)web_anchor_config_get("room");
+-    char* name  = (char*)web_anchor_config_get("name");
+-    char* color = (char*)web_anchor_config_get("color");
+-    char* team  = (char*)web_anchor_config_get("team");
+-
+-    printf("[Web] Applying Anchor config: room=%s name=%s color=%s team=%s\n",
+-           room ? room : "", name ? name : "", color ? color : "", team ? team : "");
+-
+-    // Build WebSocket URL
+-    std::string roomId = (room && room[0]) ? room : "default";
+-    std::string wsUrl = "wss://soh-anchor.zalo.partykit.dev/party/" + roomId;
+-    CVarSetString(CVAR_REMOTE_ANCHOR("WebSocketURL"), wsUrl.c_str());
+-    CVarSetString(CVAR_REMOTE_ANCHOR("RoomId"), roomId.c_str());
+-
+-    if (name && name[0]) {
+-        CVarSetString(CVAR_REMOTE_ANCHOR("Name"), name);
+-    }
+-
+-    if (color && color[0] && strlen(color) == 6) {
+-        unsigned int r = 100, g = 255, b = 100;
+-        sscanf(color, "%02x%02x%02x", &r, &g, &b);
+-        CVarSetColor24(CVAR_REMOTE_ANCHOR("Color.Value"), { (uint8_t)r, (uint8_t)g, (uint8_t)b });
+-    }
+-
+-    if (team && team[0]) {
+-        CVarSetString(CVAR_REMOTE_ANCHOR("TeamId"), team);
+-    }
+-
+-    // Enable Anchor and skip to file select
+-    CVarSetInteger(CVAR_REMOTE_ANCHOR("Enabled"), 1);
+-    CVarSetInteger(CVAR_SETTING("BootSequence"), BOOTSEQUENCE_FILESELECT);
+-
+-    free(room); free(name); free(color); free(team);
+-    printf("[Web] Anchor configured. WebSocket URL: %s\n", wsUrl.c_str());
++    CVarSetInteger(CVAR_REMOTE_ANCHOR("Enabled"), 0);
++    const char* skips[] = {"TimeSavers.SkipCutscene.Intro", "TimeSavers.SkipCutscene.Entrances",
++        "TimeSavers.SkipCutscene.Story", "TimeSavers.SkipCutscene.LearnSong", "TimeSavers.SkipCutscene.BossIntro",
++        "TimeSavers.SkipCutscene.QuickBossDeaths", "TimeSavers.SkipCutscene.OnePoint", "TimeSavers.SkipOwlInteractions",
++        "TimeSavers.SkipMiscInteractions", "TimeSavers.DisableTitleCard"};
++    for (const char* skip : skips) CVarSetInteger((std::string(CVAR_ENHANCEMENT("")) + skip).c_str(), 0);
+ }
+ 
+ static int s_otr_loaded = 0;
+@@ -135,6 +101,9 @@ static int s_otr_loaded = 0;
+ #include <imgui.h>
+ 
+ extern "C" {
++EMSCRIPTEN_KEEPALIVE int peak_oot_mode() { return gSaveContext.gameMode; }
++EMSCRIPTEN_KEEPALIVE void peak_oot_pause() { emscripten_pause_main_loop(); }
++EMSCRIPTEN_KEEPALIVE void peak_oot_resume() { emscripten_resume_main_loop(); }
+ 
+ EMSCRIPTEN_KEEPALIVE
+ int web_wants_text_input(void) {
+@@ -157,8 +126,8 @@ void web_save_to_idb(void) {
+     emscripten_run_script(
+         "if (typeof FS !== 'undefined' && FS.syncfs) {"
+         "  FS.syncfs(false, function(err) {"
+-        "    if (err) console.error('[Web] FS.syncfs save failed:', err);"
+-        "    else console.log('[Web] FS.syncfs save complete.');"
++        "    if (err) { console.error('[Web] FS.syncfs save failed:', err); window.peakSaveWarning?.(); }"
++        "    else { console.log('[Web] FS.syncfs save complete.'); window.peakSaveComplete?.(); }"
+         "  });"
+         "}"
+     );
+@@ -174,11 +143,15 @@ EM_JS(void, web_mount_idbfs, (), {
+     var dirs = ["/Save"];
+     for (var i = 0; i < dirs.length; i++) {
+         try { FS.mkdir(dirs[i]); } catch (e) { /* may exist */ }
+-        FS.mount(IDBFS, {}, dirs[i]);
++        var saveRoot = '/oot-saves-' + encodeURIComponent(document.body.dataset.saveKey);
++        FS.mkdirTree(saveRoot);
++        FS.rmdir('/Save');
++        FS.mount(IDBFS, {autoPersist:true}, saveRoot);
++        FS.symlink(saveRoot, '/Save');
+     }
+     FS.syncfs(true, function(err) {
+         if (err) {
+-            console.error("[Web] IDBFS load failed:", err);
++            console.error("[Web] IDBFS load failed:", err); window.peakSaveError?.(err); return;
+         } else {
+             console.log("[Web] IDBFS loaded. Files in /Save/:");
+             try {

@@ -1,0 +1,253 @@
+html { background: #1a1c2c; }
+body { background-attachment: scroll; }
+
+.mk64-page {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 20px;
+    color: #fff;
+}
+
+.mk64-back {
+    color: #fff;
+    display: inline-block;
+    margin-bottom: 24px;
+}
+
+.mk64-back:focus-visible {
+    outline: 3px solid #ffd35c;
+    outline-offset: 5px;
+}
+
+.mk64-panel {
+    background: rgba(20, 20, 23, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: clamp(24px, 5vw, 48px);
+}
+
+.mk64-eyebrow {
+    color: #ffd35c;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.mk64-panel h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    margin: 0 0 16px;
+}
+
+.mk64-status {
+    background: #ff4444;
+    border-radius: 999px;
+    display: inline-block;
+    font-weight: 800;
+    margin: 0 0 20px;
+    padding: 8px 16px;
+}
+
+.mk64-description {
+    color: #c6c9d8;
+    line-height: 1.6;
+    max-width: 42rem;
+}
+
+.mk64-game {
+    align-items: center;
+    aspect-ratio: 4 / 3;
+    background: #0a0b11;
+    border: 1px dashed rgba(255, 255, 255, 0.24);
+    border-radius: 12px;
+    color: #c6c9d8;
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+    min-height: 220px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    width: min(960px, 100%);
+    max-width: 100%;
+    min-width: min(320px, 100%);
+    resize: both;
+    box-sizing: border-box;
+}
+
+.mk64-game canvas { width: 100%; height: 100%; object-fit: contain; }
+.mk64-game [hidden], .mk64-actions [hidden] { display: none; }
+.mk64-game p { position: absolute; padding: 20px; }
+.mk64-game canvas:focus-visible { outline: 3px solid #ffd35c; outline-offset: -3px; }
+.mk64-game::after { content: '◢'; position: absolute; right: 4px; bottom: 2px; color: #ffffffb3; font-size: 18px; line-height: 1; pointer-events: none; }
+.mk64-fullscreen { position: absolute; z-index: 2; top: 12px; right: 12px; padding: 8px 12px; border: 1px solid #ffffff88; border-radius: 8px; background: #10121bcc; color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.mk64-fullscreen:hover, .mk64-fullscreen:focus-visible { background: #303342; outline: 2px solid #ffd35c; }
+.mk64-game:fullscreen { width: 100vw; height: 100vh; max-width: none; max-height: none; min-height: 0; margin: 0; border: 0; border-radius: 0; resize: none; }
+.mk64-game:fullscreen canvas { width: 100%; height: 100%; }
+.mk64-game:fullscreen::after { display: none; }
+.mk64-game.mk64-touch-layout { --mk64-touch-rail: clamp(112px, 20%, 190px); width: 100%; aspect-ratio: 19.5 / 9; min-height: 0; resize: none; touch-action: manipulation; }
+.mk64-game.mk64-touch-layout canvas { width: 100%; height: 100%; flex: none; }
+.mk64-game.mk64-touch-layout::after { display: none; }
+.mk64-touch-controls { position: absolute; inset: 0; z-index: 1; opacity: var(--mk64-touch-opacity, .75); pointer-events: none; user-select: none; -webkit-user-select: none; }
+.mk64-touch-left, .mk64-touch-right { position: absolute; top: 0; bottom: 0; width: var(--mk64-touch-rail); pointer-events: none; }
+.mk64-touch-left { left: 0; }
+.mk64-touch-right { right: 0; }
+.mk64-touch-button, .mk64-touch-c-buttons button, .mk64-touch-stick { position: absolute; display: grid; place-items: center; touch-action: none; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
+.mk64-touch-button, .mk64-touch-c-buttons button { padding: 0; border: 2px solid #dce5faac; border-radius: 50%; background: #26334bc2; color: #fff; font: 800 clamp(13px, 2.5vw, 22px)/1 system-ui, sans-serif; text-shadow: 0 1px 3px #000a; box-shadow: 0 3px 12px #0005; transform: scale(var(--mk64-touch-scale, 1)); }
+.mk64-touch-button.is-pressed, .mk64-touch-c-buttons button.is-pressed { filter: brightness(1.45); }
+.mk64-touch-l, .mk64-touch-z-left, .mk64-touch-z-right, .mk64-touch-r { top: 9%; width: 42%; height: 15%; min-height: 40px; }
+.mk64-touch-l, .mk64-touch-z-right { left: 5%; }
+.mk64-touch-z-left, .mk64-touch-r { right: 5%; }
+.mk64-touch-stick { left: 11%; bottom: 5%; width: 78%; aspect-ratio: 1; border: 3px solid #b6caffaa; border-radius: 50%; background: #26334b82; transform: scale(var(--mk64-touch-scale, 1)); }
+.mk64-touch-knob { width: 45%; aspect-ratio: 1; border-radius: 50%; background: #a1b8e9c4; box-shadow: 0 3px 8px #0008; }
+.mk64-touch-start { top: 3%; left: 29%; width: 42%; height: 11%; min-height: 30px; border-radius: 100px; font-size: clamp(9px, 1.2vw, 12px); }
+.mk64-touch-right .mk64-touch-z-right, .mk64-touch-right .mk64-touch-r { top: 20%; }
+.mk64-touch-c-buttons { position: absolute; top: 36%; left: 7%; width: 86%; height: 32%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); place-items: center; }
+.mk64-touch-c-buttons button { position: static; width: min(100%, 42px); aspect-ratio: 1; border-color: #ffe18ac9; background: #c9a22fc9; color: #171717; font-size: clamp(10px, 1.5vw, 13px); }
+.mk64-touch-c-buttons button:nth-child(1) { grid-column: 2; grid-row: 1; }
+.mk64-touch-c-buttons button:nth-child(2) { grid-column: 1; grid-row: 2; }
+.mk64-touch-c-buttons button:nth-child(3) { grid-column: 3; grid-row: 2; }
+.mk64-touch-c-buttons button:nth-child(4) { grid-column: 2; grid-row: 3; }
+.mk64-touch-b { left: 7%; bottom: 6%; width: 37%; aspect-ratio: 1; background: #2d805ac9; }
+.mk64-touch-a { right: 5%; bottom: 5%; width: 49%; aspect-ratio: 1; max-width: 84px; background: #2374adc9; font-size: clamp(20px, 3.5vw, 30px); }
+.mk64-touch-a.is-latched { border-color: #ffd35c; box-shadow: 0 0 0 3px #ffd35c88; }
+.mk64-game.mk64-touch-layout .mk64-fullscreen { top: 6px; right: auto; left: 50%; transform: translateX(-50%); padding: 6px 8px; font-size: 11px; }
+.mk64-touch-menu { position: absolute; z-index: 4; top: 6px; right: calc(var(--mk64-touch-rail) + 8px); min-width: 40px; min-height: 32px; padding: 0 8px; border: 1px solid #ffffffa6; border-radius: 10px; background: #171c30cf; color: white; font: 900 18px/1 system-ui, sans-serif; cursor: pointer; }
+.mk64-touch-settings { position: absolute; z-index: 5; top: 44px; right: calc(var(--mk64-touch-rail) + 8px); width: min(290px, calc(100% - 16px)); padding: 14px; border: 1px solid #ffffff52; border-radius: 12px; background: #181b2cf2; color: #fff; text-align: left; box-shadow: 0 12px 30px #000a; }
+.mk64-touch-settings-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.mk64-touch-settings-heading button { border: 0; background: transparent; color: #fff; font-size: 24px; cursor: pointer; }
+.mk64-touch-settings label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 9px 0 4px; font-size: 13px; }
+.mk64-touch-settings label:first-of-type { justify-content: flex-start; margin-bottom: 12px; }
+.mk64-touch-settings input[type="range"] { width: 100%; accent-color: #ffd35c; }
+.mk64-touch-settings input[type="checkbox"] { accent-color: #ffd35c; }
+.mk64-touch-settings output { color: #ced6e7; }
+.mk64-game.mk64-touch-layout:fullscreen { width: 100vw; height: 100vh; aspect-ratio: auto; }
+@media (orientation: portrait) and (max-width: 780px) {
+    .mk64-game.mk64-touch-layout { display: flex; flex-direction: column; align-items: stretch; aspect-ratio: auto; height: auto; }
+    .mk64-game.mk64-touch-layout canvas { width: 100%; height: auto; aspect-ratio: 4 / 3; }
+    .mk64-touch-controls { position: relative; inset: auto; flex: none; width: 100%; height: 290px; }
+    .mk64-touch-left, .mk64-touch-right { width: 50%; }
+    .mk64-touch-stick { width: min(72%, 135px); left: 14%; }
+    .mk64-touch-start { top: 8px; left: 30%; width: 40%; height: 32px; }
+    .mk64-touch-right .mk64-touch-z-right, .mk64-touch-right .mk64-touch-r { top: 50px; height: 40px; }
+    .mk64-touch-c-buttons { top: 96px; height: 100px; }
+    .mk64-touch-c-buttons button { width: min(100%, 32px); }
+    .mk64-touch-a { width: 40%; }
+    .mk64-touch-b { width: 34%; }
+    .mk64-touch-menu { right: 8px; }
+    .mk64-touch-settings { right: 8px; }
+    .mk64-game.mk64-touch-layout:fullscreen { height: 100vh; }
+    .mk64-game.mk64-touch-layout:fullscreen canvas { max-height: calc(100vh - 290px); }
+    .mk64-game.mk64-touch-layout:fullscreen .mk64-touch-controls { height: 290px; }
+}
+.mk64-actions { margin-top: 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.mk64-actions input { min-width: 9rem; max-width: 12rem; background: #12151e; color: #fff; border: 1px solid #777b89; border-radius: 8px; padding: 11px 12px; font: inherit; text-transform: uppercase; }
+.mk64-actions select { background: #12151e; color: #fff; border: 1px solid #777b89; border-radius: 8px; padding: 11px 12px; font: inherit; }
+.mk64-actions button { background: #ffd35c; color: #141417; border: 0; border-radius: 8px; padding: 12px 20px; font: inherit; font-weight: 800; cursor: pointer; }
+.mk64-actions button:disabled { opacity: .6; cursor: wait; }
+.mk64-actions button:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.mk64-controls { color: #c6c9d8; line-height: 1.9; }
+.mk64-controls kbd { color: #fff; border: 1px solid #626574; border-radius: 4px; padding: 2px 5px; }
+.mk64-controller-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+.mk64-controller-tools select { max-width: 100%; min-width: 220px; padding: 9px; background: #1a1c2c; color: #fff; border: 1px solid #777b89; border-radius: 8px; }
+.mk64-controller-tools button { padding: 9px 12px; background: #252b3b; color: #fff; border: 1px solid #777b89; border-radius: 8px; font: inherit; cursor: pointer; }
+.mk64-controller-tools button:disabled { opacity: .5; cursor: default; }
+.mk64-controller-tools [hidden] { display: none; }
+.mk64-controller-tools input { accent-color: #ffd35c; }
+@media (max-width: 768px) {
+    .mk64-page {
+        margin: 0 auto;
+        padding: 90px 14px 30px;
+    }
+}
+
+/* Shared Watch Together room browser and CATAN-style waiting room. */
+#mk64-room-browser[hidden], #mk64-lobby[hidden], #mk64-play-area[hidden], #mk64-start-race[hidden] { display: none !important; }
+.mk64-page.plex-container { max-width: 1280px; min-height: 75vh; padding: 45px 28px 70px; }
+.mk64-page .plex-header { margin: 14px 0 24px; }
+.mk64-room-nav { display: flex; align-items: center; gap: 10px; margin: 0 0 26px; }
+.mk64-room-nav .mk64-back-button { display: inline-flex; align-items: center; justify-content: center; min-height: 41px; box-sizing: border-box; text-decoration: none; }
+.mk64-room-nav [hidden] { display: none; }
+.mk64-page .header-title h1 { font-size: clamp(2rem,4vw,3rem); }
+.mk64-page .header-title span { font-size: 1rem; }
+.mk64-room-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.mk64-primary, .mk64-secondary, .mk64-back-button { padding: 11px 17px; border-radius: 8px; color: #fff; font: 700 13px Inter,sans-serif; cursor: pointer; }
+.mk64-primary { background: #ff4444; border: 1px solid #ff4444; }
+.mk64-secondary, .mk64-back-button { background: #ffffff1a; border: 1px solid #ffffff30; }
+.mk64-primary:hover { background: #d32c35; }
+.mk64-secondary:hover, .mk64-back-button:hover { background: #ffffff2a; }
+.mk64-primary:disabled { opacity: .48; cursor: not-allowed; }
+.mk64-page button:focus-visible, .mk64-page input:focus-visible, .mk64-page select:focus-visible { outline: 3px solid #ffd35c; outline-offset: 3px; }
+.mk64-page .rooms-grid { gap: 22px; margin-top: 22px; }
+.mk64-page .room-card { min-height: 260px; }
+.mk64-page .room-poster { height: auto; aspect-ratio: 4 / 3; display: grid; place-items: center; background: #142056 url('/static/img/mk64-title-screen.png') center / contain no-repeat; }
+.mk64-page .room-poster::before { display: none; }
+.mk64-page .room-info { padding: 20px; min-width: 0; }
+.mk64-page .room-info .now-playing { margin-bottom: 12px; }
+.mk64-page .room-users { margin-top: auto; padding-top: 14px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 9px; min-height: 32px; }
+.mk64-page .room-users .user-avatar, .mk64-page .listed-person .user-avatar { margin-left: 0; flex: none; }
+.mk64-page .listed-players { margin: 4px 0 14px; }
+.mk64-page .listed-person { gap: 7px; }
+.mk64-page .card-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 14px; }
+.mk64-page .no-rooms { padding: 32px; background: #14141799; border: 1px dashed #ffffff35; border-radius: 16px; }
+.mk64-dialog { width: min(440px,calc(100% - 32px)); padding: 28px; box-sizing: border-box; color: #fff; background: #19171f; border: 1px solid #ffffff2a; border-radius: 16px; box-shadow: 0 20px 70px #0009; }
+.mk64-dialog::backdrop { background: #000c; }
+.mk64-dialog form { display: grid; gap: 12px; }
+.mk64-dialog h2 { margin: 0 0 5px; }
+.mk64-dialog p { color: #c6c9d8; font-size: 13px; line-height: 1.6; }
+.mk64-dialog input, .mk64-dialog select { width: 100%; padding: 11px; box-sizing: border-box; color: #fff; background: #15141b; border: 1px solid #ffffff35; border-radius: 8px; font: inherit; }
+.mk64-dialog input::placeholder { color: #aeb2c4; opacity: 1; }
+.mk64-dialog input.mk64-editing::placeholder { opacity: 0; }
+.mk64-dialog .modal-actions { justify-content: flex-end; margin-top: 6px; }
+.mk64-lobby { margin-top: 0; }
+.mk64-lobby-header, .mk64-game-heading { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 24px; }
+.mk64-lobby-header h1, .mk64-game-heading h1 { margin: 5px 0 0; font-size: clamp(2rem,4vw,3rem); }
+.mk64-lobby-header p { margin: 6px 0 0; }
+.mk64-phase { padding: 7px 12px; border-radius: 100px; background: #ff444433; color: #ffc3c3; font-size: 12px; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
+.mk64-lobby-grid { display: grid; grid-template-columns: minmax(280px,.9fr) minmax(320px,1.1fr); gap: 20px; align-items: stretch; }
+.mk64-lobby-card, .mk64-unavailable, .mk64-controls-panel { min-width: 0; padding: 24px; background: #141417b3; border: 1px solid #ffffff1a; border-radius: 16px; box-shadow: 0 12px 32px #0003; }
+.mk64-card-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; border-bottom: 1px solid #ffffff1a; padding-bottom: 12px; }
+.mk64-card-heading h2 { margin: 0; font-size: 19px; }
+.mk64-card-heading span { color: #c6c9d8; font-size: 12px; }
+#mk64-room-members, #mk64-spectator-members { list-style: none; margin: 12px 0 0; padding: 0; }
+#mk64-room-members li, #mk64-spectator-members li:not(.mk64-empty-spectators) { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #ffffff12; }
+#mk64-room-members li:last-child, #mk64-spectator-members li:last-child { border-bottom: 0; }
+.mk64-seat-avatar { display: grid; place-items: center; width: 38px; height: 38px; flex: none; border: 1px solid #ff4444; border-radius: 50%; color: #fff; background: #ff444422; font-weight: 800; }
+.mk64-seat-avatar.empty { border-color: #ffffff35; background: #ffffff09; color: #8b8d9c; }
+.mk64-seat-name { flex: 1; min-width: 0; }
+.mk64-seat-name strong, .mk64-seat-name small { display: block; }
+.mk64-seat-name strong { display: flex; align-items: center; gap: 6px; }
+.mk64-seat-name small { margin-top: 2px; color: #c6c9d8; font-size: 11px; }
+.mk64-host-badge { font-size: 14px; line-height: 1; }
+.mk64-seat-tag { font-size: 11px; color: #8cdda1; }
+.mk64-ready-state { display: flex; align-items: center; gap: 7px; flex: none; }
+.mk64-ready-marker { display: grid; place-items: center; box-sizing: border-box; width: 22px; height: 22px; padding: 0; border: 2px solid #8cdda1; border-radius: 50%; background: transparent; color: transparent; font: 800 13px/1 Inter,sans-serif; }
+.mk64-ready-marker.is-ready { background: #8cdda1; color: #152019; }
+button.mk64-ready-marker { cursor: pointer; }
+button.mk64-ready-marker:hover { box-shadow: 0 0 0 3px #8cdda133; }
+.mk64-spectator-heading { margin: 20px 0 6px; font-size: 15px; }
+#mk64-spectator-members .mk64-empty-spectators { padding: 9px 0; color: #c6c9d8; font-size: 12px; }
+.mk64-role-actions { display: flex; flex-wrap: nowrap; gap: 8px; min-width: 0; max-width: 100%; margin-top: 14px; overflow-x: auto; padding-bottom: 3px; }
+.mk64-role-actions button { flex: none; white-space: nowrap; }
+.mk64-role-actions button[aria-pressed="true"] { border-color: #ffd35c; color: #ffd35c; }
+.mk64-role-actions [hidden] { display: none; }
+.mk64-track-art { position: relative; width: min(100%, 360px); aspect-ratio: 4 / 3; margin: 18px auto; overflow: hidden; border-radius: 10px; background: #142056 url('/static/img/mk64-title-screen.png') center / contain no-repeat; }
+.mk64-race-card p { color: #c6c9d8; font-size: 13px; line-height: 1.6; }
+.mk64-race-card #mk64-room-status:empty { display: none; }
+.mk64-play-area { max-width: 100%; margin: 20px auto 0; }
+.mk64-game { margin: 0 auto; }
+.mk64-controls-panel { margin-top: 32px; padding: 18px 24px; }
+.mk64-volume-control { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; color: #fff; font-size: 13px; }
+.mk64-volume-control input { width: min(220px, 45vw); accent-color: #ffd35c; }
+.mk64-volume-control output { min-width: 3ch; color: #c6c9d8; }
+.mk64-controls-panel .mk64-controls { margin: 8px 0; font-size: 12px; }
+@media (max-width: 780px) { .mk64-page.plex-container { padding: 92px 14px 38px; } .mk64-page .plex-header { align-items: flex-start; gap: 18px; } .mk64-room-toolbar { align-items: stretch; flex-direction: column; } .mk64-lobby-grid { grid-template-columns: 1fr; } .mk64-role-actions { flex-wrap: wrap; overflow: visible; } }
+@media (max-width: 480px) { .mk64-page .plex-header { flex-direction: column; } .mk64-lobby-header { align-items: flex-start; flex-direction: column; } }
+
+#mk64-runtime-status:empty { display: none; }
+
+.mk64-controller-panel { margin-top: 14px; }
+.mk64-controller-panel summary { cursor: pointer; font-weight: 700; padding: 12px 0; }
+.mk64-controller-bindings { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+.mk64-controller-bindings button { padding: 12px; text-align: left; color: #fff; background: #252b3b; border: 1px solid #777b89; border-radius: 8px; cursor: pointer; }
+.mk64-controller-bindings button[aria-pressed="true"] { border-color: #ffd35c; }
+.mk64-controller-bindings button:disabled { opacity: .5; cursor: default; }

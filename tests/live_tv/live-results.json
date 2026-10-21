@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-09-08T19:27:50.868Z",
+  "results": [
+    {
+      "name": "15 viewers decode a rolling HLS stream",
+      "pass": true,
+      "details": "decoded=15/15"
+    },
+    {
+      "name": "viewers remain within the live-edge bound",
+      "pass": true,
+      "details": "max latency=8.00s"
+    },
+    {
+      "name": "a viewer beyond the hard bound is corrected",
+      "pass": true,
+      "details": "latency=3.05s"
+    },
+    {
+      "name": "pause and resume rejoins the shared live edge",
+      "pass": true,
+      "details": "latency=3.04s"
+    },
+    {
+      "name": "F5 refresh returns near the live edge",
+      "pass": true,
+      "details": "latency=4.93s"
+    },
+    {
+      "name": "leave and rejoin returns near the live edge",
+      "pass": true,
+      "details": "latency=3.15s"
+    },
+    {
+      "name": "final active viewers stay close together",
+      "pass": true,
+      "details": "spread=5.46s"
+    }
+  ]
+}

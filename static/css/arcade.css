@@ -126,4 +126,11 @@ body {
     .game-title {
         font-size: 1.25em;
     }
-}
+}.game-meta { font-size: .8rem; color: #c6c9d8; margin: 0 0 18px; }
+.game-card:focus-visible { outline: 3px solid #ffd35c; outline-offset: 5px; }
+.catan-card:hover { border-color: #d9b36c; box-shadow: 0 10px 20px rgba(217, 179, 108, 0.25); }
+.catan-icon { color: #d9b36c; }
+.mario-kart-card:hover { border-color: #ffd35c; box-shadow: 0 10px 20px rgba(255, 211, 92, 0.25); }
+.mario-kart-icon { color: #ffd35c; }
+.game-icon { font-size: 2rem; letter-spacing: .12em; padding: 28px 0; }
+@media (prefers-reduced-motion: reduce) { .game-card { transition: none; } .game-card:hover { transform: none; } }

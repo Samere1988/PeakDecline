@@ -1,0 +1,70 @@
+<!doctype html><meta charset="utf-8"><title>Mario Kart authority candidate</title>
+<style>body{background:#171923;color:#eee;font:16px system-ui}canvas{width:min(960px,100%);aspect-ratio:16/9}pre{white-space:pre-wrap}</style>
+<h1>Mario Kart — authority candidate</h1>
+<p>Local development test. X accelerates, arrows steer, Z uses an item. The live game is unchanged.</p>
+<p><button id="drive">Drive for 10 seconds</button> <button id="fault">Inject local position error</button></p>
+<canvas id="mk64-canvas" tabindex="0"></canvas><pre id="status" role="status">Loading…</pre>
+<script src="/mk64.js"></script><script src="/native_state.js"></script><script src="/authority_net.js"></script><script src="/state_codec.js"></script>
+<script>
+'use strict';
+(async()=>{
+ const status=document.querySelector('#status'),canvas=document.querySelector('canvas'),keys=new Set();
+ window.addEventListener('keydown',e=>{if(['KeyX','KeyC','KeyZ','KeyS','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code)){e.preventDefault();keys.add(e.code);}});
+ window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
+ const [manifest,rom]=await Promise.all([fetch('/state-manifest.json').then(r=>r.json()),fetch('/baserom.us.z64').then(r=>r.arrayBuffer())]);
+ let client,codec,slot,module,sim,latest,latestAt=0,started=false,last=0,accumulator=0,displayed=0,errors=0;
+ let deserialize=Promise.resolve(),driveUntil=0,repairMs=0,maxRepairMs=0;
+ document.querySelector('#drive').onclick=()=>{driveUntil=performance.now()+10000;};
+ document.querySelector('#fault').onclick=()=>{
+  if(!sim)return;
+  const player=manifest.regions.find(r=>r.symbol==='gPlayers');
+  const view=new DataView(module.HEAPU8.buffer);
+  view.setFloat32(player.address+0x14,view.getFloat32(player.address+0x14,true)+40,true);
+ };
+
+ const ws=new WebSocket(`ws://${location.host}`);ws.binaryType='arraybuffer';
+ async function inflate(data,limit){
+  const reader=new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate')).getReader();
+  const pieces=[];let size=0;
+  for(;;){const {value,done}=await reader.read();if(done)break;size+=value.length;if(size>limit){await reader.cancel();throw Error('Oversized snapshot');}pieces.push(value);}
+  const output=new Uint8Array(size);let at=0;for(const piece of pieces){output.set(piece,at);at+=piece.length;}return output;
+ }
+ ws.onmessage=e=>{deserialize=deserialize.then(async()=>{
+  const packet=new Uint8Array(e.data),view=new DataView(packet.buffer),length=view.getUint32(0,true);
+  if(length>4096||length+4>packet.length)throw Error('Invalid envelope');
+  const meta=JSON.parse(new TextDecoder().decode(packet.subarray(4,4+length)));
+  if(meta.build!==manifest.wasm)throw Error('Build mismatch');
+  const data=await inflate(packet.subarray(4+length),32*1024*1024);
+  if(data.length!==meta.bytes)throw Error('Snapshot length mismatch');
+  if(meta.type==='baseline'){
+   slot=meta.slot;codec=new MK64StateCodec.Codec(data);
+   module=await createMK64({canvas,noInitialRun:true,mk64Multiplayer:true,mk64PlayerCount:2,mk64LocalSlot:slot,print:()=>{},printErr:console.error});
+   module.FS.writeFile('/baserom.us.z64',new Uint8Array(rom));module.callMain([]);
+   sim=MK64Native.attach(module,manifest,2);
+   sim.restore({schema:1,build:manifest.wasm,frame:meta.frame,data});
+   client=new MK64Authority.Client(sim,{slot});
+  }else if(meta.type==='state'&&client){
+   const state={schema:1,build:manifest.wasm,frame:meta.frame,data:codec.decode(data)};
+   latest=meta;latestAt=performance.now();
+   const began=performance.now();client.reconcile({...meta,state});repairMs=performance.now()-began;maxRepairMs=Math.max(maxRepairMs,repairMs);
+   // Establish a small lead once. Newer checkpoints can fast-forward this
+   // client without stopping the authority or another player.
+   if(!started){for(let i=0;i<3;i++)ws.send(JSON.stringify(client.tick({buttons:0,x:0,y:0})));started=true;}
+  }
+ }).catch(error=>{errors++;status.textContent=error.stack;console.error(error);});};
+ function input(){return {buttons:(keys.has('KeyX')||performance.now()<driveUntil?0x8000:0)|(keys.has('KeyC')?0x4000:0)|(keys.has('KeyZ')?0x2000:0)|(keys.has('Enter')?0x1000:0)|(keys.has('KeyS')?0x10:0),x:(keys.has('ArrowRight')?80:0)-(keys.has('ArrowLeft')?80:0),y:(keys.has('ArrowUp')?80:0)-(keys.has('ArrowDown')?80:0)};}
+ function render(now){
+  const dt=last?Math.min(100,now-last):0;last=now;
+  if(started&&!errors&&ws.readyState===1){
+   accumulator=(now-latestAt)%(1000/30);
+   const target=latest.frame+3+Math.floor((now-latestAt)*30/1000);
+   let count=0;while(sim.frame()<target&&count++<3)ws.send(JSON.stringify(client.tick(input())));
+   module._web_present_pass(accumulator<1000/60?1:0);displayed++;
+   status.textContent=JSON.stringify({slot,frame:sim.frame(),authorityFrame:latest?.frame,confirmed:client.confirmed,hash:sim.hash(),rendered:displayed,corrections:client.metrics.corrections,replayed:client.metrics.replayed,repairMs,maxRepairMs,errors,position:[0,1,2].map(i=>module._web_player_position(slot,i))},null,2);
+  }
+  requestAnimationFrame(render);
+ }
+ ws.onclose=()=>{status.textContent='Disconnected from candidate authority. Other seats continue.';};
+ requestAnimationFrame(render);
+})().catch(error=>{document.querySelector('#status').textContent=error.stack;console.error(error);});
+</script>

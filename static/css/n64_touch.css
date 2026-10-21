@@ -1,0 +1,38 @@
+/* Unmodified Libretro N64 artwork; source and license in assets/n64-controls. */
+.n64-touch-controls[hidden] { display:none !important; }
+.n64-touch-controls button, .n64-touch-controls .mk64-touch-stick, .n64-touch-controls .mk64-touch-knob {
+  border:0; background:transparent; box-shadow:none; padding:0;
+}
+.n64-touch-controls button img { width:100%; height:100%; object-fit:contain; pointer-events:none;  }
+.n64-touch-controls button.is-pressed { background:#66bfff35; }
+.n64-touch-controls button.is-latched { background:#ffc94d40; outline:2px solid #ffc94d; }
+.n64-touch-controls .mk64-touch-stick { position:absolute; }
+.n64-stick-base { position:absolute; width:100%; height:100%; pointer-events:none;  }
+.n64-touch-controls .mk64-touch-knob { position:absolute; width:45%; height:45%; object-fit:contain; pointer-events:none;  }
+.retro-frame-shell { position:relative; background:#080c12; }
+.retro-frame-shell.mk64-touch-layout { --mk64-touch-rail:clamp(112px,20%,190px); aspect-ratio:19.5/9; }
+.retro-frame-shell.mk64-touch-layout .retro-game-frame { position:absolute; left:var(--mk64-touch-rail); width:calc(100% - 2 * var(--mk64-touch-rail)); height:100%; aspect-ratio:auto; }
+@media (max-aspect-ratio:1/1) {
+  .retro-frame-shell.mk64-touch-layout { aspect-ratio:auto; }
+  .retro-frame-shell.mk64-touch-layout .retro-game-frame { position:relative; left:0; width:100%; height:auto; aspect-ratio:4/3; }
+}
+
+@media (max-aspect-ratio:1/1) {
+ .n64-touch-controls .mk64-touch-start { top:0; height:36px; width:40%; }
+ .n64-touch-controls .mk64-touch-c-buttons { top:96px; height:116px; }
+ .n64-touch-controls .mk64-touch-c-buttons button { width:38px; height:38px; }
+}
+
+.n64-touch-controls button img { min-width:0; min-height:0; max-width:100%; max-height:100%; }
+
+/* Opacity preserves keyboard access; hidden controls never intercept game clicks. */
+.mk64-fullscreen { transition:opacity .2s ease; }
+.mk64-fullscreen.game-control-idle { opacity:0; pointer-events:none; }
+.mk64-fullscreen:focus { opacity:1; pointer-events:auto; }
+.retro-frame-shell:fullscreen { width:100vw; height:100vh; max-width:none; margin:0; background:#080c12; }
+.retro-frame-shell:fullscreen .retro-game-frame { height:100%; aspect-ratio:auto; }
+.retro-frame-shell.mk64-touch-layout .mk64-fullscreen { top:6px; right:auto; left:50%; transform:translateX(-50%); }
+@media (max-aspect-ratio:1/1) {
+ .retro-frame-shell.mk64-touch-layout:fullscreen .retro-game-frame { height:calc(100% - 290px); }
+}
+@media (prefers-reduced-motion:reduce) { .mk64-fullscreen { transition:none; } }

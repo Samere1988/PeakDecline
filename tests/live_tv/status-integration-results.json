@@ -1,0 +1,267 @@
+{
+  "at": "2026-09-09T02:53:53.171Z",
+  "method": "Local production routes and FFmpeg 1080p with real HLS playback. Clock/download failures routed; fatal error injected. Autoplay permitted by test flag.",
+  "results": [
+    {
+      "name": "initial no-stream message",
+      "pass": true
+    },
+    {
+      "name": "channel switching and loading messages",
+      "pass": true
+    },
+    {
+      "name": "slow loading warning without false success",
+      "pass": true
+    },
+    {
+      "name": "actual playing event then LIVE",
+      "pass": true
+    },
+    {
+      "name": "clock outage while video continues, then clock recovery",
+      "pass": true
+    },
+    {
+      "name": "pause and resume messages",
+      "pass": true
+    },
+    {
+      "name": "unchanged quality and Auto do not claim buffering",
+      "pass": true
+    },
+    {
+      "name": "quality selection while paused preserves pause feedback",
+      "pass": true
+    },
+    {
+      "name": "real download starvation shows buffering, then clears on recovery",
+      "pass": true
+    },
+    {
+      "name": "fatal loader error reports reconnecting and clears after retry",
+      "pass": true
+    },
+    {
+      "name": "failed channel produces actionable failure, retry clears it",
+      "pass": true
+    },
+    {
+      "name": "no browser errors",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "trace": [
+    {
+      "text": "No active stream. Select a channel to start.",
+      "at": 259,
+      "paused": true
+    },
+    {
+      "text": "Switching to Synthetic live sports 1…",
+      "at": 497.80000001192093,
+      "paused": true
+    },
+    {
+      "text": "Loading Synthetic live sports 1…",
+      "at": 3175.6000000089407,
+      "paused": true
+    },
+    {
+      "text": "Taking longer than expected. Still trying — check your connection or try another channel.",
+      "at": 23170.60000000894,
+      "paused": true
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 23402.10000000894,
+      "paused": false
+    },
+    {
+      "text": "LIVE",
+      "at": 26454.30000001192,
+      "paused": false
+    },
+    {
+      "text": "Playing — live sync temporarily unavailable",
+      "at": 27953.90000000596,
+      "paused": false
+    },
+    {
+      "text": "LIVE",
+      "at": 28961.5,
+      "paused": false
+    },
+    {
+      "text": "Paused. Press Play to return to live.",
+      "at": 29288.30000001192,
+      "paused": true
+    },
+    {
+      "text": "Joining live…",
+      "at": 29621.70000000298,
+      "paused": false
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 29621.90000000596,
+      "paused": false
+    },
+    {
+      "text": "Buffering… Waiting for more video.",
+      "at": 29622.10000000894,
+      "paused": false
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 29630.20000000298,
+      "paused": false
+    },
+    {
+      "text": "LIVE",
+      "at": 32704.20000000298,
+      "paused": false
+    },
+    {
+      "text": "Paused. Press Play to return to live.",
+      "at": 33271.60000000894,
+      "paused": true
+    },
+    {
+      "text": "Joining live…",
+      "at": 33571.80000001192,
+      "paused": false
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 33572,
+      "paused": false
+    },
+    {
+      "text": "Buffering… Waiting for more video.",
+      "at": 33572.30000001192,
+      "paused": false
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 33578.70000000298,
+      "paused": false
+    },
+    {
+      "text": "LIVE",
+      "at": 36704,
+      "paused": false
+    },
+    {
+      "text": "Buffering… Waiting for more video.",
+      "at": 41199.60000000894,
+      "paused": false
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 41214.70000000298,
+      "paused": false
+    },
+    {
+      "text": "LIVE",
+      "at": 44453.40000000596,
+      "paused": false
+    },
+    {
+      "text": "Playback interrupted. Reconnecting…",
+      "at": 44474.80000001192,
+      "paused": false
+    },
+    {
+      "text": "Loading Synthetic live sports 1…",
+      "at": 47481.20000000298,
+      "paused": true
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 47571.40000000596,
+      "paused": false
+    },
+    {
+      "text": "LIVE",
+      "at": 50748.70000000298,
+      "paused": false
+    },
+    {
+      "text": "Switching to Unavailable test channel…",
+      "at": 50791.70000000298,
+      "paused": false
+    },
+    {
+      "text": "No active stream. Select a channel to start.",
+      "at": 51396.40000000596,
+      "paused": true
+    },
+    {
+      "text": "Unable to switch to Unavailable test channel. Try again or choose another channel.",
+      "at": 51399.20000000298,
+      "paused": true
+    },
+    {
+      "text": "Switching to Synthetic live sports 1…",
+      "at": 51442,
+      "paused": true
+    },
+    {
+      "text": "Loading Synthetic live sports 1…",
+      "at": 54105.70000000298,
+      "paused": true
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 54184.40000000596,
+      "paused": false
+    },
+    {
+      "text": "Buffering… Waiting for more video.",
+      "at": 55368.70000000298,
+      "paused": false
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 55373.90000000596,
+      "paused": false
+    },
+    {
+      "text": "Buffering… Waiting for more video.",
+      "at": 56370.40000000596,
+      "paused": false
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 56374.60000000894,
+      "paused": false
+    },
+    {
+      "text": "Buffering… Waiting for more video.",
+      "at": 57614.20000000298,
+      "paused": false
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 57619.40000000596,
+      "paused": false
+    },
+    {
+      "text": "Buffering… Waiting for more video.",
+      "at": 58616.5,
+      "paused": false
+    },
+    {
+      "text": "Now playing Synthetic live sports 1",
+      "at": 58621.70000000298,
+      "paused": false
+    },
+    {
+      "text": "LIVE",
+      "at": 61870.10000000894,
+      "paused": false
+    }
+  ]
+}

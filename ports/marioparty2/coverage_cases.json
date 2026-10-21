@@ -1,0 +1,644 @@
+[
+  {
+    "key": "mg-01-BowserSlots",
+    "kind": "minigame",
+    "id": 1,
+    "type": 4,
+    "section": 3,
+    "ticks": 30000,
+    "title": "Bowser Slots"
+  },
+  {
+    "key": "mg-02-RollOutTheBarrels",
+    "kind": "minigame",
+    "id": 2,
+    "type": 4,
+    "section": 4,
+    "ticks": 30000,
+    "title": "Roll Out The Barrels"
+  },
+  {
+    "key": "mg-03-CoffinCongestion",
+    "kind": "minigame",
+    "id": 3,
+    "type": 4,
+    "section": 5,
+    "ticks": 30000,
+    "title": "Coffin Congestion"
+  },
+  {
+    "key": "mg-04-HammerSlammer",
+    "kind": "minigame",
+    "id": 4,
+    "type": 4,
+    "section": 6,
+    "ticks": 30000,
+    "title": "Hammer Slammer"
+  },
+  {
+    "key": "mg-05-GiveMeABrake",
+    "kind": "minigame",
+    "id": 5,
+    "type": 4,
+    "section": 7,
+    "ticks": 30000,
+    "title": "Give Me ABrake"
+  },
+  {
+    "key": "mg-06-MalletGoRound",
+    "kind": "minigame",
+    "id": 6,
+    "type": 4,
+    "section": 8,
+    "ticks": 30000,
+    "title": "Mallet Go Round"
+  },
+  {
+    "key": "mg-07-GrabBag",
+    "kind": "minigame",
+    "id": 7,
+    "type": 3,
+    "section": 9,
+    "ticks": 30000,
+    "title": "Grab Bag"
+  },
+  {
+    "key": "mg-08-BumperBalloonCars",
+    "kind": "minigame",
+    "id": 8,
+    "type": 3,
+    "section": 11,
+    "ticks": 30000,
+    "title": "Bumper Balloon Cars"
+  },
+  {
+    "key": "mg-09-RakinEmIn",
+    "kind": "minigame",
+    "id": 9,
+    "type": 3,
+    "section": 12,
+    "ticks": 30000,
+    "title": "Rakin Em In"
+  },
+  {
+    "key": "mg-11-DayAtTheRaces",
+    "kind": "minigame",
+    "id": 11,
+    "type": 3,
+    "section": 13,
+    "ticks": 30000,
+    "title": "Day At The Races"
+  },
+  {
+    "key": "mg-12-FaceLift",
+    "kind": "minigame",
+    "id": 12,
+    "type": 3,
+    "section": 35,
+    "ticks": 30000,
+    "title": "Face Lift"
+  },
+  {
+    "key": "mg-13-CrazyCutters",
+    "kind": "minigame",
+    "id": 13,
+    "type": 3,
+    "section": 37,
+    "ticks": 30000,
+    "title": "Crazy Cutters"
+  },
+  {
+    "key": "mg-14-HotBobOmb",
+    "kind": "minigame",
+    "id": 14,
+    "type": 3,
+    "section": 15,
+    "ticks": 30000,
+    "title": "Hot Bob Omb"
+  },
+  {
+    "key": "mg-15-BowlOver",
+    "kind": "minigame",
+    "id": 15,
+    "type": 1,
+    "section": 16,
+    "ticks": 30000,
+    "title": "Bowl Over"
+  },
+  {
+    "key": "mg-16-RainbowRun",
+    "kind": "minigame",
+    "id": 16,
+    "type": 1,
+    "section": 17,
+    "ticks": 30000,
+    "title": "Rainbow Run"
+  },
+  {
+    "key": "mg-17-CraneGame",
+    "kind": "minigame",
+    "id": 17,
+    "type": 1,
+    "section": 18,
+    "ticks": 30000,
+    "title": "Crane Game"
+  },
+  {
+    "key": "mg-18-MoveToTheMusic",
+    "kind": "minigame",
+    "id": 18,
+    "type": 1,
+    "section": 19,
+    "ticks": 30000,
+    "title": "Move To The Music"
+  },
+  {
+    "key": "mg-19-BobOmbBarrage",
+    "kind": "minigame",
+    "id": 19,
+    "type": 1,
+    "section": 20,
+    "ticks": 30000,
+    "title": "Bob Omb Barrage"
+  },
+  {
+    "key": "mg-20-LookAway",
+    "kind": "minigame",
+    "id": 20,
+    "type": 1,
+    "section": 21,
+    "ticks": 30000,
+    "title": "Look Away"
+  },
+  {
+    "key": "mg-21-ShockDropOrRoll",
+    "kind": "minigame",
+    "id": 21,
+    "type": 1,
+    "section": 22,
+    "ticks": 30000,
+    "title": "Shock Drop Or Roll"
+  },
+  {
+    "key": "mg-22-LightsOut",
+    "kind": "minigame",
+    "id": 22,
+    "type": 1,
+    "section": 23,
+    "ticks": 30000,
+    "title": "Lights Out"
+  },
+  {
+    "key": "mg-23-FiletRelay",
+    "kind": "minigame",
+    "id": 23,
+    "type": 1,
+    "section": 24,
+    "ticks": 30000,
+    "title": "Filet Relay"
+  },
+  {
+    "key": "mg-24-Archerival",
+    "kind": "minigame",
+    "id": 24,
+    "type": 1,
+    "section": 25,
+    "ticks": 30000,
+    "title": "Archerival"
+  },
+  {
+    "key": "mg-26-ToadBandstand",
+    "kind": "minigame",
+    "id": 26,
+    "type": 2,
+    "section": 26,
+    "ticks": 30000,
+    "title": "Toad Bandstand"
+  },
+  {
+    "key": "mg-27-BobsledRun",
+    "kind": "minigame",
+    "id": 27,
+    "type": 2,
+    "section": 27,
+    "ticks": 30000,
+    "title": "Bobsled Run"
+  },
+  {
+    "key": "mg-28-HandcarHavoc",
+    "kind": "minigame",
+    "id": 28,
+    "type": 2,
+    "section": 28,
+    "ticks": 30000,
+    "title": "Handcar Havoc"
+  },
+  {
+    "key": "mg-30-BallonBurst",
+    "kind": "minigame",
+    "id": 30,
+    "type": 2,
+    "section": 29,
+    "ticks": 30000,
+    "title": "Balloon Burst"
+  },
+  {
+    "key": "mg-31-SkyPilots",
+    "kind": "minigame",
+    "id": 31,
+    "type": 2,
+    "section": 30,
+    "ticks": 30000,
+    "title": "Sky Pilots"
+  },
+  {
+    "key": "mg-32-SpeedHockey",
+    "kind": "minigame",
+    "id": 32,
+    "type": 2,
+    "section": 31,
+    "ticks": 30000,
+    "title": "Speed Hockey"
+  },
+  {
+    "key": "mg-33-CakeFactory",
+    "kind": "minigame",
+    "id": 33,
+    "type": 2,
+    "section": 32,
+    "ticks": 30000,
+    "title": "Cake Factory"
+  },
+  {
+    "key": "mg-35-DungeonDash",
+    "kind": "minigame",
+    "id": 35,
+    "type": 2,
+    "section": 33,
+    "ticks": 30000,
+    "title": "Dungeon Dash"
+  },
+  {
+    "key": "mg-36-MagnetCarta",
+    "kind": "minigame",
+    "id": 36,
+    "type": 2,
+    "section": 34,
+    "ticks": 30000,
+    "title": "Magnet Carta"
+  },
+  {
+    "key": "mg-37-LavaTileIsle",
+    "kind": "minigame",
+    "id": 37,
+    "type": 0,
+    "section": 10,
+    "ticks": 30000,
+    "title": "Lava Tile Isle"
+  },
+  {
+    "key": "mg-38-HotRopeJump",
+    "kind": "minigame",
+    "id": 38,
+    "type": 0,
+    "section": 14,
+    "ticks": 30000,
+    "title": "Hot Rope Jump"
+  },
+  {
+    "key": "mg-39-ShellShocked",
+    "kind": "minigame",
+    "id": 39,
+    "type": 0,
+    "section": 36,
+    "ticks": 30000,
+    "title": "Shell Shocked"
+  },
+  {
+    "key": "mg-40-ToadInTheBox",
+    "kind": "minigame",
+    "id": 40,
+    "type": 0,
+    "section": 38,
+    "ticks": 30000,
+    "title": "Toad In The Box"
+  },
+  {
+    "key": "mg-41-MechaMarathon",
+    "kind": "minigame",
+    "id": 41,
+    "type": 0,
+    "section": 39,
+    "ticks": 30000,
+    "title": "Mecha Marathon"
+  },
+  {
+    "key": "mg-42-RollCall",
+    "kind": "minigame",
+    "id": 42,
+    "type": 0,
+    "section": 40,
+    "ticks": 30000,
+    "title": "Roll Call"
+  },
+  {
+    "key": "mg-43-AbandonShip",
+    "kind": "minigame",
+    "id": 43,
+    "type": 0,
+    "section": 41,
+    "ticks": 30000,
+    "title": "Abandon Ship"
+  },
+  {
+    "key": "mg-44-PlatformPeril",
+    "kind": "minigame",
+    "id": 44,
+    "type": 0,
+    "section": 42,
+    "ticks": 30000,
+    "title": "Platform Peril"
+  },
+  {
+    "key": "mg-45-TotemPolePound",
+    "kind": "minigame",
+    "id": 45,
+    "type": 0,
+    "section": 43,
+    "ticks": 30000,
+    "title": "Totem Pole Pound"
+  },
+  {
+    "key": "mg-46-BumperBalls",
+    "kind": "minigame",
+    "id": 46,
+    "type": 0,
+    "section": 44,
+    "ticks": 30000,
+    "title": "Bumper Balls"
+  },
+  {
+    "key": "mg-48-BombsAway",
+    "kind": "minigame",
+    "id": 48,
+    "type": 0,
+    "section": 45,
+    "ticks": 30000,
+    "title": "Bombs Away"
+  },
+  {
+    "key": "mg-49-TipsyTourney",
+    "kind": "minigame",
+    "id": 49,
+    "type": 0,
+    "section": 46,
+    "ticks": 30000,
+    "title": "Tipsy Tourney"
+  },
+  {
+    "key": "mg-50-HoneycombHavoc",
+    "kind": "minigame",
+    "id": 50,
+    "type": 0,
+    "section": 47,
+    "ticks": 30000,
+    "title": "Honeycomb Havoc"
+  },
+  {
+    "key": "mg-51-HexagonHeat",
+    "kind": "minigame",
+    "id": 51,
+    "type": 0,
+    "section": 48,
+    "ticks": 30000,
+    "title": "Hexagon Heat"
+  },
+  {
+    "key": "mg-52-SkateboardScamper",
+    "kind": "minigame",
+    "id": 52,
+    "type": 0,
+    "section": 49,
+    "ticks": 30000,
+    "title": "Skateboard Scamper"
+  },
+  {
+    "key": "mg-53-SlotCarDerby",
+    "kind": "minigame",
+    "id": 53,
+    "type": 0,
+    "section": 50,
+    "ticks": 30000,
+    "title": "Slot Car Derby"
+  },
+  {
+    "key": "mg-54-ShyGuySays",
+    "kind": "minigame",
+    "id": 54,
+    "type": 0,
+    "section": 51,
+    "ticks": 30000,
+    "title": "Shy Guy Says"
+  },
+  {
+    "key": "mg-55-SneakNSnore",
+    "kind": "minigame",
+    "id": 55,
+    "type": 0,
+    "section": 52,
+    "ticks": 30000,
+    "title": "Sneak NSnore"
+  },
+  {
+    "key": "mg-57-DriversEd",
+    "kind": "minigame",
+    "id": 57,
+    "type": 5,
+    "section": 53,
+    "ticks": 30000,
+    "title": "Drivers Ed"
+  },
+  {
+    "key": "mg-58-ChanceTime",
+    "kind": "minigame",
+    "id": 58,
+    "type": 6,
+    "section": 54,
+    "ticks": 30000,
+    "title": "Chance Time"
+  },
+  {
+    "key": "mg-59-DesertDuel",
+    "kind": "minigame",
+    "id": 59,
+    "type": 7,
+    "section": 65,
+    "ticks": 30000,
+    "title": "Western Land duel"
+  },
+  {
+    "key": "mg-60-PirateDuel",
+    "kind": "minigame",
+    "id": 60,
+    "type": 7,
+    "section": 68,
+    "ticks": 30000,
+    "title": "Pirate Land duel"
+  },
+  {
+    "key": "mg-61-name",
+    "kind": "minigame",
+    "id": 61,
+    "type": 7,
+    "section": 70,
+    "ticks": 30000,
+    "title": "Horror Land duel"
+  },
+  {
+    "key": "mg-62-name",
+    "kind": "minigame",
+    "id": 62,
+    "type": 7,
+    "section": 72,
+    "ticks": 30000,
+    "title": "Space Land duel"
+  },
+  {
+    "key": "mg-63-name",
+    "kind": "minigame",
+    "id": 63,
+    "type": 7,
+    "section": 74,
+    "ticks": 30000,
+    "title": "Mystery Land duel"
+  },
+  {
+    "key": "mg-64-name",
+    "kind": "minigame",
+    "id": 64,
+    "type": 7,
+    "section": 76,
+    "ticks": 30000,
+    "title": "Bowser Land duel"
+  },
+  {
+    "key": "mg-65-BowsersBigBlast",
+    "kind": "minigame",
+    "id": 65,
+    "type": 3,
+    "section": 59,
+    "ticks": 30000,
+    "title": "Bowsers Big Blast"
+  },
+  {
+    "key": "mg-66-LooneyLumberjacks",
+    "kind": "minigame",
+    "id": 66,
+    "type": 2,
+    "section": 55,
+    "ticks": 30000,
+    "title": "Looney Lumberjacks"
+  },
+  {
+    "key": "mg-67-TorpedoTargets",
+    "kind": "minigame",
+    "id": 67,
+    "type": 2,
+    "section": 60,
+    "ticks": 30000,
+    "title": "Torpedo Targets"
+  },
+  {
+    "key": "mg-68-DestructionDuet",
+    "kind": "minigame",
+    "id": 68,
+    "type": 2,
+    "section": 61,
+    "ticks": 30000,
+    "title": "Destruction Duet"
+  },
+  {
+    "key": "mg-69-DizzyDancing",
+    "kind": "minigame",
+    "id": 69,
+    "type": 0,
+    "section": 56,
+    "ticks": 30000,
+    "title": "Dizzy Dancing"
+  },
+  {
+    "key": "mg-70-TileDriver",
+    "kind": "minigame",
+    "id": 70,
+    "type": 0,
+    "section": 57,
+    "ticks": 30000,
+    "title": "Tile Driver"
+  },
+  {
+    "key": "mg-71-QuicksandCache",
+    "kind": "minigame",
+    "id": 71,
+    "type": 1,
+    "section": 58,
+    "ticks": 30000,
+    "title": "Quicksand Cache"
+  },
+  {
+    "key": "mg-72-DeepSeaSalvage",
+    "kind": "minigame",
+    "id": 72,
+    "type": 0,
+    "section": 62,
+    "ticks": 30000,
+    "title": "Deep Sea Salvage"
+  },
+  {
+    "key": "board-WesternLand",
+    "kind": "board",
+    "id": 0,
+    "section": 64,
+    "ticks": 40000,
+    "title": "Western Land"
+  },
+  {
+    "key": "board-PirateLand",
+    "kind": "board",
+    "id": 1,
+    "section": 67,
+    "ticks": 40000,
+    "title": "Pirate Land"
+  },
+  {
+    "key": "board-HorrorLand",
+    "kind": "board",
+    "id": 2,
+    "section": 69,
+    "ticks": 40000,
+    "title": "Horror Land"
+  },
+  {
+    "key": "board-SpaceLand",
+    "kind": "board",
+    "id": 3,
+    "section": 71,
+    "ticks": 40000,
+    "title": "Space Land"
+  },
+  {
+    "key": "board-MysteryLand",
+    "kind": "board",
+    "id": 4,
+    "section": 73,
+    "ticks": 40000,
+    "title": "Mystery Land"
+  },
+  {
+    "key": "board-BowserLand",
+    "kind": "board",
+    "id": 5,
+    "section": 75,
+    "ticks": 40000,
+    "title": "Bowser Land"
+  }
+]

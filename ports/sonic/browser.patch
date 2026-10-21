@@ -1,0 +1,183 @@
+diff --git a/RSDKv4/Drawing.cpp b/RSDKv4/Drawing.cpp
+index cc71ced..be734ae 100644
+--- a/RSDKv4/Drawing.cpp
++++ b/RSDKv4/Drawing.cpp
+@@ -87,7 +87,7 @@ int InitRenderDevice()
+ #endif
+ 
+ #if RETRO_USING_SDL2
+-    SDL_Init(SDL_INIT_EVERYTHING);
++    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER);
+ 
+     SDL_DisableScreenSaver();
+ 
+@@ -159,7 +159,7 @@ int InitRenderDevice()
+ #endif
+ 
+ #if RETRO_USING_SDL1
+-    SDL_Init(SDL_INIT_EVERYTHING);
++    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER);
+ 
+     Engine.windowSurface = SDL_SetVideoMode(SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale, 32, SDL_SWSURFACE);
+     if (!Engine.windowSurface) {
+diff --git a/RSDKv4/Input.cpp b/RSDKv4/Input.cpp
+index 4738d59..b60d54b 100644
+--- a/RSDKv4/Input.cpp
++++ b/RSDKv4/Input.cpp
+@@ -1,3 +1,4 @@
++#include <emscripten.h>
+ #include "RetroEngine.hpp"
+ 
+ InputData keyPress = InputData();
+@@ -219,6 +220,12 @@ void controllerClose(byte controllerID)
+ 
+ void ProcessInput()
+ {
++    if (EM_ASM_INT({return !!window.peakReadPad;})) {
++        int mask = EM_ASM_INT({const p=window.peakReadPad();const b=p.buttons;return (p.y>20?1:0)|(p.y< -20?2:0)|(p.x< -20?4:0)|(p.x>20?8:0)|(b&0x8000?16:0)|(b&0x4000?32:0)|(b&0x2000?64:0)|(b&0x1000?4096:0);});
++        for(int i=0;i<INPUT_ANY;i++){if(mask&(1<<i))inputDevice[i].setHeld();else inputDevice[i].setReleased();}
++        if(mask)inputDevice[INPUT_ANY].setHeld();else inputDevice[INPUT_ANY].setReleased();
++        Engine.dimTimer=0;return;
++    }
+ #if RETRO_USING_SDL2
+     int length           = 0;
+     const byte *keyState = SDL_GetKeyboardState(&length);
+diff --git a/RSDKv4/RetroEngine.cpp b/RSDKv4/RetroEngine.cpp
+index 3d2826b..0803703 100644
+--- a/RSDKv4/RetroEngine.cpp
++++ b/RSDKv4/RetroEngine.cpp
+@@ -489,8 +489,10 @@ void RetroEngine::Run()
+         frameStart = SDL_GetTicks();
+         frameDelta = frameStart - frameEnd;
+ 
++#ifndef __EMSCRIPTEN__
+         if (frameDelta < 1000.0f / (float)refreshRate)
+             SDL_Delay(1000.0f / (float)refreshRate - frameDelta);
++#endif // Browser frames are already paced by requestAnimationFrame.
+ 
+         frameEnd = SDL_GetTicks();
+ #endif
+diff --git a/RSDKv4/Userdata.cpp b/RSDKv4/Userdata.cpp
+index 2187ff1..a80be3d 100644
+--- a/RSDKv4/Userdata.cpp
++++ b/RSDKv4/Userdata.cpp
+@@ -426,13 +426,13 @@ void InitUserdata()
+ 
+ #if RETRO_PLATFORM == RETRO_UWP
+     if (!usingCWD)
+-        sprintf(buffer, "%s/UData.bin", getResourcesPath());
++        sprintf(buffer, "/save/UData.bin");
+     else
+-        sprintf(buffer, "%sUData.bin", gamePath);
++        sprintf(buffer, "/save/UData.bin");
+ #elif RETRO_PLATFORM == RETRO_OSX
+-    sprintf(buffer, "%s/UData.bin", gamePath);
++    sprintf(buffer, "/save/UData.bin");
+ #else
+-    sprintf(buffer, "%sUData.bin", gamePath);
++    sprintf(buffer, "/save/UData.bin");
+ #endif
+     file = fOpen(buffer, "rb");
+     if (file) {
+@@ -576,13 +576,13 @@ void ReadUserdata()
+     char buffer[0x100];
+ #if RETRO_PLATFORM == RETRO_UWP
+     if (!usingCWD)
+-        sprintf(buffer, "%s/UData.bin", getResourcesPath());
++        sprintf(buffer, "/save/UData.bin");
+     else
+-        sprintf(buffer, "%sUData.bin", gamePath);
++        sprintf(buffer, "/save/UData.bin");
+ #elif RETRO_PLATFORM == RETRO_OSX
+-    sprintf(buffer, "%s/UData.bin", gamePath);
++    sprintf(buffer, "/save/UData.bin");
+ #else
+-    sprintf(buffer, "%sUData.bin", gamePath);
++    sprintf(buffer, "/save/UData.bin");
+ #endif
+     FileIO *userFile = fOpen(buffer, "rb");
+     if (!userFile)
+@@ -610,13 +610,13 @@ void WriteUserdata()
+     char buffer[0x100];
+ #if RETRO_PLATFORM == RETRO_UWP
+     if (!usingCWD)
+-        sprintf(buffer, "%s/UData.bin", getResourcesPath());
++        sprintf(buffer, "/save/UData.bin");
+     else
+-        sprintf(buffer, "%sUData.bin", gamePath);
++        sprintf(buffer, "/save/UData.bin");
+ #elif RETRO_PLATFORM == RETRO_OSX
+-    sprintf(buffer, "%s/UData.bin", gamePath);
++    sprintf(buffer, "/save/UData.bin");
+ #else
+-    sprintf(buffer, "%sUData.bin", gamePath);
++    sprintf(buffer, "/save/UData.bin");
+ #endif
+     FileIO *userFile = fOpen(buffer, "wb");
+     if (!userFile)
+diff --git a/RSDKv4/Userdata.hpp b/RSDKv4/Userdata.hpp
+index 4ec7356..a0535ae 100644
+--- a/RSDKv4/Userdata.hpp
++++ b/RSDKv4/Userdata.hpp
+@@ -122,13 +122,13 @@ inline bool ReadSaveRAMData()
+     char buffer[0x100];
+ #if RETRO_PLATFORM == RETRO_UWP
+     if (!usingCWD)
+-        sprintf(buffer, "%s/SData.bin", getResourcesPath());
++        sprintf(buffer, "/save/SData.bin");
+     else
+-        sprintf(buffer, "%sSData.bin", gamePath);
++        sprintf(buffer, "/save/SData.bin");
+ #elif RETRO_PLATFORM == RETRO_OSX
+-    sprintf(buffer, "%s/SData.bin", gamePath);
++    sprintf(buffer, "/save/SData.bin");
+ #else
+-    sprintf(buffer, "%sSData.bin", gamePath);
++    sprintf(buffer, "/save/SData.bin");
+ #endif
+     FileIO *saveFile = fOpen(buffer, "rb");
+     if (!saveFile)
+@@ -143,13 +143,13 @@ inline bool WriteSaveRAMData()
+     char buffer[0x100];
+ #if RETRO_PLATFORM == RETRO_UWP
+     if (!usingCWD)
+-        sprintf(buffer, "%s/SData.bin", getResourcesPath());
++        sprintf(buffer, "/save/SData.bin");
+     else
+-        sprintf(buffer, "%sSData.bin", gamePath);
++        sprintf(buffer, "/save/SData.bin");
+ #elif RETRO_PLATFORM == RETRO_OSX
+-    sprintf(buffer, "%s/SData.bin", gamePath);
++    sprintf(buffer, "/save/SData.bin");
+ #else
+-    sprintf(buffer, "%sSData.bin", gamePath);
++    sprintf(buffer, "/save/SData.bin");
+ #endif
+ 
+     FileIO *saveFile = fOpen(buffer, "wb");
+diff --git a/RSDKv4/main.cpp b/RSDKv4/main.cpp
+index 8aca9e1..14761f1 100644
+--- a/RSDKv4/main.cpp
++++ b/RSDKv4/main.cpp
+@@ -6,6 +6,7 @@
+ void main_loop()
+ {
+ 	Engine.Run();
++ EM_ASM({window.peakNativeTicks=(window.peakNativeTicks||0)+1;});
+ }
+ #endif
+ 
+@@ -20,11 +21,12 @@ int main(int argc, char *argv[])
+     SDL_SetHint(SDL_HINT_WINRT_HANDLE_BACK_BUTTON, "1");
+     Engine.Init();
+ #ifdef __EMSCRIPTEN__
+-	emscripten_set_main_loop(main_loop, 0, 1);
++	emscripten_set_main_loop(main_loop, 60, 1);
+ #endif
+ 
+ #ifndef __EMSCRIPTEN__
+     Engine.Run();
++ EM_ASM({window.peakNativeTicks=(window.peakNativeTicks||0)+1;});
+ #endif
+ 
+     return 0;

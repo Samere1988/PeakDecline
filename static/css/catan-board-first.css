@@ -1,0 +1,153 @@
+/* Board-first room layout. Loaded with the game client, including cached pages. */
+.board-first .move-summary { display:flex; flex:1 1 0; min-height:0; flex-direction:column; padding:10px; }
+.board-first .move-summary h2 { margin:0 0 8px; font-size:13px; }
+.board-first #room-history { flex:1; min-height:0; max-height:none; width:100%; box-sizing:border-box; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; margin:0; font:12px/1.9 Arial,sans-serif; }
+.catan-app.board-first .room-chat-panel { position:relative; flex:1 1 0; min-height:0; overflow:hidden; padding:8px 10px; }
+.board-first .chat-toggle>summary { cursor:pointer; font-size:13px; font-weight:bold; }
+.catan-app.board-first .room-chat-panel .chat-toggle[open] { position:static; z-index:auto; display:flex; flex:1 1 auto; flex-direction:column; width:auto; max-width:none; height:100%; min-height:0; padding:0; border:0; border-radius:0; background:transparent; }
+.catan-app.board-first .room-chat-panel .chat-toggle>summary { flex:0 0 auto; }
+.catan-app.board-first #room-chat { height:auto; flex:1 1 auto; min-height:0; overflow:auto; margin-bottom:46px; }
+.catan-app.board-first .room-chat-panel .chat-toggle { min-height:0; }
+.catan-app.board-first .room-chat-panel #chat-form { position:absolute; z-index:2; left:10px; right:10px; bottom:8px; display:flex; align-items:stretch; width:auto; min-width:0; margin:0; padding:4px 0 0; border-top:1px solid #ffffff28; background:#211b28; box-sizing:border-box; }
+.catan-app.board-first .room-chat-panel #chat-message { flex:1 1 auto; min-width:0; width:0; height:32px; margin:0; box-sizing:border-box; }
+.catan-app.board-first .room-chat-panel #chat-form button { flex:0 0 auto; height:32px; white-space:nowrap; }
+.catan-app.board-first #trade-panel.negotiated-trading { width:430px; top:82px; right:calc(clamp(250px,19vw,320px) + 20px); background:#f2eee4; color:#292a2c; padding:10px; border:3px solid #126b98; border-radius:8px; }
+.board-first #trade-hub .trade-context { display:none; }
+.board-first #trade-hub button { color:#18384b; background:#d6e8ec; border:1px solid #9cacb3; }
+.board-first #trade-hub button:disabled { opacity:.45; }
+.board-first .trade-composer>summary { cursor:pointer; padding:5px; font-weight:bold; font-size:13px; }
+.board-first .negotiated-offer { background:#f2eee4; border:0; border-top:3px solid #126b98; border-radius:0; padding:8px 0 0; }
+.board-first .negotiated-offer>strong { display:flex; align-items:center; justify-content:center; gap:8px; border-bottom:1px solid #c7c0b5; padding-bottom:5px; }
+.board-first .trade-avatar { position:relative; display:inline-flex; flex:none; width:38px; height:38px; min-width:0!important; }
+.board-first .trade-avatar img { width:100%; height:100%; object-fit:contain; }
+.board-first .trade-avatar .trade-person { position:absolute; width:20px; height:25px; top:6px; left:9px; }
+.board-first #trade-panel.negotiated-trading #close-trade { color:#18384b; background:#d6e8ec; border-color:#9cacb3; }
+.board-first .trade-wildcard { color:#596471; border-color:#96a2aa; }
+.board-first .trade-arrow { font-size:28px; font-weight:bold; }
+.board-first .trade-arrow.receive { color:#39a526; }
+.board-first .trade-arrow.give { color:#d93441; }
+.board-first .trade-term img { width:36px; height:52px; }
+.board-first .trade-terms { flex-wrap:wrap; }
+.board-first .trade-term b,.board-first .trade-pick b { border-radius:0 0 0 6px; background:#285ea8; color:white; }
+.board-first .trade-response-icons { display:flex; margin-left:auto; gap:4px; }
+.board-first .trade-response { position:relative; display:flex; flex-direction:column; border:0; padding:0; }
+.board-first .trade-response>span:nth-child(2) { position:absolute; right:0; top:24px; background:#fff; border-radius:50%; color:#22475c; }
+.board-first #trade-hub .trade-response button { padding:3px 5px; font-size:10px; }
+.board-first .trade-response-actions { justify-content:flex-end; margin:0 0 0 auto; flex-wrap:nowrap; }
+.board-first #trade-hub .trade-response-actions button { min-height:36px; padding:4px 9px; font-size:12px; font-weight:800; background:#65baca; border:2px solid white; box-shadow:0 1px 2px #627e9f; }
+.board-first #trade-hub .trade-response-actions [data-respond="accept-trade"] { background:#319854; color:#fff; }
+.board-first #trade-hub .trade-response-actions [data-respond="reject-trade"] { background:#bd4848; color:#fff; }
+.board-first [data-edit] { order:0; }
+.board-first [data-respond="reject-trade"],.board-first [data-cancel] { order:1; }
+.board-first [data-respond="accept-trade"] { order:2; }
+.board-first .trade-selection>strong { color:#344958; }
+.board-first .trade-pick small { color:#344958; }
+@media(max-width:800px){ .catan-app.board-first #trade-panel.negotiated-trading { right:8px; top:60px; } }
+.catan-app.board-first:has(.catan-layout:not([hidden])) { padding:4px 6px; grid-template-rows:28px minmax(0,1fr); gap:4px; }
+.board-first:has(.catan-layout:not([hidden])) .catan-room-browser { position:absolute; top:7px; right:12px; z-index:15; }
+.board-first:has(.catan-layout:not([hidden])) #online-notice,.board-first:has(.catan-layout:not([hidden])) .room-status { display:none; }
+.catan-app.board-first .catan-layout { grid-template-columns:minmax(0,1fr) clamp(360px,21vw,560px); gap:6px; }
+.catan-app.board-first .board-panel { position:relative; border:0; border-radius:6px; background:#126b98; box-shadow:none; }
+.catan-app.board-first .board-toolbar { display:flex; position:absolute; top:8px; left:8px; right:8px; z-index:9; padding:0; min-height:0; border:0; background:transparent; pointer-events:none; gap:8px; }
+.board-first .board-toolbar>div { pointer-events:auto; }
+.catan-app.board-first .board-toolbar>div:first-child { display:none; }
+.catan-app.board-first #turn-label { display:block; min-width:0; max-width:min(210px,35vw); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; padding:7px 10px; border-radius:5px; background:#162333c9; }
+.catan-app.board-first .toolbar-actions { align-items:center; flex-wrap:nowrap; gap:5px; margin-left:auto; min-width:0; }
+.catan-app.board-first .dice-display { min-height:0; padding:0 5px; background:transparent; gap:4px; }
+.catan-app.board-first .dice-display span { display:none; }
+.catan-app.board-first .dice-display:has(.die) { background:#162333c9; border-radius:5px; padding:4px 7px; }
+.catan-app.board-first .dice-display .die { width:30px; height:30px; }
+.catan-app.board-first .catan-board { background:#126b98; border-radius:0; }
+.catan-app.board-first .catan-board::before,.catan-app.board-first .catan-board::after { display:none; }
+.catan-app.board-first .hex-board { width:min(81cqw,87cqh); }
+.catan-app.board-first .hex-board.base-six { width:min(78cqw,78cqh); }
+.catan-app.board-first .game-message { position:absolute; bottom:91px; left:8px; max-width:calc(100% - 16px); z-index:8; padding:5px 8px; border:0; border-radius:5px; background:#162333c9; color:#f2f4fa; pointer-events:none; }
+.catan-app.board-first .phase-actions:not(:empty) { position:absolute; bottom:120px; left:8px; z-index:10; max-width:calc(100% - 16px); background:#162333e8; border-radius:5px; }
+.catan-app.board-first .bottom-controls { height:84px; min-height:84px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; padding:6px 8px; border:0; background:#211b28; }
+.catan-app.board-first .bottom-controls .card-heading { display:none; }
+.catan-app.board-first .bottom-hand { display:flex; flex-direction:row; gap:10px; align-items:center; min-width:0; height:72px; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
+.catan-app.board-first #resources { display:flex; gap:2px; flex:none; max-width:none; }
+.catan-app.board-first #resources .resource { width:43px; flex:0 0 43px; padding:0; border:0; background:none; border-radius:0; }
+.catan-app.board-first .bottom-controls .resource-card-image { width:43px; height:62px; }
+.catan-app.board-first .resource-label { display:none; }
+.catan-app.board-first .resource-count { right:0; top:0; border:0; border-radius:0 0 0 7px; min-width:17px; height:19px; line-height:19px; font-size:12px; color:white; background:#285ea8; }
+.catan-app.board-first #development-hand { display:flex; flex:none; width:auto; gap:2px; height:68px; max-height:68px; overflow:visible; padding:0; align-items:center; }
+.catan-app.board-first #development-hand:empty { display:none; }
+.catan-app.board-first #development-hand .development-card, .catan-app.board-first #ck-progress-dock .development-card { width:43px; flex:0 0 43px; padding:0; }
+.catan-app.board-first .development-card img { width:43px; height:62px; }
+.catan-app.board-first .development-card span { display:none; }
+.catan-app.board-first .bottom-build { width:480px; min-width:0; }
+.catan-app.board-first .action-tray { grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; }
+.catan-app.board-first .action-tile { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 12px; justify-items:center; gap:2px; height:68px; padding:6px 3px; border-radius:7px; }
+.catan-app.board-first .action-tile img { grid-column:1; grid-row:1; height:100%; min-height:0; max-height:100%; object-fit:contain; }
+.catan-app.board-first .action-tile span { grid-column:1; grid-row:2; font-size:9px; line-height:12px; white-space:nowrap; max-width:100%; }
+.catan-app.board-first .game-message:empty { display:none; }
+.board-first #close-trade { color:#fff; background:#ffffff15; border:1px solid #ffffff30; border-radius:5px; }
+.board-first .card-receipt { bottom:105px; }
+.catan-app.board-first .catan-sidebar { gap:5px; }
+.catan-app.board-first .sidebar-card { border-radius:5px; box-shadow:none; }
+.catan-app.board-first.waiting-room .game-message { bottom:12px; }
+@media(min-width:1500px) and (min-height:900px){
+ .catan-app.board-first .bottom-controls { height:108px; min-height:108px; }
+ .catan-app.board-first .bottom-hand { height:96px; }
+ .catan-app.board-first #resources .resource { width:56px; flex-basis:56px; }
+ .catan-app.board-first .bottom-controls .resource-card-image { width:56px; height:82px; }
+ .catan-app.board-first #development-hand { height:88px; max-height:88px; }
+ .catan-app.board-first #development-hand .development-card, .catan-app.board-first #ck-progress-dock .development-card { width:56px; flex-basis:56px; }
+ .catan-app.board-first .development-card img { width:56px; height:82px; }
+ .catan-app.board-first .bottom-build { width:670px; }
+ .catan-app.board-first .action-tile { height:96px; }
+ .catan-app.board-first .action-tray .action-tile img { width:68px; height:68px; }
+ .catan-app.board-first .game-message { bottom:116px; }
+ .catan-app.board-first .phase-actions:not(:empty) { bottom:145px; }
+ .catan-app.board-first .card-receipt { bottom:130px; }
+ .catan-app.board-first .bank-card .card-stat img { height:54px; }
+ .catan-app.board-first .player-row { min-height:108px; }
+ .catan-app.board-first .seat-identity { width:120px; }
+ .catan-app.board-first .seat-identity .player-name { font-size:14px; }
+ .catan-app.board-first .seat-avatar { display:block; width:72px; height:79px; }
+ .catan-app.board-first .seat-frame { width:72px; height:72px; }
+ .catan-app.board-first .seat-person { width:39px; height:44px; left:17px; top:10px; }
+ .catan-app.board-first .seat-ribbon { width:72px; height:28px; }
+ .catan-app.board-first .seat-avatar strong { font-size:14px; }
+ .catan-app.board-first .seat-stats { gap:6px; }
+ .catan-app.board-first .seat-stats .card-stat img { height:72px; }
+ .catan-app.board-first .award-stat img { height:38px; }
+}
+@media(max-width:1100px){
+ .catan-app.board-first .catan-layout { grid-template-columns:minmax(0,1fr) 330px; }
+ .catan-app.board-first .bottom-build { width:318px; }
+ .catan-app.board-first .bottom-controls { gap:6px; }
+ .catan-app.board-first #resources .resource { width:36px; flex-basis:36px; }
+ .catan-app.board-first .bottom-controls .resource-card-image { width:36px; height:54px; }
+ .catan-app.board-first #development-hand .development-card, .catan-app.board-first #ck-progress-dock .development-card { width:36px; flex-basis:36px; }
+ .catan-app.board-first .development-card img { width:36px; height:54px; }
+}
+@media(max-width:800px){
+ .catan-app.board-first .catan-layout { grid-template-columns:minmax(0,1fr); }
+ .catan-app.board-first #toggle-sidebar { display:block; padding:4px 8px; margin-right:84px; font-size:10px; }
+ .catan-app.board-first .catan-sidebar { display:none; position:fixed; inset:36px 5px 5px; padding:8px; z-index:35; background:#19171f; border:1px solid #665469; border-radius:8px; }
+ .catan-app.board-first.sidebar-open .catan-sidebar,.catan-app.board-first.trading .catan-sidebar { display:flex; }
+ .catan-app.board-first #close-sidebar { display:block; padding:7px; background:#372637; color:white; border:0; }
+ .catan-app.board-first .bottom-build { width:300px; }
+}
+@media(max-width:560px){
+ .catan-app.board-first:has(.catan-layout:not([hidden])) .catan-topbar h1 { font-size:13px; }
+ .catan-app.board-first:has(.catan-layout:not([hidden])) .catan-topbar>div:first-child { gap:6px; }
+ .catan-app.board-first .bottom-controls { grid-template-columns:minmax(0,1fr); grid-template-rows:58px 50px; height:120px; min-height:120px; padding:4px 6px; gap:4px; }
+ .catan-app.board-first .bottom-hand { height:58px; }
+ .catan-app.board-first #development-hand { height:56px; }
+ .catan-app.board-first .bottom-build { width:100%; }
+ .catan-app.board-first .action-tile { height:49px; padding:4px 2px; }
+ .catan-app.board-first .action-tile span { font-size:8px; }
+ .catan-app.board-first .game-message { bottom:127px; font-size:10px; }
+ .catan-app.board-first .phase-actions:not(:empty) { bottom:160px; }
+ .catan-app.board-first .board-toolbar { top:6px; left:5px; right:5px; flex-wrap:wrap; }
+ .catan-app.board-first #turn-label { font-size:10px; padding:5px; }
+ .catan-app.board-first .dice-display .die { width:22px; height:22px; }
+ .catan-app.board-first .toolbar-actions button { padding:5px; font-size:10px; }
+ .catan-app.board-first #sound-toggle { font-size:0; width:28px; }
+ .catan-app.board-first #sound-toggle::before { content:'♪'; font-size:16px; }
+ .board-first .card-receipt { bottom:165px; }
+}
+.catan-app.board-first[data-online="true"] .seat-identity { width:clamp(130px,38%,190px); }

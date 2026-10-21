@@ -1,0 +1,50 @@
+diff --git a/src/main.c b/src/main.c
+index 2b42744..62019ab 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -1,3 +1,4 @@
++#include <emscripten.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -401,6 +402,7 @@ int main(int argc, char** argv) {
+     HandleCommand(kKeys_Load + 0, true);
+ 
+   while(running) {
++    emscripten_sleep(0);
+     while(SDL_PollEvent(&event)) {
+       switch(event.type) {
+       case SDL_CONTROLLERDEVICEADDED:
+@@ -447,18 +449,20 @@ int main(int argc, char** argv) {
+     }
+ 
+     if (g_paused) {
+-      SDL_Delay(16);
++      emscripten_sleep(16);
+       continue;
+     }
+ 
+     // Clear gamepad inputs when joypad directional inputs to avoid wonkiness
+-    int inputs = g_input1_state;
++    int inputs = 0;
+     if (g_input1_state & 0xf0)
+       g_gamepad_buttons = 0;
+-    inputs |= g_gamepad_buttons;
++
++    inputs |= EM_ASM_INT({return window.peakSnesPad ? window.peakSnesPad() : 0;});
+ 
+     SDL_LockMutex(g_audio_mutex);
+     bool is_replay = ZeldaRunFrame(inputs);
++    EM_ASM({window.peakNativeTicks=(window.peakNativeTicks||0)+1;});
+     SDL_UnlockMutex(g_audio_mutex);
+ 
+     frameCtr++;
+@@ -489,7 +493,7 @@ int main(int argc, char** argv) {
+           delta = 500;
+         }
+ //        printf("Sleeping %d\n", delta);
+-        SDL_Delay(delta);
++        emscripten_sleep(delta);
+       } else if (curTick - lastTick > 500) {
+         lastTick = curTick;
+       }

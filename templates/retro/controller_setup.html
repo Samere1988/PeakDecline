@@ -1,0 +1,17 @@
+  <p id="{{ controller_id }}-controller-status" class="mk64-description" role="status">Connect a controller, then press a button.</p>
+  <details id="{{ controller_id }}-controller-panel" class="mk64-controller-panel {{ controller_id }}-controller-panel">
+    <summary>Controller setup</summary>
+    <div id="{{ controller_id }}-controller-bindings" class="mk64-controller-bindings {{ controller_id }}-controller-bindings"></div>
+  <div class="mk64-controller-tools {{ controller_id }}-controller-tools">
+    <label id="{{ controller_id }}-controller-label" for="{{ controller_id }}-controller-select" hidden>Controller</label>
+    <select id="{{ controller_id }}-controller-select" aria-label="Controller" hidden></select>
+    <button id="{{ controller_id }}-controller-setup" type="button" hidden>Set up all controls</button>
+    <button id="{{ controller_id }}-controller-back" type="button" hidden>Back one control</button>
+    <button id="{{ controller_id }}-controller-cancel" type="button" hidden>Cancel setup</button>
+    <button id="{{ controller_id }}-controller-reset" type="button">Reset mapping</button>
+    <label for="{{ controller_id }}-controller-deadzone">Stick dead zone <output id="{{ controller_id }}-controller-deadzone-value">18%</output></label>
+    <input id="{{ controller_id }}-controller-deadzone" type="range" min="0" max="60" value="18" aria-label="Stick dead zone" disabled>
+  </div>
+  <p id="{{ controller_id }}-controller-step" class="mk64-description" role="status">Standard gamepads use the left stick, A/B, left trigger for Z, right shoulder or trigger for R, and the right stick for C-buttons. Select any control above to change just that mapping, or choose Set up all controls for guided setup.</p>
+<p id="{{ controller_id }}-controller-test" class="mk64-description" aria-live="off"></p>
+  </details>

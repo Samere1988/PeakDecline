@@ -1,0 +1,3 @@
+const path=require('node:path');
+const {chromium}=require(path.join(process.env.HOME,'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));
+(async()=>{const b=await chromium.launch({headless:true,executablePath:path.join(process.env.HOME,'.cache/ms-playwright/chromium-1243/chrome-linux64/chrome')});try{const p=await b.newPage({viewport:{width:1800,height:1450}});await p.goto('file://'+path.resolve('.tmp/mp2-coverage-report/gallery.html'));await p.evaluate(start=>{[...document.querySelectorAll('article')].forEach((el,i)=>{if(i<start||i>=start+12)el.remove();});},Number(process.env.MP_GALLERY_START||0));await p.screenshot({path:'.tmp/mp2-gallery-'+(process.env.MP_GALLERY_START||0)+'.png',fullPage:true});}finally{await b.close();}})();

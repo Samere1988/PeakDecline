@@ -1,0 +1,235 @@
+/* Watch Together's shared plex.css provides the palette, room cards and buttons.
+   Overrides here are limited to CATAN; the watch pages are unchanged. */
+html { background:#1a1c2c; }
+body { height:auto; min-height:100vh; background-attachment:scroll; }
+.global-footer { color:#c6c9d8; background:transparent; }
+.catan-app { max-width:1500px; color:#e0e0e0; }
+.catan-app .catan-topbar { background:transparent; }
+.catan-room-browser { margin:0 0 24px; }
+.connection-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+.connection-bar #online-notice { color:#c6c9d8; font-size:12px; margin:0; }
+.catan-app .plex-header { margin:28px 0; }
+.catan-app .header-title h1 { font-size:2.7rem; }
+.catan-app #room-list.rooms-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,310px),1fr)); gap:24px; margin-top:26px; }
+.catan-app .room-card { box-shadow:0 12px 32px #0003; backdrop-filter:none; }
+.catan-app .catan-room-poster { display:flex; justify-content:center; align-items:center; gap:0; background:radial-gradient(ellipse at center,#4a294c,#1a1c2c); }
+.catan-app .catan-room-poster img { height:125px; width:108px; object-fit:contain; opacity:1; margin:0 -8px; transform:rotate(-9deg); }
+.catan-app .catan-room-poster img:nth-child(2) { transform:translateY(12px) rotate(6deg); }
+.catan-app .room-info .room-name { margin:0 0 10px; }
+#room-name:focus::placeholder { opacity:0; }
+.listed-players { display:flex; flex-wrap:wrap; gap:10px 14px; margin-bottom:18px; }
+.listed-person { display:flex; align-items:center; gap:6px; font-size:12px; overflow-wrap:anywhere; }
+.listed-person .user-avatar { margin:0; flex-shrink:0; }
+.listed-person small,.listed-spectators { font-size:12px; color:#c6c9d8; }
+.card-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+.catan-app input,.catan-app select { background:#15141b; color:#fff; border:1px solid #ffffff26; border-radius:6px; padding:10px; }
+.catan-app .btn-submit { background:#ff4444; color:#fff; border:0; }
+.catan-app .btn-cancel { background:#ffffff1f; color:#fff; border:0; }
+.catan-dialog { width:min(440px,calc(100% - 32px)); max-height:calc(100dvh - 24px); overflow:auto; box-sizing:border-box; padding:28px; background:#19171f; color:#e0e0e0; border:1px solid #ffffff2a; border-radius:16px; box-shadow:0 20px 70px #0009; }
+.catan-dialog::backdrop { background:#000c; }
+.catan-dialog h2 { color:white; margin-top:0; }
+.catan-dialog p { color:#c6c9d8; font-size:13px; line-height:1.6; }
+.catan-dialog .modal-actions { flex-wrap:wrap; margin-top:22px; }
+.public-choice { display:flex; align-items:center; gap:8px; }
+.game-mode-choices { display:grid; gap:7px; margin:14px 0; padding:0; border:0; }
+.game-mode-choices[hidden] { display:none; }
+.game-mode-choices legend { margin-bottom:7px; font-size:13px; font-weight:700; }
+.game-mode-choices label { display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid #ffffff35; border-radius:8px; cursor:pointer; }
+.game-mode-choices label:has(input:checked) { border-color:#f3d28f; background:#f3d28f18; }
+.game-mode-choices .mode-unavailable { opacity:.58; cursor:not-allowed; }
+.game-mode-choices input { margin:0; flex:none; }
+.game-mode-choices strong,.game-mode-choices small { display:block; }
+.game-mode-choices small { margin-top:2px; color:#c6c9d8; font-size:11px; }
+#room-mode-label { margin-left:auto; padding:2px 6px; border-radius:5px; background:#ffffff16; color:#d7e4e8; font-size:10px; white-space:nowrap; }
+.catan-app .board-panel,.catan-app .sidebar-card { background:#141417b3; border-color:#ffffff1a; border-radius:16px; }
+.catan-app .board-toolbar,.catan-app .bottom-controls,.catan-app .dice-display,.catan-app .game-message { background:#211b28; }
+.catan-app .primary-button { background:linear-gradient(135deg,#ff4444,#c92525); }
+.catan-app .secondary-button { background:#ffffff1a; }
+.catan-app .player-row { background:#ffffff0a; }
+.catan-app .player-row.active { outline-color:#ff4444; background:#4a192c77; }
+.catan-app .room-seating h2 { overflow-wrap:anywhere; }
+#room-phase-label { white-space:nowrap; color:#f19b9b; }
+#online-help { font-size:12px; line-height:1.6; color:#c6c9d8; }
+#room-members { padding:0; list-style:none; margin:16px 0; }
+#room-members li { display:flex; align-items:center; gap:9px; padding:10px 0; border-bottom:1px solid #ffffff12; }
+#room-members li>div { flex:1; min-width:0; }
+#room-members strong { display:block; font-size:12px; overflow-wrap:anywhere; }
+#room-members small { display:block; margin-top:3px; color:#c6c9d8; font-size:10px; text-transform:capitalize; }
+.room-avatar { display:grid; place-items:center; width:35px; height:35px; flex-shrink:0; background:#ffffff0b; border-radius:50%; border:1px solid var(--seat-color); color:var(--seat-color); }
+.room-avatar img { width:28px; height:28px; }
+.ready-tag { font-size:10px; color:#c6c9d8; }
+.ready-tag.is-ready { color:#8cdda1; }
+.catan-app #seat-options { gap:5px; }
+.catan-app #seat-options button,.room-seating button { padding:8px 10px; background:#ffffff12; border:1px solid #ffffff20; color:#fff; border-radius:6px; font-size:11px; }
+.room-seating #ready-room,.room-seating #start-room { background:#ff4444; font-size:12px; }
+.room-seating summary,.room-chat-panel summary { color:#c6c9d8; font-size:12px; cursor:pointer; }
+.room-chat-panel .card-heading span { font-size:10px; }
+#room-chat { white-space:pre-wrap; overflow-wrap:anywhere; overflow:auto; height:180px; padding:12px; border-radius:8px; background:#0003; font:12px/1.7 Inter,sans-serif; color:#e0e0e0; }
+#chat-form { display:flex; gap:6px; margin:10px 0 14px; }
+#chat-message { min-width:0; flex:1; font-size:12px; }
+#room-history { white-space:pre-wrap; overflow-wrap:anywhere; max-height:180px; overflow:auto; font:11px/1.6 Inter,sans-serif; }
+.catan-app.waiting-room .bottom-controls,.catan-app.waiting-room #dice-display,.catan-app.waiting-room #roll-dice,.catan-app.waiting-room #new-game,.catan-app.waiting-room #trade-panel,.catan-app.waiting-room .bank-card,.catan-app.waiting-room .game-players { display:none; }
+.catan-app.waiting-room .board-toolbar { border-bottom-color:#ffffff18; }
+@media(max-width:900px){ .catan-app .catan-sidebar { grid-template-columns:1fr; } }
+@media(max-width:560px){ .catan-app .header-title h1 { font-size:2rem; } .catan-app .plex-header { text-align:left; } .catan-app .no-rooms { padding:28px 16px; } .catan-app .room-info { padding:18px; } }
+/* The room is a viewport workspace; the browser/list keeps its normal page flow. */
+body:has(.catan-app[data-online="true"] .catan-layout:not([hidden])) { height:100dvh; min-height:0; overflow:hidden; }
+body:has(.catan-layout:not([hidden])) .global-footer { display:none; }
+.catan-app[data-online="true"]:has(.catan-layout:not([hidden])) { width:100%; max-width:none; height:100dvh; min-height:0; padding:8px 12px; box-sizing:border-box; display:grid; grid-template-rows:30px 26px minmax(0,1fr); gap:4px; }
+.catan-app:has(.catan-layout:not([hidden])) .catan-topbar { margin:0; padding:0; align-items:center; border:0; }
+.catan-app:has(.catan-layout:not([hidden])) .catan-topbar>div:first-child { display:flex; align-items:center; gap:14px; }
+.catan-app:has(.catan-layout:not([hidden])) .catan-topbar h1 { margin:0; font-size:17px; }
+.catan-app:has(.catan-layout:not([hidden])) .catan-room-browser { margin:0; min-height:0; }
+.catan-app:has(.catan-layout:not([hidden])) .connection-bar { margin:0; height:26px; }
+.catan-app:has(.catan-layout:not([hidden])) #back-lobby { padding:4px 12px; font-size:11px; }
+.catan-app[data-online="true"] .catan-layout { min-height:0; grid-template-columns:minmax(0,1fr) 300px; align-items:stretch; gap:10px; }
+.catan-app[data-online="true"] .board-panel { min-height:0; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
+.catan-app[data-online="true"] .board-toolbar { flex-shrink:0; padding:7px 12px; min-height:38px; box-sizing:border-box; }
+.catan-app[data-online="true"] .board-toolbar .eyebrow { display:none; }
+.catan-app[data-online="true"] .toolbar-actions { margin:0; }
+.catan-app[data-online="true"] .toolbar-actions button { padding:7px 10px; font-size:11px; }
+.catan-app[data-online="true"] .dice-display { min-height:30px; padding:2px 10px; flex-shrink:0; }
+.catan-app[data-online="true"] .dice-display .die { width:26px; height:26px; }
+.catan-app[data-online="true"] .dice-display strong { font-size:20px; }
+.catan-app[data-online="true"] .catan-board { flex:1; min-height:0; padding:0; overflow:hidden; container-type:size; border-radius:0; }
+.catan-app[data-online="true"] .hex-board { width:min(80cqw,87cqh); max-width:none; margin:0; flex:none; container-type:inline-size; }
+.catan-app[data-online="true"] .desert-label { font-size:1.7cqw; }
+.catan-app[data-online="true"] .game-message { flex-shrink:0; padding:5px 10px; font-size:11px; margin:0; }
+.catan-app[data-online="true"] .phase-actions { flex-shrink:0; padding:4px 10px; gap:4px; }
+.catan-app[data-online="true"] .phase-actions button { font-size:11px; padding:5px; }
+.catan-app[data-online="true"] .bottom-controls { flex-shrink:0; grid-template-columns:minmax(180px,.85fr) minmax(0,1.4fr); gap:14px; padding:8px 12px; }
+.catan-app[data-online="true"] .bottom-hand { min-width:0; display:grid; grid-template-columns:minmax(250px,1fr) minmax(92px,150px); grid-template-rows:auto auto; column-gap:10px; align-items:end; }
+.catan-app[data-online="true"] .bottom-hand .card-heading { grid-column:1 / -1; }
+.catan-app[data-online="true"] #resources { grid-column:1; grid-row:2; }
+.catan-app[data-online="true"] #dev-cards { grid-column:1 / -1; grid-row:3; }
+.catan-app[data-online="true"] #development-hand { grid-column:2; grid-row:2; min-width:0; align-self:end; }
+.catan-app[data-online="true"] .bottom-controls .card-heading { margin-bottom:4px; }
+.catan-app[data-online="true"] .bottom-controls h2 { font-size:12px; }
+.catan-app[data-online="true"] .bottom-controls .resource-grid { max-width:310px; }
+.catan-app[data-online="true"] .bottom-controls .resource-card-image { height:58px; width:100%; aspect-ratio:auto; }
+.catan-app[data-online="true"] .bottom-controls .resource { padding-bottom:2px; }
+.catan-app[data-online="true"] .bottom-controls .dev-card-count,.catan-app[data-online="true"] .bottom-controls .build-hint { display:none; }
+.catan-app[data-online="true"] .action-tray { grid-template-columns:repeat(6,minmax(0,1fr)); }
+.catan-app[data-online="true"] .action-tile { height:76px; }
+.catan-app[data-online="true"] .action-tile img { height:43px; }
+.catan-app[data-online="true"] #development-hand { display:flex; gap:4px; overflow:auto; max-height:36px; }
+.catan-app[data-online="true"] #development-hand button { flex-shrink:0; padding:4px; font-size:11px; }
+.catan-app[data-online="true"] .catan-sidebar { min-height:0; display:flex; flex-direction:column; gap:6px; }
+.catan-app[data-online="true"].base-six-mode .catan-sidebar { overflow-y:auto; scrollbar-width:thin; }
+.catan-app[data-online="true"] .sidebar-card { padding:8px 10px; border-radius:9px; min-width:0; }
+.catan-app[data-online="true"] .card-heading { margin-bottom:5px; }
+.catan-app[data-online="true"] .card-heading h2 { font-size:12px; }
+.catan-app[data-online="true"] #online-help { display:none; }
+.catan-app:not(.waiting-room) #room-members { display:none; }
+.catan-app[data-online="true"] .room-seating .room-form { margin:4px 0; }
+.catan-app[data-online="true"] #test-seat-options { font-size:11px; margin-bottom:5px; }
+.catan-app[data-online="true"] #test-seat-options button { padding:5px 8px; }
+.catan-app[data-online="true"] #room-management[open] { position:absolute; z-index:30; right:12px; top:100px; width:280px; padding:14px; background:#211b28; border:1px solid #665469; border-radius:10px; box-shadow:0 10px 40px #000a; }
+.catan-app[data-online="true"] .room-chat-panel { display:flex; flex-direction:column; flex:1; min-height:95px; }
+.catan-app[data-online="true"] #room-chat { flex:1; min-height:20px; height:auto; padding:5px 8px; font-size:11px; }
+.catan-app[data-online="true"] #chat-form { margin:5px 0; }
+.catan-app[data-online="true"] #chat-form input,.catan-app[data-online="true"] #chat-form button { padding:6px; font-size:11px; }
+.catan-app[data-online="true"] .bank-card { flex-shrink:0; }
+.catan-app[data-online="true"] .bank-card .card-heading { display:none; }
+.catan-app[data-online="true"] .card-stat img { height:40px; }
+.catan-app[data-online="true"] .card-stat>span { font-size:11px; }
+.catan-app[data-online="true"] .game-players { flex-shrink:0; }
+.catan-app[data-online="true"] .game-players>.card-heading { display:none; }
+.catan-app[data-online="true"] .players-list { gap:4px; }
+.catan-app[data-online="true"] .player-row { padding:4px 6px; gap:6px; min-height:48px; }
+.catan-app[data-online="true"] .seat-identity { width:clamp(130px,38%,190px); display:flex; flex-direction:row-reverse; align-items:center; gap:5px; }
+.catan-app[data-online="true"] .seat-identity .player-name { min-width:0; flex:1; font-size:11px; max-height:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
+.catan-app[data-online="true"] .seat-avatar { width:32px; height:39px; margin:0; flex-shrink:0; }
+.catan-app[data-online="true"] .seat-frame { width:32px; height:32px; }
+.catan-app[data-online="true"] .seat-person { width:18px; height:21px; left:7px; top:4px; }
+.catan-app[data-online="true"] .seat-ribbon { width:32px; height:16px; }
+.catan-app[data-online="true"] .seat-avatar strong { font-size:9px; white-space:nowrap; }
+.catan-app[data-online="true"] .seat-stats { gap:4px; }
+.catan-app[data-online="true"] .award-stat img { height:22px; }
+.catan-app[data-online="true"] .award-stat span { font-size:11px; }
+.catan-app[data-online="true"] #trade-panel { display:none; position:fixed; z-index:40; right:22px; top:70px; width:300px; max-width:calc(100vw - 40px); max-height:calc(100dvh - 100px); overflow:auto; box-sizing:border-box; background:#211b28; box-shadow:0 16px 65px #000b; border:1px solid #735c70; }
+.catan-app[data-online="true"].trading #trade-panel { display:block; }
+#close-trade { float:right; padding:5px; font-size:11px; margin-bottom:8px; }
+#toggle-sidebar,#close-sidebar { display:none; }
+.card-receipt { position:fixed; z-index:60; left:50%; bottom:145px; transform:translateX(-50%); display:flex; align-items:center; gap:7px; background:#19171fee; border:1px solid #d9b36c; color:#ffe7b7; padding:7px 10px; border-radius:9px; pointer-events:none; opacity:0; font-size:13px; max-width:80vw; }
+.card-receipt.visible { opacity:1; }
+.receipt-resource { position:relative; display:inline-flex; flex:none; }
+.receipt-resource img { display:block; width:27px; height:39px; object-fit:contain; }
+.receipt-resource b { position:absolute; right:-4px; top:-3px; min-width:15px; padding:1px 2px; border-radius:5px; background:#285ea8; color:#fff; font-size:11px; text-align:center; }
+.received-card { position:fixed; top:0; left:0; width:36px; height:54px; object-fit:contain; z-index:55; pointer-events:none; filter:drop-shadow(0 3px 4px #0008); }
+.catan-app[data-online="true"] #development-hand { display:flex; gap:3px; overflow-x:auto; overflow-y:hidden; max-height:74px; padding:2px 0; }
+.catan-app[data-online="true"] #development-hand .development-card { position:relative; flex:0 0 40px; width:40px; padding:0; border:0; background:transparent; color:#fff; }
+.catan-app[data-online="true"] .development-card img { display:block; width:40px; height:58px; object-fit:contain; filter:drop-shadow(0 2px 2px #0008); }
+.catan-app[data-online="true"] .development-card span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:7px; margin-top:1px; }
+.catan-app[data-online="true"] .development-card b { position:absolute; top:2px; right:0; padding:2px 4px; border-radius:5px; background:#d43b3b; color:#fff; font-size:8px; }
+.catan-app[data-online="true"] .development-card:disabled { opacity:.72; }
+.catan-app[data-online="true"] .development-card:not(:disabled):hover img { transform:translateY(-3px); filter:drop-shadow(0 6px 4px #0009) brightness(1.08); }
+@media(max-width:900px){
+ .catan-app[data-online="true"] .catan-layout { grid-template-columns:minmax(0,1fr) 250px; gap:6px; }
+ .catan-app[data-online="true"] .bottom-controls { grid-template-columns:1fr; gap:4px; }
+ .catan-app[data-online="true"] .bottom-hand { grid-template-columns:minmax(0,1fr) 110px; }
+ .catan-app[data-online="true"] .bottom-controls .resource-grid { max-width:none; }
+ .catan-app[data-online="true"] .bottom-controls .resource-card-image { height:40px; }
+ .catan-app[data-online="true"] .action-tile { height:53px; padding:3px; }
+ .catan-app[data-online="true"] .action-tile img { height:29px; }
+ .catan-app[data-online="true"] .bottom-controls .resource-label { display:none; }
+}
+@media(max-width:650px){
+ .catan-app[data-online="true"]:has(.catan-layout:not([hidden])) { padding:4px; grid-template-rows:30px 22px minmax(0,1fr); gap:2px; }
+ .catan-app[data-online="true"] .catan-layout { grid-template-columns:minmax(0,1fr); }
+ .catan-app[data-online="true"] .room-status { display:none; }
+ .catan-app[data-online="true"] #toggle-sidebar { display:block; padding:5px 8px; font-size:10px; }
+ .catan-app[data-online="true"] .catan-sidebar { display:none; position:fixed; inset:62px 4px 4px; padding:8px; z-index:35; background:#19171f; border:1px solid #665469; border-radius:10px; }
+ .catan-app[data-online="true"].sidebar-open .catan-sidebar { display:flex; }
+ .catan-app[data-online="true"] #close-sidebar { display:block; padding:7px; background:#372637; color:white; border:0; }
+ .catan-app[data-online="true"] .board-toolbar { display:flex; padding:5px 8px; }
+ .catan-app[data-online="true"] #turn-label { font-size:11px; }
+ .catan-app[data-online="true"] .toolbar-actions { gap:3px; }
+ .catan-app[data-online="true"] .bottom-controls { padding:6px 8px; }
+ .catan-app[data-online="true"] .bottom-hand { grid-template-columns:minmax(0,1fr); }
+ .catan-app[data-online="true"] #development-hand { grid-column:1; grid-row:4; max-height:70px; }
+ .catan-app[data-online="true"] .action-tile span { font-size:9px; }
+ .catan-app[data-online="true"].trading .catan-sidebar { display:flex; }
+ .catan-app[data-online="true"] .placement-target { width:19px; height:19px; }
+ .catan-app[data-online="true"] #trade-panel { right:8px; top:85px; }
+}
+@media(max-height:650px) and (min-width:651px){
+ .catan-app[data-online="true"] .bottom-controls .resource-card-image { height:40px; }
+ .catan-app[data-online="true"] .action-tile { height:57px; }
+ .catan-app[data-online="true"] .action-tile img { height:30px; }
+ .catan-app[data-online="true"] .player-row { min-height:34px; }
+ .catan-app[data-online="true"] .card-stat img { height:30px; }
+ .catan-app[data-online="true"] .seat-avatar { display:none; }
+}
+
+.catan-app[data-online="true"] #development-options:not([hidden]) { position:fixed; z-index:45; bottom:130px; left:12px; max-width:calc(100vw - 24px); padding:14px; border:1px solid #735c70; border-radius:10px; background:#211b28; color:#f1f4f6; box-shadow:0 12px 40px #000a; }
+.catan-app[data-online="true"] .room-chat-panel details[open] { position:absolute; z-index:30; right:20px; top:150px; width:280px; max-width:calc(100vw - 40px); padding:12px; background:#211b28; border:1px solid #735c70; border-radius:10px; }
+.catan-app[data-online="true"] #trade-panel.negotiated-trading { width:430px; }
+#trade-panel.negotiated-trading>:not(#trade-hub):not(#close-trade) { display:none; }
+#trade-hub h2 { font-size:16px; margin:0 0 12px; }
+.trade-modes,.trade-submit,.trade-response-actions { display:flex; gap:6px; margin:8px 0; flex-wrap:wrap; }
+#trade-hub button { padding:7px 10px; border:1px solid #ffffff25; border-radius:6px; color:#fff; background:#ffffff12; font-size:12px; }
+#trade-hub .trade-modes button[aria-pressed="true"],#trade-hub #submit-negotiated-trade { background:#bd353f; }
+.trade-context { color:#b9b2bf; font-size:11px; margin:6px 0; }
+.trade-selection>strong { display:block; font-size:12px; margin:8px 0 4px; }
+.trade-card-row { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:7px; }
+.trade-pick { position:relative; text-align:center; min-width:0; }
+#trade-hub .trade-pick button[data-pick] { display:block; padding:3px; width:100%; position:relative; background:#ffffff08; }
+.trade-pick img { height:63px; max-width:100%; object-fit:contain; display:block; margin:auto; }
+.trade-pick b { position:absolute; right:0; top:0; background:#f2dfac; color:#302c24; border-radius:20px; padding:2px 6px; }
+#trade-hub .trade-pick button[data-minus] { padding:0 10px; font-size:16px; margin-top:3px; }
+.trade-pick small { margin-left:3px; font-size:11px; color:#ffe0a6; }
+.negotiated-offer { margin-top:12px; padding:9px; border:1px solid #695367; border-radius:8px; background:#ffffff05; }
+.negotiated-offer>strong { font-size:12px; }
+.trade-terms { display:flex; align-items:center; gap:5px; margin:7px 0; }
+.trade-terms>span:first-child { font-size:11px; min-width:65px; max-width:110px; }
+.trade-term { position:relative; display:inline-block; }
+.trade-term img { width:25px; height:36px; display:block; }
+.trade-term b { position:absolute; right:-3px; top:-3px; background:#f2dfac; color:#222; border-radius:10px; padding:0 3px; font-size:11px; }
+.trade-wildcard { border:1px dashed #c6a970; border-radius:5px; padding:8px; color:#ffe0a6; font-size:12px; }
+.trade-response { display:flex; align-items:center; justify-content:space-between; gap:5px; border-top:1px solid #ffffff0b; padding:4px 0; font-size:11px; }
+.trade-response span:first-child { flex:1; }
+.trade-preferences { margin-top:12px; font-size:11px; }
+.trade-preferences button { display:block; margin-top:5px; }
+.catan-app[data-online="true"] #resources .resource { cursor:pointer; }
+@media(max-width:650px){.trade-pick img { height:48px; } #trade-hub button { font-size:11px; padding:6px; } .catan-app[data-online="true"] #trade-panel.negotiated-trading { max-height:calc(100dvh - 110px); }}

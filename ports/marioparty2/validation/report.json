@@ -1,0 +1,1327 @@
+{
+  "summary": {
+    "PASS": 69,
+    "VISUAL_ISSUE": 3
+  },
+  "sources": {
+    "rom_sha1": "166eda1c05670d337e2c3f15a5db528ae1e5d6e3",
+    "decomp": {
+      "repository": "https://github.com/mariopartyrd/marioparty2.git",
+      "commit": "020a95ae0021a5d6d4e39cf98628cb86faba129a"
+    },
+    "recompiler": {
+      "repository": "https://github.com/N64Recomp/N64Recomp.git",
+      "commit": "ffb39cdad1da5de07eaaa48bd1db4a89a7986771"
+    },
+    "renderer": {
+      "repository": "https://github.com/sm64pc/sm64ex.git",
+      "commit": "d7ca2c04364a6dd0dac58b47151e04e26887e6f0"
+    },
+    "splat": {
+      "repository": "https://github.com/Rainchus/splat.git",
+      "commit": "78c21c6d29f82ceb45301f1d501cb665a71a6b12"
+    }
+  },
+  "runtime_sha256": "5522aa3727ee5b43ec5cfc4782385d50f83d10919788e2dec2172e90dc50e78d",
+  "rows": [
+    {
+      "case": {
+        "key": "mg-01-BowserSlots",
+        "kind": "minigame",
+        "id": 1,
+        "type": 4,
+        "section": 3,
+        "ticks": 30000,
+        "title": "Bowser Slots"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16064,
+      "error": null,
+      "entered": 14559,
+      "exited": 15883,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-02-RollOutTheBarrels",
+        "kind": "minigame",
+        "id": 2,
+        "type": 4,
+        "section": 4,
+        "ticks": 30000,
+        "title": "Roll Out The Barrels"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16568,
+      "error": null,
+      "entered": 14559,
+      "exited": 16387,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-03-CoffinCongestion",
+        "kind": "minigame",
+        "id": 3,
+        "type": 4,
+        "section": 5,
+        "ticks": 30000,
+        "title": "Coffin Congestion"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16502,
+      "error": null,
+      "entered": 14559,
+      "exited": 16321,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-04-HammerSlammer",
+        "kind": "minigame",
+        "id": 4,
+        "type": 4,
+        "section": 6,
+        "ticks": 30000,
+        "title": "Hammer Slammer"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 15852,
+      "error": null,
+      "entered": 14545,
+      "exited": 15671,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-05-GiveMeABrake",
+        "kind": "minigame",
+        "id": 5,
+        "type": 4,
+        "section": 7,
+        "ticks": 30000,
+        "title": "Give Me ABrake"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 15858,
+      "error": null,
+      "entered": 14545,
+      "exited": 15677,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-06-MalletGoRound",
+        "kind": "minigame",
+        "id": 6,
+        "type": 4,
+        "section": 8,
+        "ticks": 30000,
+        "title": "Mallet Go Round"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16148,
+      "error": null,
+      "entered": 14559,
+      "exited": 15967,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-07-GrabBag",
+        "kind": "minigame",
+        "id": 7,
+        "type": 3,
+        "section": 9,
+        "ticks": 30000,
+        "title": "Grab Bag"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17764,
+      "error": null,
+      "entered": 14489,
+      "exited": 17583,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-08-BumperBalloonCars",
+        "kind": "minigame",
+        "id": 8,
+        "type": 3,
+        "section": 11,
+        "ticks": 30000,
+        "title": "Bumper Balloon Cars"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16660,
+      "error": null,
+      "entered": 14489,
+      "exited": 16479,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-09-RakinEmIn",
+        "kind": "minigame",
+        "id": 9,
+        "type": 3,
+        "section": 12,
+        "ticks": 30000,
+        "title": "Rakin Em In"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16858,
+      "error": null,
+      "entered": 14489,
+      "exited": 16677,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-11-DayAtTheRaces",
+        "kind": "minigame",
+        "id": 11,
+        "type": 3,
+        "section": 13,
+        "ticks": 30000,
+        "title": "Day At The Races"
+      },
+      "status": "VISUAL_ISSUE",
+      "sync": "MATCH",
+      "ticks": 17968,
+      "error": null,
+      "entered": 14489,
+      "exited": 17787,
+      "runtime_status": "PASS",
+      "note": "Runs to completion, but the race-camera capture at tick 16289 shows missing/corrupted track geometry. Runtime completion alone is not a visual pass."
+    },
+    {
+      "case": {
+        "key": "mg-12-FaceLift",
+        "kind": "minigame",
+        "id": 12,
+        "type": 3,
+        "section": 35,
+        "ticks": 30000,
+        "title": "Face Lift"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17384,
+      "error": null,
+      "entered": 14489,
+      "exited": 17203,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-13-CrazyCutters",
+        "kind": "minigame",
+        "id": 13,
+        "type": 3,
+        "section": 37,
+        "ticks": 30000,
+        "title": "Crazy Cutters"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16980,
+      "error": null,
+      "entered": 14489,
+      "exited": 16799,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-14-HotBobOmb",
+        "kind": "minigame",
+        "id": 14,
+        "type": 3,
+        "section": 15,
+        "ticks": 30000,
+        "title": "Hot Bob Omb"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 18084,
+      "error": null,
+      "entered": 14489,
+      "exited": 17903,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-15-BowlOver",
+        "kind": "minigame",
+        "id": 15,
+        "type": 1,
+        "section": 16,
+        "ticks": 30000,
+        "title": "Bowl Over"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 15820,
+      "error": null,
+      "entered": 14485,
+      "exited": 15639,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-16-RainbowRun",
+        "kind": "minigame",
+        "id": 16,
+        "type": 1,
+        "section": 17,
+        "ticks": 30000,
+        "title": "Rainbow Run"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 18372,
+      "error": null,
+      "entered": 14485,
+      "exited": 18191,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-17-CraneGame",
+        "kind": "minigame",
+        "id": 17,
+        "type": 1,
+        "section": 18,
+        "ticks": 30000,
+        "title": "Crane Game"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 19466,
+      "error": null,
+      "entered": 14485,
+      "exited": 19285,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-18-MoveToTheMusic",
+        "kind": "minigame",
+        "id": 18,
+        "type": 1,
+        "section": 19,
+        "ticks": 30000,
+        "title": "Move To The Music"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17264,
+      "error": null,
+      "entered": 14485,
+      "exited": 17083,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-19-BobOmbBarrage",
+        "kind": "minigame",
+        "id": 19,
+        "type": 1,
+        "section": 20,
+        "ticks": 30000,
+        "title": "Bob Omb Barrage"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16170,
+      "error": null,
+      "entered": 14485,
+      "exited": 15989,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-20-LookAway",
+        "kind": "minigame",
+        "id": 20,
+        "type": 1,
+        "section": 21,
+        "ticks": 30000,
+        "title": "Look Away"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16906,
+      "error": null,
+      "entered": 14485,
+      "exited": 16725,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-21-ShockDropOrRoll",
+        "kind": "minigame",
+        "id": 21,
+        "type": 1,
+        "section": 22,
+        "ticks": 30000,
+        "title": "Shock Drop Or Roll"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17398,
+      "error": null,
+      "entered": 14499,
+      "exited": 17217,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-22-LightsOut",
+        "kind": "minigame",
+        "id": 22,
+        "type": 1,
+        "section": 23,
+        "ticks": 30000,
+        "title": "Lights Out"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 15610,
+      "error": null,
+      "entered": 14499,
+      "exited": 15429,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-23-FiletRelay",
+        "kind": "minigame",
+        "id": 23,
+        "type": 1,
+        "section": 24,
+        "ticks": 30000,
+        "title": "Filet Relay"
+      },
+      "status": "VISUAL_ISSUE",
+      "sync": "MATCH",
+      "ticks": 16894,
+      "error": null,
+      "entered": 14485,
+      "exited": 16713,
+      "runtime_status": "PASS",
+      "note": "Completes with matching simulation state, but the split-screen gameplay captures show missing player body geometry (heads/feet render separately)."
+    },
+    {
+      "case": {
+        "key": "mg-24-Archerival",
+        "kind": "minigame",
+        "id": 24,
+        "type": 1,
+        "section": 25,
+        "ticks": 30000,
+        "title": "Archerival"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16974,
+      "error": null,
+      "entered": 14485,
+      "exited": 16793,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-26-ToadBandstand",
+        "kind": "minigame",
+        "id": 26,
+        "type": 2,
+        "section": 26,
+        "ticks": 30000,
+        "title": "Toad Bandstand"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17908,
+      "error": null,
+      "entered": 14485,
+      "exited": 17727,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-27-BobsledRun",
+        "kind": "minigame",
+        "id": 27,
+        "type": 2,
+        "section": 27,
+        "ticks": 30000,
+        "title": "Bobsled Run"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 19430,
+      "error": null,
+      "entered": 14499,
+      "exited": 19249,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-28-HandcarHavoc",
+        "kind": "minigame",
+        "id": 28,
+        "type": 2,
+        "section": 28,
+        "ticks": 30000,
+        "title": "Handcar Havoc"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17086,
+      "error": null,
+      "entered": 14485,
+      "exited": 16905,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-30-BallonBurst",
+        "kind": "minigame",
+        "id": 30,
+        "type": 2,
+        "section": 29,
+        "ticks": 30000,
+        "title": "Balloon Burst"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16176,
+      "error": null,
+      "entered": 14485,
+      "exited": 15995,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-31-SkyPilots",
+        "kind": "minigame",
+        "id": 31,
+        "type": 2,
+        "section": 30,
+        "ticks": 30000,
+        "title": "Sky Pilots"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 19174,
+      "error": null,
+      "entered": 14485,
+      "exited": 18993,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-32-SpeedHockey",
+        "kind": "minigame",
+        "id": 32,
+        "type": 2,
+        "section": 31,
+        "ticks": 30000,
+        "title": "Speed Hockey"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17370,
+      "error": null,
+      "entered": 14485,
+      "exited": 17189,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-33-CakeFactory",
+        "kind": "minigame",
+        "id": 33,
+        "type": 2,
+        "section": 32,
+        "ticks": 30000,
+        "title": "Cake Factory"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17022,
+      "error": null,
+      "entered": 14485,
+      "exited": 16841,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-35-DungeonDash",
+        "kind": "minigame",
+        "id": 35,
+        "type": 2,
+        "section": 33,
+        "ticks": 30000,
+        "title": "Dungeon Dash"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17636,
+      "error": null,
+      "entered": 14499,
+      "exited": 17455,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-36-MagnetCarta",
+        "kind": "minigame",
+        "id": 36,
+        "type": 2,
+        "section": 34,
+        "ticks": 30000,
+        "title": "Magnet Carta"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17330,
+      "error": null,
+      "entered": 14499,
+      "exited": 17149,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-37-LavaTileIsle",
+        "kind": "minigame",
+        "id": 37,
+        "type": 0,
+        "section": 10,
+        "ticks": 30000,
+        "title": "Lava Tile Isle"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16174,
+      "error": null,
+      "entered": 14499,
+      "exited": 15993,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-38-HotRopeJump",
+        "kind": "minigame",
+        "id": 38,
+        "type": 0,
+        "section": 14,
+        "ticks": 30000,
+        "title": "Hot Rope Jump"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 18326,
+      "error": null,
+      "entered": 14499,
+      "exited": 18145,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-39-ShellShocked",
+        "kind": "minigame",
+        "id": 39,
+        "type": 0,
+        "section": 36,
+        "ticks": 30000,
+        "title": "Shell Shocked"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16118,
+      "error": null,
+      "entered": 14485,
+      "exited": 15937,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-40-ToadInTheBox",
+        "kind": "minigame",
+        "id": 40,
+        "type": 0,
+        "section": 38,
+        "ticks": 30000,
+        "title": "Toad In The Box"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 18224,
+      "error": null,
+      "entered": 14485,
+      "exited": 18043,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-41-MechaMarathon",
+        "kind": "minigame",
+        "id": 41,
+        "type": 0,
+        "section": 39,
+        "ticks": 30000,
+        "title": "Mecha Marathon"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17752,
+      "error": null,
+      "entered": 14485,
+      "exited": 17571,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-42-RollCall",
+        "kind": "minigame",
+        "id": 42,
+        "type": 0,
+        "section": 40,
+        "ticks": 30000,
+        "title": "Roll Call"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17528,
+      "error": null,
+      "entered": 14485,
+      "exited": 17347,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-43-AbandonShip",
+        "kind": "minigame",
+        "id": 43,
+        "type": 0,
+        "section": 41,
+        "ticks": 30000,
+        "title": "Abandon Ship"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16478,
+      "error": null,
+      "entered": 14485,
+      "exited": 16297,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-44-PlatformPeril",
+        "kind": "minigame",
+        "id": 44,
+        "type": 0,
+        "section": 42,
+        "ticks": 30000,
+        "title": "Platform Peril"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17076,
+      "error": null,
+      "entered": 14485,
+      "exited": 16895,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-45-TotemPolePound",
+        "kind": "minigame",
+        "id": 45,
+        "type": 0,
+        "section": 43,
+        "ticks": 30000,
+        "title": "Totem Pole Pound"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16478,
+      "error": null,
+      "entered": 14485,
+      "exited": 16297,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-46-BumperBalls",
+        "kind": "minigame",
+        "id": 46,
+        "type": 0,
+        "section": 44,
+        "ticks": 30000,
+        "title": "Bumper Balls"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17554,
+      "error": null,
+      "entered": 14485,
+      "exited": 17373,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-48-BombsAway",
+        "kind": "minigame",
+        "id": 48,
+        "type": 0,
+        "section": 45,
+        "ticks": 30000,
+        "title": "Bombs Away"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17294,
+      "error": null,
+      "entered": 14485,
+      "exited": 17113,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-49-TipsyTourney",
+        "kind": "minigame",
+        "id": 49,
+        "type": 0,
+        "section": 46,
+        "ticks": 30000,
+        "title": "Tipsy Tourney"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16312,
+      "error": null,
+      "entered": 14485,
+      "exited": 16131,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-50-HoneycombHavoc",
+        "kind": "minigame",
+        "id": 50,
+        "type": 0,
+        "section": 47,
+        "ticks": 30000,
+        "title": "Honeycomb Havoc"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 20546,
+      "error": null,
+      "entered": 14485,
+      "exited": 20365,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-51-HexagonHeat",
+        "kind": "minigame",
+        "id": 51,
+        "type": 0,
+        "section": 48,
+        "ticks": 30000,
+        "title": "Hexagon Heat"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16538,
+      "error": null,
+      "entered": 14499,
+      "exited": 16357,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-52-SkateboardScamper",
+        "kind": "minigame",
+        "id": 52,
+        "type": 0,
+        "section": 49,
+        "ticks": 30000,
+        "title": "Skateboard Scamper"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17028,
+      "error": null,
+      "entered": 14499,
+      "exited": 16847,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-53-SlotCarDerby",
+        "kind": "minigame",
+        "id": 53,
+        "type": 0,
+        "section": 50,
+        "ticks": 30000,
+        "title": "Slot Car Derby"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17600,
+      "error": null,
+      "entered": 14485,
+      "exited": 17419,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-54-ShyGuySays",
+        "kind": "minigame",
+        "id": 54,
+        "type": 0,
+        "section": 51,
+        "ticks": 30000,
+        "title": "Shy Guy Says"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16360,
+      "error": null,
+      "entered": 14485,
+      "exited": 16179,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-55-SneakNSnore",
+        "kind": "minigame",
+        "id": 55,
+        "type": 0,
+        "section": 52,
+        "ticks": 30000,
+        "title": "Sneak NSnore"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16446,
+      "error": null,
+      "entered": 14499,
+      "exited": 16265,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-57-DriversEd",
+        "kind": "minigame",
+        "id": 57,
+        "type": 5,
+        "section": 53,
+        "ticks": 30000,
+        "title": "Drivers Ed"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 19052,
+      "error": null,
+      "entered": 14485,
+      "exited": 18871,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-58-ChanceTime",
+        "kind": "minigame",
+        "id": 58,
+        "type": 6,
+        "section": 54,
+        "ticks": 30000,
+        "title": "Chance Time"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16134,
+      "error": null,
+      "entered": 14123,
+      "exited": 15953,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-59-DesertDuel",
+        "kind": "minigame",
+        "id": 59,
+        "type": 7,
+        "section": 65,
+        "ticks": 30000,
+        "title": "Western Land duel"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16228,
+      "error": null,
+      "entered": 14131,
+      "exited": 16047,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-60-PirateDuel",
+        "kind": "minigame",
+        "id": 60,
+        "type": 7,
+        "section": 68,
+        "ticks": 30000,
+        "title": "Pirate Land duel"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16030,
+      "error": null,
+      "entered": 14131,
+      "exited": 15849,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-61-name",
+        "kind": "minigame",
+        "id": 61,
+        "type": 7,
+        "section": 70,
+        "ticks": 30000,
+        "title": "Horror Land duel"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17576,
+      "error": null,
+      "entered": 14131,
+      "exited": 17395,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-62-name",
+        "kind": "minigame",
+        "id": 62,
+        "type": 7,
+        "section": 72,
+        "ticks": 30000,
+        "title": "Space Land duel"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16190,
+      "error": null,
+      "entered": 14131,
+      "exited": 16009,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-63-name",
+        "kind": "minigame",
+        "id": 63,
+        "type": 7,
+        "section": 74,
+        "ticks": 30000,
+        "title": "Mystery Land duel"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16456,
+      "error": null,
+      "entered": 14131,
+      "exited": 16275,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-64-name",
+        "kind": "minigame",
+        "id": 64,
+        "type": 7,
+        "section": 76,
+        "ticks": 30000,
+        "title": "Bowser Land duel"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16168,
+      "error": null,
+      "entered": 14131,
+      "exited": 15987,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-65-BowsersBigBlast",
+        "kind": "minigame",
+        "id": 65,
+        "type": 3,
+        "section": 59,
+        "ticks": 30000,
+        "title": "Bowsers Big Blast"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 19256,
+      "error": null,
+      "entered": 14503,
+      "exited": 19075,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-66-LooneyLumberjacks",
+        "kind": "minigame",
+        "id": 66,
+        "type": 2,
+        "section": 55,
+        "ticks": 30000,
+        "title": "Looney Lumberjacks"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16156,
+      "error": null,
+      "entered": 14485,
+      "exited": 15975,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-67-TorpedoTargets",
+        "kind": "minigame",
+        "id": 67,
+        "type": 2,
+        "section": 60,
+        "ticks": 30000,
+        "title": "Torpedo Targets"
+      },
+      "status": "VISUAL_ISSUE",
+      "sync": "MATCH",
+      "ticks": 18988,
+      "error": null,
+      "entered": 14485,
+      "exited": 18807,
+      "runtime_status": "PASS",
+      "note": "Completes and matches replay state, but both split-screen views show missing submarine hull geometry; crew/windows and propellers render as disconnected pieces."
+    },
+    {
+      "case": {
+        "key": "mg-68-DestructionDuet",
+        "kind": "minigame",
+        "id": 68,
+        "type": 2,
+        "section": 61,
+        "ticks": 30000,
+        "title": "Destruction Duet"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17014,
+      "error": null,
+      "entered": 14499,
+      "exited": 16833,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-69-DizzyDancing",
+        "kind": "minigame",
+        "id": 69,
+        "type": 0,
+        "section": 56,
+        "ticks": 30000,
+        "title": "Dizzy Dancing"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16112,
+      "error": null,
+      "entered": 14485,
+      "exited": 15931,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-70-TileDriver",
+        "kind": "minigame",
+        "id": 70,
+        "type": 0,
+        "section": 57,
+        "ticks": 30000,
+        "title": "Tile Driver"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 16620,
+      "error": null,
+      "entered": 14485,
+      "exited": 16439,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-71-QuicksandCache",
+        "kind": "minigame",
+        "id": 71,
+        "type": 1,
+        "section": 58,
+        "ticks": 30000,
+        "title": "Quicksand Cache"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17450,
+      "error": null,
+      "entered": 14485,
+      "exited": 17269,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "mg-72-DeepSeaSalvage",
+        "kind": "minigame",
+        "id": 72,
+        "type": 0,
+        "section": 62,
+        "ticks": 30000,
+        "title": "Deep Sea Salvage"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 17178,
+      "error": null,
+      "entered": 14485,
+      "exited": 16997,
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "board-WesternLand",
+        "kind": "board",
+        "id": 0,
+        "section": 64,
+        "ticks": 40000,
+        "title": "Western Land"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 13333,
+      "error": null,
+      "entered": 5285,
+      "exited": 5406,
+      "normal_menu": "PASS",
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "board-PirateLand",
+        "kind": "board",
+        "id": 1,
+        "section": 67,
+        "ticks": 40000,
+        "title": "Pirate Land"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 14053,
+      "error": null,
+      "entered": 5285,
+      "exited": 5406,
+      "normal_menu": "NOT_RUN",
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "board-HorrorLand",
+        "kind": "board",
+        "id": 2,
+        "section": 69,
+        "ticks": 40000,
+        "title": "Horror Land"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 13719,
+      "error": null,
+      "entered": 5285,
+      "exited": 5406,
+      "normal_menu": "NOT_RUN",
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "board-SpaceLand",
+        "kind": "board",
+        "id": 3,
+        "section": 71,
+        "ticks": 40000,
+        "title": "Space Land"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 11781,
+      "error": null,
+      "entered": 5285,
+      "exited": 5406,
+      "normal_menu": "NOT_RUN",
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "board-MysteryLand",
+        "kind": "board",
+        "id": 4,
+        "section": 73,
+        "ticks": 40000,
+        "title": "Mystery Land"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 12349,
+      "error": null,
+      "entered": 5285,
+      "exited": 5406,
+      "normal_menu": "NOT_RUN",
+      "runtime_status": "PASS"
+    },
+    {
+      "case": {
+        "key": "board-BowserLand",
+        "kind": "board",
+        "id": 5,
+        "section": 75,
+        "ticks": 40000,
+        "title": "Bowser Land"
+      },
+      "status": "PASS",
+      "sync": "MATCH",
+      "ticks": 13961,
+      "error": null,
+      "entered": 5285,
+      "exited": 5406,
+      "normal_menu": "NOT_RUN",
+      "runtime_status": "PASS"
+    }
+  ]
+}

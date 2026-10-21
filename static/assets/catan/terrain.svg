@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="210" viewBox="0 0 240 210">
+  <defs>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a7c16f"/><stop offset=".55" stop-color="#688f51"/><stop offset="1" stop-color="#416b48"/></linearGradient>
+    <linearGradient id="brick" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e29a69"/><stop offset=".55" stop-color="#bd6546"/><stop offset="1" stop-color="#8a4938"/></linearGradient>
+    <linearGradient id="wheat" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f1d87d"/><stop offset="1" stop-color="#bd8c39"/></linearGradient>
+    <linearGradient id="sheep" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c5e1ae"/><stop offset=".6" stop-color="#82b28a"/><stop offset="1" stop-color="#5f9379"/></linearGradient>
+    <linearGradient id="ore" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a2b0ad"/><stop offset=".55" stop-color="#71838a"/><stop offset="1" stop-color="#4b626d"/></linearGradient>
+    <linearGradient id="desert" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e5c98e"/><stop offset=".55" stop-color="#c19a60"/><stop offset="1" stop-color="#a9794e"/></linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="1.4"/></filter>
+    <filter id="shadow"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#263c35" flood-opacity=".34"/></filter>
+  </defs>
+  <symbol id="wood" viewBox="0 0 240 210">
+    <rect width="240" height="210" fill="url(#wood)"/>
+    <path d="M0 151 Q55 128 104 151 T240 145 V210H0Z" fill="#537d4c" opacity=".7"/>
+    <g filter="url(#shadow)"><path d="M42 165 78 73 114 165Z" fill="#355f42"/><path d="m95 165 40-112 43 112Z" fill="#416f48"/><path d="m-8 174 37-93 38 93Z" fill="#628c50"/></g>
+    <g fill="#b1c77a" opacity=".55"><circle cx="58" cy="87" r="15"/><circle cx="126" cy="61" r="18"/><circle cx="169" cy="99" r="15"/><circle cx="208" cy="74" r="13"/></g>
+    <path d="M17 181 Q84 150 140 180T250 166" fill="none" stroke="#d5dc98" stroke-width="3" opacity=".34"/>
+  </symbol>
+  <symbol id="brick" viewBox="0 0 240 210">
+    <rect width="240" height="210" fill="url(#brick)"/>
+    <path d="M0 158 Q38 113 81 146T157 136 240 150V210H0Z" fill="#aa563e" opacity=".75"/>
+    <path d="M16 165 73 72l45 93Z" fill="#8e4e3c" opacity=".8"/><path d="m93 169 41-87 57 87Z" fill="#a25b40" opacity=".9"/>
+    <g stroke="#f0bd86" stroke-width="5" opacity=".55"><path d="M11 178 91 121l44 42 91-53"/><path d="m33 113 47 28 54-68 55 55"/></g>
+    <g fill="#773e36" opacity=".46"><circle cx="43" cy="61" r="7"/><circle cx="172" cy="51" r="10"/><circle cx="211" cy="119" r="6"/></g>
+  </symbol>
+  <symbol id="wheat" viewBox="0 0 240 210">
+    <rect width="240" height="210" fill="url(#wheat)"/>
+    <path d="M0 150 Q55 129 105 154T240 143V210H0Z" fill="#d2a63f" opacity=".62"/>
+    <g stroke="#8d6a2e" stroke-width="4" opacity=".7"><path d="M20 201 56 72M49 210 78 53M85 210 103 81M121 210 145 45M158 210 182 70M199 210 219 60"/></g>
+    <g fill="#f8e79b" opacity=".92"><ellipse cx="55" cy="68" rx="8" ry="22" transform="rotate(21 55 68)"/><ellipse cx="77" cy="50" rx="8" ry="23" transform="rotate(16 77 50)"/><ellipse cx="144" cy="42" rx="8" ry="23" transform="rotate(17 144 42)"/><ellipse cx="181" cy="67" rx="8" ry="22" transform="rotate(20 181 67)"/></g>
+    <path d="M-10 179 Q57 140 120 174T252 158" fill="none" stroke="#f8e5a1" stroke-width="5" opacity=".5"/>
+  </symbol>
+  <symbol id="sheep" viewBox="0 0 240 210">
+    <rect width="240" height="210" fill="url(#sheep)"/>
+    <path d="M0 156 Q50 125 102 151T240 142V210H0Z" fill="#5f9477" opacity=".68"/>
+    <g fill="#e6efcd" stroke="#b0cda3" stroke-width="4"><ellipse cx="70" cy="123" rx="32" ry="23"/><ellipse cx="101" cy="111" rx="33" ry="25"/><ellipse cx="158" cy="148" rx="38" ry="26"/></g>
+    <g fill="#547b68"><circle cx="45" cy="127" r="7"/><circle cx="79" cy="108" r="7"/><circle cx="145" cy="146" r="7"/></g>
+    <path d="M22 178 Q80 150 135 176T245 161" fill="none" stroke="#c8dda9" stroke-width="4" opacity=".6"/>
+  </symbol>
+  <symbol id="ore" viewBox="0 0 240 210">
+    <rect width="240" height="210" fill="url(#ore)"/>
+    <path d="M0 170 43 104l38 30 44-73 41 40 36-58 48 78v89H0Z" fill="#536a75" opacity=".92"/>
+    <g fill="#c2cebf" opacity=".65"><path d="m31 157 34-45 27 45Z"/><path d="m111 150 39-73 38 73Z"/><path d="m179 171 24-42 32 42Z"/></g>
+    <g fill="#354d5a" opacity=".7"><circle cx="49" cy="57" r="8"/><circle cx="191" cy="63" r="11"/><circle cx="105" cy="41" r="6"/></g>
+  </symbol>
+  <symbol id="desert" viewBox="0 0 240 210">
+    <rect width="240" height="210" fill="url(#desert)"/>
+    <path d="M0 151 Q61 99 118 146T240 132V210H0Z" fill="#ad7c50" opacity=".62"/>
+    <path d="M-10 114 Q61 73 126 110T250 91M-18 164Q65 126 138 164T256 145" fill="none" stroke="#f1d19a" stroke-width="6" opacity=".5"/>
+    <g fill="#886246" opacity=".45"><circle cx="68" cy="70" r="7"/><circle cx="167" cy="112" r="6"/><path d="m188 93 8-35 8 35z"/></g>
+  </symbol>
+</svg>

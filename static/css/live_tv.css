@@ -266,7 +266,7 @@ video {
 
 .video-info-bar {
     flex-shrink: 0;
-    margin-top: 10px;
+    margin-top: 0;
     display: flex;
     justify-content: center;
 }
@@ -274,15 +274,117 @@ video {
 
 .now-playing-bar {
     display: inline-flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
     align-items: center;
-    gap: 12px;
+    gap: 6px 16px;
     padding: 8px 14px;
     border-radius: 14px;
     background: rgba(20, 20, 23, 0.72);
     border: 1px solid rgba(255,255,255,0.10);
     backdrop-filter: blur(6px);
     color: var(--text-muted);
-    font-size: 0.95rem;
+    font-size: 0.82rem;
+}
+
+.live-status-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.live-sync-times {
+    order: 2;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    width: 100%;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+}
+.live-sync-times > span { white-space: nowrap; }
+#live-sync-difference {
+    flex: 0 0 26ch;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+#live-favorite-toggle, #live-end-stream {
+    font: inherit;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 5px 9px;
+    cursor: pointer;
+}
+#live-favorite-toggle[aria-pressed="true"] { color: var(--accent-primary); }
+#live-favorite-toggle:disabled { opacity: 0.5; cursor: default; }
+#live-favorite-toggle:focus-visible, #live-end-stream:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+#live-favorite-feedback:empty { display: none; }
+
+#live-player-shell:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+}
+
+#live-player-shell .plex-controls-row { flex-wrap: nowrap; }
+#live-player-shell .media-settings-cog {
+    position: static;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+}
+#live-player-shell .media-settings-panel {
+    bottom: 64px;
+    right: 14px;
+    box-sizing: border-box;
+    max-width: calc(100% - 28px);
+    max-height: calc(100% - 72px);
+    overflow-y: auto;
+}
+#live-favorite-feedback { order: 3; width: 100%; text-align: center; }
+
+.playback-status-row, .channel-details-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.playback-status-row {
+    width: 100%;
+    order: 2;
+    font-size: 0.78rem;
+}
+.channel-details-row {
+    flex-wrap: wrap;
+    flex: 1 1 250px;
+    justify-content: flex-start;
+}
+.playback-status-row .status-dot-red { flex-shrink: 0; }
+#current-status-text {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+    text-align: center;
+    max-height: 100%;
+    overflow-y: auto;
 }
 
 .now-playing-logo{
@@ -670,3 +772,31 @@ video {
         font-size: 0.75rem;
     }
 }
+
+@media (max-width: 480px) {
+    #live-player-shell .media-settings-cog { flex-basis: 34px; width: 34px; height: 34px; }
+    #live-player-shell .plex-volume { min-width: 0; }
+    .now-playing-bar { gap: 4px 8px; }
+    .channel-details-row { justify-content: center; }
+    .live-status-actions { width: 100%; }
+}
+
+/* Touch browsers can retain :hover and :focus-within after a tap.
+   For touch interaction, the existing three-second timer owns visibility.
+   Keyboard focus and desktop hover retain their existing behavior. */
+#live-player-shell[data-controls-input="touch"]:not(.controls-visible) .plex-player-controls {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+}
+/* Keep shared stream recovery directly beneath favorites. */
+.live-status-buttons { display: inline-grid; gap: 4px; flex: 0 0 auto; }
+#live-end-stream { background: rgba(171,101,101,.12); border-color: rgba(171,101,101,.45); }
+#live-end-stream:disabled { opacity: .5; cursor: wait; }
+.ch-logo[data-logo-background="dark"], .fav-icon[data-logo-background="dark"], .now-playing-logo[data-logo-background="dark"] { background: #27313b; }
+.ch-logo[data-logo-background="light"], .fav-icon[data-logo-background="light"], .now-playing-logo[data-logo-background="light"] { background: #e5e5e7; }
+.now-playing-bar #live-guide { flex: 1 1 240px; min-width: 0; max-width: 460px; text-align: left; font-size: .75rem; line-height: 1.5; padding: 0 12px; }
+#live-guide div { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+#live-guide div:first-child { color: var(--text-primary, #eee); font-weight: 600; }
+#live-guide progress { display: block; width: 100%; height: 4px; margin-top: 5px; accent-color: #b47891; }
+@media(max-width: 700px) { .now-playing-bar #live-guide { flex-basis: 100%; max-width: none; text-align: center; padding: 5px 0; } }

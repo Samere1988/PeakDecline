@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mario Party 2</title><style>
+html,body{margin:0;width:100%;height:100%;background:#080c12;color:#fff;font-family:system-ui}
+canvas{display:block;width:100%;height:100%;object-fit:contain}#status{position:absolute;left:1rem;top:1rem}
+</style></head><body data-save-key="{{ current_user.get_id() }}"><canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Mario Party 2"></canvas>
+<p id="status" role="status">Loading Mario Party 2…</p>
+<script src="{{ url_for('static', filename='js/netplay/game_audio.js') }}"></script>
+<script src="{{ url_for('static', filename='js/netplay/marioparty_runtime.js') }}"></script>
+<script src="/static/js/account_sync.js?v=1"></script>
+<script>
+(() => {
+    'use strict';
+    let started = false, failed = false;
+    window.resumePeakGameAudio = () => {
+        const audio = window.Module?.mpAudio?.context;
+        if (audio?.state === 'suspended') audio.resume().catch(() => {});
+    };
+    window.startPeakGame = () => {
+        if (started || !window.peakGameBridge) return;
+        started = true;
+        const fail = error => {
+            if (failed) return;
+            failed = true;
+            const message = error?.message || String(error);
+            document.getElementById('status').textContent = message;
+            window.peakGameBridge.failed(message);
+        };
+        window.addEventListener('error', event => fail(event.error || event.message));
+        window.addEventListener('unhandledrejection', event => fail(event.reason));
+        const settings = {
+            canvas: document.getElementById('canvas'),
+            locateFile: name => {{ build_url|tojson }} + name,
+            print: text => console.log(text), printErr: text => console.error(text),
+            onAbort: message => fail(new Error(message))
+        };
+        const script = document.createElement('script');
+        script.src = {{ build_url|tojson }} + 'marioparty2.js';
+        script.onerror = () => fail(new Error('Mario Party 2 could not be downloaded.'));
+        script.onload = async () => {
+            try {
+                const module = window.Module = await createMarioParty2(settings);
+                const response = await fetch({{ rom_url|tojson }});
+                if (!response.ok) throw new Error('Mario Party 2 game data could not be loaded.');
+                const bytes = new Uint8Array(await response.arrayBuffer());
+                if (bytes.length !== 33554432) throw new Error('Mario Party 2 game data is incomplete.');
+                module.FS.writeFile('/game.z64', bytes);
+                await PeakSaves.fs(module,{game:'marioparty2',paths:{'marioparty.eep':'/marioparty.eep'},bridge:window.peakGameBridge});
+                const runtime = startMarioPartyRuntime(module, window.peakGameBridge);
+                window.addEventListener('pagehide', () => runtime.stop(), {once: true});
+                document.getElementById('status').hidden = true;
+            } catch (error) { fail(error); }
+        };
+        document.body.append(script);
+    };
+})();
+</script></body></html>

@@ -1,0 +1,712 @@
+diff --git a/src/gpu/webgpu/SDL_gpu_webgpu.c b/src/gpu/webgpu/SDL_gpu_webgpu.c
+index a007a8b..fffdb90 100644
+--- a/src/gpu/webgpu/SDL_gpu_webgpu.c
++++ b/src/gpu/webgpu/SDL_gpu_webgpu.c
+@@ -356,15 +356,20 @@ typedef struct WebGPUBufferReference
+ {
+     WGPUBuffer buffer;
+     Uint32 count;
++    bool destroy_when_unused;
++    bool recycle_uniform_page;
+ } WebGPUBufferReference;
+ 
+ typedef struct WebGPUTextureReference
+ {
+     WGPUTexture texture;
+     Uint32 count;
++    bool destroy_when_unused;
+ } WebGPUTextureReference;
+ 
+ static void WEBGPU_ReleaseTrackedBufferReference(WebGPURenderer *renderer, WGPUBuffer buffer);
++static void WEBGPU_DestroyBufferWhenUnused(WebGPURenderer *renderer, WGPUBuffer buffer);
++static void WEBGPU_DestroyTextureWhenUnused(WebGPURenderer *renderer, WGPUTexture texture);
+ static void WEBGPU_ReleaseTrackedTextureReference(WebGPURenderer *renderer, WGPUTexture texture);
+ 
+ typedef struct WebGPUShader
+@@ -533,6 +538,9 @@ struct WebGPUTextureDownload
+     Uint64 destination_bytes_per_layer;
+     Uint32 staging_bytes_per_row;
+     Uint64 staging_size;
++    WGPUFuture map_future;
++    WebGPUBufferMapRequest map_request;
++    bool map_started;
+     bool processed;
+     bool succeeded;
+ };
+@@ -546,6 +554,9 @@ typedef struct WebGPUBufferDownload
+     Uint32 size;
+     Uint32 source_offset;
+     Uint64 staging_size;
++    WGPUFuture map_future;
++    WebGPUBufferMapRequest map_request;
++    bool map_started;
+     bool processed;
+     bool succeeded;
+ } WebGPUBufferDownload;
+@@ -768,6 +779,7 @@ struct WebGPUResourceBindGroupCacheEntry
+ {
+     WebGPUResourceBindGroupCacheKey key;
+     WGPUBindGroup bind_group;
++    Uint64 last_used;
+ };
+ 
+ typedef struct WebGPUResourceGenerationInstrumentation
+@@ -788,6 +800,12 @@ struct WebGPURenderer
+     WebGPUSubmission **pending_submissions;
+     Uint32 pending_submission_count;
+     Uint32 pending_submission_capacity;
++    /* Browser descriptor heaps need reuse across frames, not just within one. */
++    WebGPUResourceBindGroupCacheEntry persistent_bind_groups[512];
++    Uint32 persistent_bind_group_count;
++    Uint64 persistent_bind_group_clock;
++    WGPUBuffer free_uniform_pages[64];
++    Uint32 free_uniform_page_count;
+     SDL_Mutex *resource_lock;
+     WebGPUBufferReference *buffer_references;
+     Uint32 buffer_reference_count;
+@@ -1345,6 +1363,80 @@ static bool WEBGPU_ResourceBindGroupCacheKeysMatch(
+     return true;
+ }
+ 
++static void WEBGPU_ReferenceCacheKey(const WebGPUResourceBindGroupCacheKey *key, bool retain)
++{
++    if (retain) wgpuBindGroupLayoutAddRef(key->layout); else wgpuBindGroupLayoutRelease(key->layout);
++    for (Uint32 i = 0; i < key->sampled_texture_count; i++) {
++        if (key->sampled_textures[i].view) {
++            if (retain) wgpuTextureViewAddRef(key->sampled_textures[i].view); else wgpuTextureViewRelease(key->sampled_textures[i].view);
++        }
++        if (key->sampled_textures[i].sampler) {
++            if (retain) wgpuSamplerAddRef(key->sampled_textures[i].sampler); else wgpuSamplerRelease(key->sampled_textures[i].sampler);
++        }
++    }
++    for (Uint32 i = 0; i < key->storage_texture_count; i++) {
++        if (retain) wgpuTextureViewAddRef(key->storage_textures[i].view); else wgpuTextureViewRelease(key->storage_textures[i].view);
++    }
++    for (Uint32 i = 0; i < key->storage_buffer_count; i++) {
++        if (retain) wgpuBufferAddRef(key->storage_buffers[i].buffer); else wgpuBufferRelease(key->storage_buffers[i].buffer);
++    }
++}
++
++/* Cache keys own their handles, preventing address reuse from aliasing an old
++ * key. Groups are immutable; each command still owns its submitted reference. */
++static WGPUBindGroup WEBGPU_FindPersistentBindGroup(WebGPURenderer *renderer, const WebGPUResourceBindGroupCacheKey *key)
++{
++    WGPUBindGroup group = NULL;
++    SDL_LockMutex(renderer->resource_lock);
++    for (Uint32 i = 0; i < renderer->persistent_bind_group_count; i++) {
++        WebGPUResourceBindGroupCacheEntry *entry = &renderer->persistent_bind_groups[i];
++        if (WEBGPU_ResourceBindGroupCacheKeysMatch(&entry->key, key)) {
++            entry->last_used = ++renderer->persistent_bind_group_clock;
++            group = entry->bind_group;
++            wgpuBindGroupAddRef(group);
++            break;
++        }
++    }
++    SDL_UnlockMutex(renderer->resource_lock);
++    return group;
++}
++
++static void WEBGPU_InsertPersistentBindGroup(WebGPURenderer *renderer, const WebGPUResourceBindGroupCacheKey *key, WGPUBindGroup group)
++{
++    SDL_LockMutex(renderer->resource_lock);
++    Uint32 slot = renderer->persistent_bind_group_count;
++    if (slot < SDL_arraysize(renderer->persistent_bind_groups)) renderer->persistent_bind_group_count++;
++    else {
++        slot = 0;
++        for (Uint32 i = 1; i < renderer->persistent_bind_group_count; i++) {
++            if (renderer->persistent_bind_groups[i].last_used < renderer->persistent_bind_groups[slot].last_used) slot = i;
++        }
++        WEBGPU_ReferenceCacheKey(&renderer->persistent_bind_groups[slot].key, false);
++        wgpuBindGroupRelease(renderer->persistent_bind_groups[slot].bind_group);
++    }
++    WebGPUResourceBindGroupCacheEntry *entry = &renderer->persistent_bind_groups[slot];
++    entry->key = *key;
++    WEBGPU_ReferenceCacheKey(key, true);
++    entry->bind_group = group;
++    wgpuBindGroupAddRef(group);
++    entry->last_used = ++renderer->persistent_bind_group_clock;
++    SDL_UnlockMutex(renderer->resource_lock);
++}
++
++static void WEBGPU_ClearPersistentBindGroups(WebGPURenderer *renderer)
++{
++    for (Uint32 i = 0; i < renderer->persistent_bind_group_count; i++) {
++        WEBGPU_ReferenceCacheKey(&renderer->persistent_bind_groups[i].key, false);
++        wgpuBindGroupRelease(renderer->persistent_bind_groups[i].bind_group);
++    }
++    renderer->persistent_bind_group_count = 0;
++    for (Uint32 i = 0; i < renderer->free_uniform_page_count; i++) {
++        wgpuBufferDestroy(renderer->free_uniform_pages[i]);
++        wgpuBufferRelease(renderer->free_uniform_pages[i]);
++    }
++    renderer->free_uniform_page_count = 0;
++}
++
+ static WGPUBindGroup WEBGPU_FindResourceBindGroupCacheEntry(
+     WebGPUCommandBuffer *command_buffer,
+     const WebGPUResourceBindGroupCacheKey *key)
+@@ -1403,6 +1495,7 @@ static void WEBGPU_SetStringError(const char *message)
+ 
+ static void WEBGPU_FailCommandBuffer(WebGPUCommandBuffer *command_buffer, const char *message)
+ {
++    SDL_LogError(SDL_LOG_CATEGORY_GPU, "CMR2 command failure: %s", message);
+     WEBGPU_SetStringError(message);
+     if (command_buffer) {
+         command_buffer->failed = true;
+@@ -2127,6 +2220,7 @@ static void WEBGPU_FinishTextureDownload(WebGPUTextureDownload *download)
+     }
+ 
+     if (download->staging_buffer) {
++        wgpuBufferDestroy(download->staging_buffer);
+         wgpuBufferRelease(download->staging_buffer);
+         download->staging_buffer = NULL;
+     }
+@@ -2146,6 +2240,7 @@ static void WEBGPU_DestroyTextureDownload(WebGPUTextureDownload *download)
+     }
+ 
+     WEBGPU_FinishTextureDownload(download);
++    SDL_free(download->map_request.message);
+     SDL_free(download);
+ }
+ 
+@@ -2156,6 +2251,7 @@ static void WEBGPU_FinishBufferDownload(WebGPUBufferDownload *download)
+     }
+ 
+     if (download->staging_buffer) {
++        wgpuBufferDestroy(download->staging_buffer);
+         wgpuBufferRelease(download->staging_buffer);
+         download->staging_buffer = NULL;
+     }
+@@ -2175,14 +2271,16 @@ static void WEBGPU_DestroyBufferDownload(WebGPUBufferDownload *download)
+     }
+ 
+     WEBGPU_FinishBufferDownload(download);
++    SDL_free(download->map_request.message);
+     SDL_free(download);
+ }
+ 
+-static bool WEBGPU_ProcessTextureDownload(WebGPURenderer *renderer, WebGPUTextureDownload *download)
++static bool WEBGPU_ProcessTextureDownload(WebGPURenderer *renderer, WebGPUTextureDownload *download, Uint64 timeoutNS)
+ {
+     WGPUBufferMapCallbackInfo callback = WGPU_BUFFER_MAP_CALLBACK_INFO_INIT;
+-    WebGPUBufferMapRequest request;
+-    WGPUFuture future;
++    WebGPUBufferMapRequest *request = &download->map_request;
++    WGPUFutureWaitInfo wait_info = WGPU_FUTURE_WAIT_INFO_INIT;
++    WGPUWaitStatus status;
+     const Uint8 *mapped_data;
+     Uint8 *destination_data;
+ 
+@@ -2191,32 +2289,41 @@ static bool WEBGPU_ProcessTextureDownload(WebGPURenderer *renderer, WebGPUTextur
+                SDL_SetError("previous WebGPU texture download failed");
+     }
+ 
+-    SDL_zero(request);
+-    request.status = WGPUMapAsyncStatus_Error;
+-
+-    callback.mode = WGPUCallbackMode_WaitAnyOnly;
+-    callback.callback = WEBGPU_OnBufferMap;
+-    callback.userdata1 = &request;
+-    future = wgpuBufferMapAsync(download->staging_buffer, WGPUMapMode_Read, 0, (size_t)download->staging_size, callback);
+-    if (future.id == 0) {
+-        download->processed = true;
+-        WEBGPU_FinishTextureDownload(download);
+-        return SDL_SetError("wgpuBufferMapAsync failed for texture download");
++    if (!download->map_started) {
++        download->map_started = true;
++        request->status = WGPUMapAsyncStatus_Error;
++        callback.mode = WGPUCallbackMode_WaitAnyOnly;
++        callback.callback = WEBGPU_OnBufferMap;
++        callback.userdata1 = request;
++        download->map_future = wgpuBufferMapAsync(download->staging_buffer, WGPUMapMode_Read, 0, (size_t)download->staging_size, callback);
++        if (download->map_future.id == 0) {
++            download->processed = true;
++            WEBGPU_FinishTextureDownload(download);
++            return SDL_SetError("wgpuBufferMapAsync failed for texture download");
++        }
+     }
+-    if (!WEBGPU_WaitForFuture(renderer->instance, future)) {
+-        SDL_free(request.message);
++    wait_info.future = download->map_future;
++    status = wgpuInstanceWaitAny(renderer->instance, 1, &wait_info, timeoutNS);
++    if (status == WGPUWaitStatus_TimedOut) {
++        return true; // Pending; the submission's fence is not complete yet.
++    }
++    if (status != WGPUWaitStatus_Success || !wait_info.completed) {
++        SDL_free(request->message);
++        request->message = NULL;
+         download->processed = true;
+         WEBGPU_FinishTextureDownload(download);
+         return SDL_SetError("wgpuBufferMapAsync wait failed for texture download");
+     }
+-    if (request.status != WGPUMapAsyncStatus_Success) {
+-        const bool result = SDL_SetError("texture download map failed with status %d: %s", (int)request.status, request.message ? request.message : "<no message>");
+-        SDL_free(request.message);
++    if (request->status != WGPUMapAsyncStatus_Success) {
++        const bool result = SDL_SetError("texture download map failed with status %d: %s", (int)request->status, request->message ? request->message : "<no message>");
++        SDL_free(request->message);
++        request->message = NULL;
+         download->processed = true;
+         WEBGPU_FinishTextureDownload(download);
+         return result;
+     }
+-    SDL_free(request.message);
++    SDL_free(request->message);
++    request->message = NULL;
+ 
+     mapped_data = (const Uint8 *)wgpuBufferGetConstMappedRange(download->staging_buffer, 0, (size_t)download->staging_size);
+     if (!mapped_data) {
+@@ -2248,11 +2355,12 @@ static bool WEBGPU_ProcessTextureDownload(WebGPURenderer *renderer, WebGPUTextur
+     return true;
+ }
+ 
+-static bool WEBGPU_ProcessBufferDownload(WebGPURenderer *renderer, WebGPUBufferDownload *download)
++static bool WEBGPU_ProcessBufferDownload(WebGPURenderer *renderer, WebGPUBufferDownload *download, Uint64 timeoutNS)
+ {
+     WGPUBufferMapCallbackInfo callback = WGPU_BUFFER_MAP_CALLBACK_INFO_INIT;
+-    WebGPUBufferMapRequest request;
+-    WGPUFuture future;
++    WebGPUBufferMapRequest *request = &download->map_request;
++    WGPUFutureWaitInfo wait_info = WGPU_FUTURE_WAIT_INFO_INIT;
++    WGPUWaitStatus status;
+     const Uint8 *mapped_data;
+     Uint8 *destination_data;
+ 
+@@ -2261,32 +2369,41 @@ static bool WEBGPU_ProcessBufferDownload(WebGPURenderer *renderer, WebGPUBufferD
+                SDL_SetError("previous WebGPU buffer download failed");
+     }
+ 
+-    SDL_zero(request);
+-    request.status = WGPUMapAsyncStatus_Error;
+-
+-    callback.mode = WGPUCallbackMode_WaitAnyOnly;
+-    callback.callback = WEBGPU_OnBufferMap;
+-    callback.userdata1 = &request;
+-    future = wgpuBufferMapAsync(download->staging_buffer, WGPUMapMode_Read, 0, (size_t)download->staging_size, callback);
+-    if (future.id == 0) {
+-        download->processed = true;
+-        WEBGPU_FinishBufferDownload(download);
+-        return SDL_SetError("wgpuBufferMapAsync failed for buffer download");
++    if (!download->map_started) {
++        download->map_started = true;
++        request->status = WGPUMapAsyncStatus_Error;
++        callback.mode = WGPUCallbackMode_WaitAnyOnly;
++        callback.callback = WEBGPU_OnBufferMap;
++        callback.userdata1 = request;
++        download->map_future = wgpuBufferMapAsync(download->staging_buffer, WGPUMapMode_Read, 0, (size_t)download->staging_size, callback);
++        if (download->map_future.id == 0) {
++            download->processed = true;
++            WEBGPU_FinishBufferDownload(download);
++            return SDL_SetError("wgpuBufferMapAsync failed for buffer download");
++        }
+     }
+-    if (!WEBGPU_WaitForFuture(renderer->instance, future)) {
+-        SDL_free(request.message);
++    wait_info.future = download->map_future;
++    status = wgpuInstanceWaitAny(renderer->instance, 1, &wait_info, timeoutNS);
++    if (status == WGPUWaitStatus_TimedOut) {
++        return true; // Pending; the submission's fence is not complete yet.
++    }
++    if (status != WGPUWaitStatus_Success || !wait_info.completed) {
++        SDL_free(request->message);
++        request->message = NULL;
+         download->processed = true;
+         WEBGPU_FinishBufferDownload(download);
+         return SDL_SetError("wgpuBufferMapAsync wait failed for buffer download");
+     }
+-    if (request.status != WGPUMapAsyncStatus_Success) {
+-        const bool result = SDL_SetError("buffer download map failed with status %d: %s", (int)request.status, request.message ? request.message : "<no message>");
+-        SDL_free(request.message);
++    if (request->status != WGPUMapAsyncStatus_Success) {
++        const bool result = SDL_SetError("buffer download map failed with status %d: %s", (int)request->status, request->message ? request->message : "<no message>");
++        SDL_free(request->message);
++        request->message = NULL;
+         download->processed = true;
+         WEBGPU_FinishBufferDownload(download);
+         return result;
+     }
+-    SDL_free(request.message);
++    SDL_free(request->message);
++    request->message = NULL;
+ 
+     mapped_data = (const Uint8 *)wgpuBufferGetConstMappedRange(download->staging_buffer, 0, (size_t)download->staging_size);
+     if (!mapped_data) {
+@@ -2308,24 +2425,29 @@ static bool WEBGPU_ProcessBufferDownload(WebGPURenderer *renderer, WebGPUBufferD
+     return true;
+ }
+ 
+-static bool WEBGPU_ProcessSubmissionDownloads(WebGPURenderer *renderer, WebGPUSubmission *submission)
++static bool WEBGPU_ProcessSubmissionDownloads(WebGPURenderer *renderer, WebGPUSubmission *submission, Uint64 timeoutNS, bool *completed)
+ {
++    bool done = true;
++    if (completed) *completed = false;
+     for (Uint32 i = 0; i < submission->texture_download_count; i += 1) {
+-        if (!WEBGPU_ProcessTextureDownload(renderer, submission->texture_downloads[i])) {
++        if (!WEBGPU_ProcessTextureDownload(renderer, submission->texture_downloads[i], timeoutNS)) {
+             return false;
+         }
++        done = done && submission->texture_downloads[i]->processed;
+     }
+ 
+     for (Uint32 i = 0; i < submission->buffer_download_count; i += 1) {
+-        if (!WEBGPU_ProcessBufferDownload(renderer, submission->buffer_downloads[i])) {
++        if (!WEBGPU_ProcessBufferDownload(renderer, submission->buffer_downloads[i], timeoutNS)) {
+             return false;
+         }
++        done = done && submission->buffer_downloads[i]->processed;
+     }
+ 
++    if (completed) *completed = done;
+     return true;
+ }
+ 
+-static bool WEBGPU_WaitForSubmission(WebGPURenderer *renderer, WebGPUSubmission *submission, Uint64 timeoutNS, bool *completed)
++static bool WEBGPU_WaitForSubmissionInternal(WebGPURenderer *renderer, WebGPUSubmission *submission, Uint64 timeoutNS, bool *completed, bool includeDownloads)
+ {
+     WGPUFutureWaitInfo wait_info = WGPU_FUTURE_WAIT_INFO_INIT;
+     WGPUWaitStatus status;
+@@ -2355,7 +2477,7 @@ static bool WEBGPU_WaitForSubmission(WebGPURenderer *renderer, WebGPUSubmission
+         if (submission->status != WGPUQueueWorkDoneStatus_Success) {
+             return SDL_SetError("WebGPU queue work completed with status %d", (int)submission->status);
+         }
+-        return WEBGPU_ProcessSubmissionDownloads(renderer, submission);
++        return !includeDownloads || WEBGPU_ProcessSubmissionDownloads(renderer, submission, timeoutNS, completed);
+     }
+ 
+     if (submission->future.id == 0) {
+@@ -2380,12 +2502,19 @@ static bool WEBGPU_WaitForSubmission(WebGPURenderer *renderer, WebGPUSubmission
+         if (submission->status != WGPUQueueWorkDoneStatus_Success) {
+             return SDL_SetError("WebGPU queue work completed with status %d", (int)submission->status);
+         }
+-        return WEBGPU_ProcessSubmissionDownloads(renderer, submission);
++        return !includeDownloads || WEBGPU_ProcessSubmissionDownloads(renderer, submission, timeoutNS, completed);
+     }
+ 
+     return true;
+ }
+ 
++// Public fences include CPU-visible download completion. Presentation only
++// needs queue completion: a delayed mapAsync callback must not hold a frame slot.
++static bool WEBGPU_WaitForSubmission(WebGPURenderer *renderer, WebGPUSubmission *submission, Uint64 timeoutNS, bool *completed)
++{
++    return WEBGPU_WaitForSubmissionInternal(renderer, submission, timeoutNS, completed, true);
++}
++
+ static bool WEBGPU_PopErrorScope(WebGPURenderer *renderer, const char *context)
+ {
+     WGPUPopErrorScopeCallbackInfo callback = WGPU_POP_ERROR_SCOPE_CALLBACK_INFO_INIT;
+@@ -2429,18 +2558,10 @@ static WGPUBindGroup WEBGPU_CreateBindGroup(
+ {
+     WGPUBindGroup bind_group;
+ 
+-    if (!WEBGPU_CanWaitForErrorScope(renderer, context)) {
+-        return NULL;
+-    }
+-
+-    wgpuDevicePushErrorScope(renderer->device, WGPUErrorFilter_Validation);
++    /* Binding validation is reported by the device's uncaptured-error
++     * callback. Waiting for a browser callback for every draw binding
++     * serializes an entire frame across the JS event loop. */
+     bind_group = wgpuDeviceCreateBindGroup(renderer->device, bind_group_desc);
+-    if (!WEBGPU_PopErrorScope(renderer, context)) {
+-        if (bind_group) {
+-            wgpuBindGroupRelease(bind_group);
+-        }
+-        return NULL;
+-    }
+     if (!bind_group) {
+         SDL_SetError("WebGPU backend: %s failed", context);
+         return NULL;
+@@ -2725,7 +2846,7 @@ static void WEBGPU_DrainRetiredSubmissions(WebGPURenderer *renderer)
+             break;
+         }
+         if (submission_to_destroy->status == WGPUQueueWorkDoneStatus_Success) {
+-            (void)WEBGPU_ProcessSubmissionDownloads(renderer, submission_to_destroy);
++            (void)WEBGPU_ProcessSubmissionDownloads(renderer, submission_to_destroy, SDL_MAX_UINT64, NULL);
+         }
+ 
+         SDL_LockMutex(renderer->fence_lock);
+@@ -5572,7 +5693,7 @@ static bool WEBGPU_WaitForSwapchainFrameSlot(
+         return true;
+     }
+ 
+-    if (!WEBGPU_WaitForSubmission(renderer, submission, block ? SDL_MAX_UINT64 : 0, &completed)) {
++    if (!WEBGPU_WaitForSubmissionInternal(renderer, submission, block ? SDL_MAX_UINT64 : 0, &completed, false)) {
+         (void)WEBGPU_DrainDeviceLoss(renderer, context);
+         return false;
+     }
+@@ -5649,6 +5770,8 @@ static bool WEBGPU_RetainTrackedBufferReference(WebGPURenderer *renderer, WGPUBu
+ 
+     renderer->buffer_references[renderer->buffer_reference_count].buffer = buffer;
+     renderer->buffer_references[renderer->buffer_reference_count].count = 1;
++    renderer->buffer_references[renderer->buffer_reference_count].destroy_when_unused = false;
++    renderer->buffer_references[renderer->buffer_reference_count].recycle_uniform_page = false;
+     renderer->buffer_reference_count += 1;
+     SDL_UnlockMutex(renderer->resource_lock);
+     return true;
+@@ -5666,6 +5789,12 @@ static void WEBGPU_ReleaseTrackedBufferReference(WebGPURenderer *renderer, WGPUB
+             SDL_assert(renderer->buffer_references[i].count > 0);
+             renderer->buffer_references[i].count -= 1;
+             if (renderer->buffer_references[i].count == 0) {
++                if (renderer->buffer_references[i].recycle_uniform_page) {
++                    if (renderer->free_uniform_page_count < SDL_arraysize(renderer->free_uniform_pages)) {
++                        wgpuBufferAddRef(buffer);
++                        renderer->free_uniform_pages[renderer->free_uniform_page_count++] = buffer;
++                    } else wgpuBufferDestroy(buffer);
++                } else if (renderer->buffer_references[i].destroy_when_unused) wgpuBufferDestroy(buffer);
+                 renderer->buffer_references[i] = renderer->buffer_references[renderer->buffer_reference_count - 1];
+                 renderer->buffer_reference_count -= 1;
+             }
+@@ -5675,6 +5804,39 @@ static void WEBGPU_ReleaseTrackedBufferReference(WebGPURenderer *renderer, WGPUB
+     SDL_UnlockMutex(renderer->resource_lock);
+ }
+ 
++/* Releasing a browser handle does not promptly free GPU storage. Keep storage
++ * alive for recorded/submitted commands, then destroy it when their references
++ * retire. Persistent resource generations are marked only on release/cycling. */
++static void WEBGPU_DestroyBufferWhenUnused(WebGPURenderer *renderer, WGPUBuffer buffer)
++{
++    if (!buffer) return;
++    SDL_LockMutex(renderer->resource_lock);
++    for (Uint32 i = 0; i < renderer->buffer_reference_count; i++) {
++        if (renderer->buffer_references[i].buffer == buffer) {
++            renderer->buffer_references[i].destroy_when_unused = true;
++            SDL_UnlockMutex(renderer->resource_lock);
++            return;
++        }
++    }
++    SDL_UnlockMutex(renderer->resource_lock);
++    wgpuBufferDestroy(buffer);
++}
++
++static void WEBGPU_DestroyTextureWhenUnused(WebGPURenderer *renderer, WGPUTexture texture)
++{
++    if (!texture) return;
++    SDL_LockMutex(renderer->resource_lock);
++    for (Uint32 i = 0; i < renderer->texture_reference_count; i++) {
++        if (renderer->texture_references[i].texture == texture) {
++            renderer->texture_references[i].destroy_when_unused = true;
++            SDL_UnlockMutex(renderer->resource_lock);
++            return;
++        }
++    }
++    SDL_UnlockMutex(renderer->resource_lock);
++    wgpuTextureDestroy(texture);
++}
++
+ static Uint32 WEBGPU_GetTrackedBufferReferenceCount(WebGPURenderer *renderer, WGPUBuffer buffer)
+ {
+     Uint32 count = 0;
+@@ -5727,6 +5889,7 @@ static bool WEBGPU_RetainTrackedTextureReference(WebGPURenderer *renderer, WGPUT
+ 
+     renderer->texture_references[renderer->texture_reference_count].texture = texture;
+     renderer->texture_references[renderer->texture_reference_count].count = 1;
++    renderer->texture_references[renderer->texture_reference_count].destroy_when_unused = false;
+     renderer->texture_reference_count += 1;
+     SDL_UnlockMutex(renderer->resource_lock);
+     return true;
+@@ -5744,6 +5907,7 @@ static void WEBGPU_ReleaseTrackedTextureReference(WebGPURenderer *renderer, WGPU
+             SDL_assert(renderer->texture_references[i].count > 0);
+             renderer->texture_references[i].count -= 1;
+             if (renderer->texture_references[i].count == 0) {
++                if (renderer->texture_references[i].destroy_when_unused) wgpuTextureDestroy(texture);
+                 renderer->texture_references[i] = renderer->texture_references[renderer->texture_reference_count - 1];
+                 renderer->texture_reference_count -= 1;
+             }
+@@ -6156,6 +6320,16 @@ static bool WEBGPU_AcquireResourceBindGroup(
+         return true;
+     }
+ 
++    bind_group = WEBGPU_FindPersistentBindGroup(command_buffer->renderer, cache_key);
++    if (bind_group) {
++        bool tracked = WEBGPU_TrackCommandBufferBindGroup(command_buffer, bind_group);
++        if (tracked) {
++            WEBGPU_InsertResourceBindGroupCacheEntry(command_buffer, cache_key, bind_group);
++            *out_bind_group = bind_group;
++        }
++        wgpuBindGroupRelease(bind_group);
++        return tracked;
++    }
+     scoped_error = WEBGPU_CommandBufferCanWaitForErrorScope(command_buffer);
+     if (scoped_error) {
+         bind_group = WEBGPU_CreateBindGroup(command_buffer->renderer, bind_group_desc, scoped_create_context);
+@@ -6176,6 +6350,7 @@ static bool WEBGPU_AcquireResourceBindGroup(
+         return false;
+     }
+     WEBGPU_InsertResourceBindGroupCacheEntry(command_buffer, cache_key, bind_group);
++    WEBGPU_InsertPersistentBindGroup(command_buffer->renderer, cache_key, bind_group);
+ 
+     /* Return the command-buffer-tracked reference; resource cache entries are non-owning. */
+     *out_bind_group = bind_group;
+@@ -6482,6 +6657,7 @@ static bool WEBGPU_CycleBufferIfBound(WebGPUCommandBuffer *command_buffer, WebGP
+         return false;
+     }
+ 
++    WEBGPU_DestroyBufferWhenUnused(command_buffer->renderer, buffer->buffer);
+     wgpuBufferRelease(buffer->buffer);
+     buffer->buffer = replacement;
+     buffer->generation = replacement_generation;
+@@ -6516,6 +6692,7 @@ static bool WEBGPU_CycleTextureIfBound(WebGPUCommandBuffer *command_buffer, WebG
+         return false;
+     }
+ 
++    WEBGPU_DestroyTextureWhenUnused(command_buffer->renderer, texture->texture);
+     WEBGPU_ReleaseTextureHandles(texture);
+     texture->texture = replacement_texture;
+     texture->view = replacement_view;
+@@ -9343,6 +9520,7 @@ static void WEBGPU_ReleaseTexture(SDL_GPURenderer *driverData, SDL_GPUTexture *t
+     if (webgpu_texture->released) {
+         return;
+     }
++    WEBGPU_DestroyTextureWhenUnused((WebGPURenderer *)driverData, webgpu_texture->texture);
+     webgpu_texture->released = true;
+     WEBGPU_ReleaseTextureReference(webgpu_texture);
+ }
+@@ -9502,6 +9680,7 @@ static void WEBGPU_ReleaseBuffer(SDL_GPURenderer *driverData, SDL_GPUBuffer *buf
+     if (webgpu_buffer->released) {
+         return;
+     }
++    WEBGPU_DestroyBufferWhenUnused((WebGPURenderer *)driverData, webgpu_buffer->buffer);
+     webgpu_buffer->released = true;
+     WEBGPU_ReleaseBufferReference(webgpu_buffer);
+ }
+@@ -11557,11 +11736,21 @@ static bool WEBGPU_PrepareUniformBindGroup(
+         bind_group_desc.layout = layout;
+         bind_group_desc.entryCount = uniform_count;
+         bind_group_desc.entries = entries;
++        WebGPUResourceBindGroupCacheKey key;
++        SDL_zero(key);
++        key.path = instrumentation_path;
++        key.layout = layout;
++        key.entry_count = key.storage_buffer_count = uniform_count;
++        for (Uint32 i = 0; i < uniform_count; i++) {
++            key.storage_buffers[i].buffer = buffers[i];
++            key.storage_buffers[i].size = buffer_sizes[i];
++        }
++        bind_group = WEBGPU_FindPersistentBindGroup(command_buffer->renderer, &key);
+         scoped_error = WEBGPU_CommandBufferCanWaitForErrorScope(command_buffer);
+-        if (scoped_error) {
+-            bind_group = WEBGPU_CreateBindGroup(command_buffer->renderer, &bind_group_desc, create_scope_name);
+-        } else {
+-            bind_group = wgpuDeviceCreateBindGroup(command_buffer->renderer->device, &bind_group_desc);
++        if (!bind_group) {
++            if (scoped_error) bind_group = WEBGPU_CreateBindGroup(command_buffer->renderer, &bind_group_desc, create_scope_name);
++            else bind_group = wgpuDeviceCreateBindGroup(command_buffer->renderer->device, &bind_group_desc);
++            if (bind_group) WEBGPU_InsertPersistentBindGroup(command_buffer->renderer, &key, bind_group);
+         }
+         if (!bind_group) {
+             if (!scoped_error) {
+@@ -12145,17 +12334,33 @@ static bool WEBGPU_AllocateUniformSlice(WebGPUCommandBuffer *command_buffer, Uin
+ 
+         buffer_desc.usage = WGPUBufferUsage_Uniform | WGPUBufferUsage_CopyDst;
+         buffer_desc.size = page_size;
+-        page = wgpuDeviceCreateBuffer(command_buffer->renderer->device, &buffer_desc);
++        page = NULL;
++        SDL_LockMutex(command_buffer->renderer->resource_lock);
++        if (page_size == WEBGPU_UNIFORM_BUFFER_PAGE_SIZE && command_buffer->renderer->free_uniform_page_count) {
++            page = command_buffer->renderer->free_uniform_pages[--command_buffer->renderer->free_uniform_page_count];
++        }
++        SDL_UnlockMutex(command_buffer->renderer->resource_lock);
++        if (!page) page = wgpuDeviceCreateBuffer(command_buffer->renderer->device, &buffer_desc);
+         if (!page) {
+             WEBGPU_SetStringError("CreateBuffer failed for uniform page");
+             return false;
+         }
+         if (!WEBGPU_TrackCommandBufferBuffer(command_buffer, page)) {
++            wgpuBufferDestroy(page);
+             wgpuBufferRelease(page);
+             WEBGPU_SetStringError("failed to track uniform page");
+             return false;
+         }
+ 
++        SDL_LockMutex(command_buffer->renderer->resource_lock);
++        for (Uint32 i = 0; i < command_buffer->renderer->buffer_reference_count; i++) {
++            if (command_buffer->renderer->buffer_references[i].buffer == page) {
++                command_buffer->renderer->buffer_references[i].recycle_uniform_page = page_size == WEBGPU_UNIFORM_BUFFER_PAGE_SIZE;
++                command_buffer->renderer->buffer_references[i].destroy_when_unused = true;
++                break;
++            }
++        }
++        SDL_UnlockMutex(command_buffer->renderer->resource_lock);
+         command_buffer->uniform_buffer_page = page;
+         command_buffer->uniform_buffer_page_offset = 0;
+         command_buffer->uniform_buffer_page_size = page_size;
+@@ -13219,6 +13424,7 @@ static void WEBGPU_UploadToTexture(SDL_GPUCommandBuffer *commandBuffer, const SD
+ 
+     mapped_data = (Uint8 *)wgpuBufferGetMappedRange(staging_buffer, 0, (size_t)staging_size);
+     if (!mapped_data) {
++        WEBGPU_DestroyBufferWhenUnused(command_buffer->renderer, staging_buffer);
+         wgpuBufferRelease(staging_buffer);
+         WEBGPU_FailCommandBuffer(command_buffer, "GetMappedRange failed for texture upload staging buffer");
+         return;
+@@ -13237,6 +13443,7 @@ static void WEBGPU_UploadToTexture(SDL_GPUCommandBuffer *commandBuffer, const SD
+ 
+     if (!WEBGPU_TrackCommandBufferBuffer(command_buffer, staging_buffer) ||
+         !WEBGPU_TrackCommandBufferTexture(command_buffer, texture->texture)) {
++        WEBGPU_DestroyBufferWhenUnused(command_buffer->renderer, staging_buffer);
+         wgpuBufferRelease(staging_buffer);
+         WEBGPU_FailCommandBuffer(command_buffer, "failed to track UploadToTexture resources");
+         return;
+@@ -13253,6 +13460,7 @@ static void WEBGPU_UploadToTexture(SDL_GPUCommandBuffer *commandBuffer, const SD
+     texture_copy.origin.z = destination_endpoint.origin_z;
+     texture_copy.aspect = WGPUTextureAspect_All;
+ 
++    WEBGPU_DestroyBufferWhenUnused(command_buffer->renderer, staging_buffer);
+     wgpuCommandEncoderCopyBufferToTexture(command_buffer->encoder, &buffer_copy, &texture_copy, &copy_size);
+     wgpuBufferRelease(staging_buffer);
+ }
+@@ -13329,6 +13537,7 @@ static void WEBGPU_UploadToBuffer(SDL_GPUCommandBuffer *commandBuffer, const SDL
+ 
+     mapped_data = wgpuBufferGetMappedRange(staging_buffer, 0, (size_t)staging_size);
+     if (!mapped_data) {
++        WEBGPU_DestroyBufferWhenUnused(command_buffer->renderer, staging_buffer);
+         wgpuBufferRelease(staging_buffer);
+         WEBGPU_FailCommandBuffer(command_buffer, "GetMappedRange failed for upload staging buffer");
+         return;
+@@ -13341,11 +13550,13 @@ static void WEBGPU_UploadToBuffer(SDL_GPUCommandBuffer *commandBuffer, const SDL
+ 
+     if (!WEBGPU_TrackCommandBufferBuffer(command_buffer, staging_buffer) ||
+         !WEBGPU_TrackCommandBufferBuffer(command_buffer, buffer->buffer)) {
++        WEBGPU_DestroyBufferWhenUnused(command_buffer->renderer, staging_buffer);
+         wgpuBufferRelease(staging_buffer);
+         WEBGPU_FailCommandBuffer(command_buffer, "failed to track UploadToBuffer buffers");
+         return;
+     }
+ 
++    WEBGPU_DestroyBufferWhenUnused(command_buffer->renderer, staging_buffer);
+     wgpuCommandEncoderCopyBufferToBuffer(command_buffer->encoder, staging_buffer, 0, buffer->buffer, destination->offset, staging_size);
+     wgpuBufferRelease(staging_buffer);
+ }
+@@ -13518,6 +13729,7 @@ static void WEBGPU_DownloadFromTexture(SDL_GPUCommandBuffer *commandBuffer, cons
+ 
+     download = (WebGPUTextureDownload *)SDL_calloc(1, sizeof(*download));
+     if (!download) {
++        WEBGPU_DestroyBufferWhenUnused(command_buffer->renderer, staging_buffer);
+         wgpuBufferRelease(staging_buffer);
+         WEBGPU_FailCommandBuffer(command_buffer, "failed to allocate texture download state");
+         return;
+@@ -13623,6 +13835,7 @@ static void WEBGPU_DownloadFromBuffer(SDL_GPUCommandBuffer *commandBuffer, const
+ 
+     download = (WebGPUBufferDownload *)SDL_calloc(1, sizeof(*download));
+     if (!download) {
++        WEBGPU_DestroyBufferWhenUnused(command_buffer->renderer, staging_buffer);
+         wgpuBufferRelease(staging_buffer);
+         WEBGPU_FailCommandBuffer(command_buffer, "failed to allocate buffer download state");
+         return;
+@@ -14907,7 +15120,7 @@ static bool WEBGPU_WaitForFences(SDL_GPURenderer *driverData, bool waitAll, SDL_
+                     SDL_SetError("WebGPU queue work completed with status %d", (int)submissions[i]->status);
+                     goto wait_any_done;
+                 }
+-                result = WEBGPU_ProcessSubmissionDownloads(renderer, submissions[i]);
++                result = WEBGPU_ProcessSubmissionDownloads(renderer, submissions[i], SDL_MAX_UINT64, NULL);
+                 WEBGPU_DrainRetiredSubmissionsIfAllowed(renderer);
+                 if (result) {
+                     result = WEBGPU_DrainRuntimeErrors(renderer, "WaitForFences");
+@@ -15153,6 +15366,7 @@ static void WEBGPU_DestroyRenderer(WebGPURenderer *renderer)
+         }
+     }
+     WEBGPU_DestroyPendingSubmissions(renderer);
++    WEBGPU_ClearPersistentBindGroups(renderer);
+     WEBGPU_DestroyBlitResources(renderer);
+ 
+     while (renderer->claimed_window_count > 0) {

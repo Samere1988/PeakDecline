@@ -1,0 +1,53 @@
+#retro-room-browser[hidden], #retro-lobby[hidden], #retro-start-race[hidden], #retro-return[hidden] { display:none !important; }
+#retro-room-members, #retro-spectator-members { list-style:none; margin:12px 0 0; padding:0; }
+#retro-room-members li, #retro-spectator-members li:not(.mk64-empty-spectators) { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid #ffffff12; }
+#retro-room-members li:last-child, #retro-spectator-members li:last-child { border-bottom:0; }
+#retro-spectator-members .mk64-empty-spectators { padding:9px 0; color:#c6c9d8; font-size:12px; }
+#retro-room-status:empty, #retro-runtime-status:empty { display:none; }
+#retro-game-select { color-scheme:dark; margin:8px 0 16px; width:100%; }
+#retro-change-game { margin-bottom:20px; }
+#retro-next-game { color-scheme:dark; width:100%; max-width:100%; min-width:0; box-sizing:border-box; margin:8px 0 12px; }
+#retro-close-game { white-space:normal; text-align:left; max-width:100%; }
+#retro-invite { width:100%; box-sizing:border-box; margin:8px 0; min-width:0; }
+#retro-create-dialog label { display:block; text-align:left; }
+#retro-return { margin-bottom:16px; }
+.retro-game-frame { width:100%; aspect-ratio:4/3; background:#080c12; }
+.retro-game-frame iframe { display:block; width:100%; height:100%; border:0; }
+.retro-touch-pad { display:none; gap:8px; flex-wrap:wrap; padding:12px 0; }
+.retro-touch-pad button { min-width:48px; min-height:48px; touch-action:none; user-select:none; }
+@media (pointer:coarse) { .retro-touch-pad { display:flex; } }
+
+.retro-game-art { display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; background:#000; color:#fff; font-size:clamp(24px,4vw,42px); font-weight:800; letter-spacing:.06em; text-align:center; }
+#retro-lobby-art { width:min(100%,360px); aspect-ratio:4/3; margin:18px auto; border-radius:10px; }
+/* Real game captures; contain preserves each title screen's full composition. */
+.retro-game-art[data-game="mk64"] { background:#000 url('/static/img/mk64-title-screen.png') center / contain no-repeat; }
+.retro-game-art[data-game="fzerox"] { background:#000 url('/static/img/fzerox-title-screen.png') center / contain no-repeat; }
+.retro-game-art[data-game="smash64"] { background:#000 url('/static/img/smash64-title-screen.png') center / contain no-repeat; }
+.retro-match-result {
+    position: absolute;
+    z-index: 5;
+    top: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 80%;
+    padding: .75rem 1rem;
+    border-radius: .75rem;
+    background: #111d;
+    color: #fff;
+    text-align: center;
+    pointer-events: none;
+}
+
+.retro-game-art[data-game="perfectdark"] { background:#000 url('/static/img/perfectdark-title-screen.png') center / contain no-repeat; }
+.retro-game-art[data-game="devilutionx"] { background:#000 url('/static/img/devilutionx-title-screen.png') center / contain no-repeat; }
+.retro-game-art[data-game="oot"] { background:#000 url('/static/img/oot-title-screen.png') center / contain no-repeat; }
+
+.retro-game-art[data-game="sm64"] { background:#000 url('/static/img/sm64-title-screen.png') center / contain no-repeat; }
+.retro-game-art[data-game="sonic1"] { background:#000 url('/static/img/sonic1-title-screen.png') center / contain no-repeat; }
+.retro-game-art[data-game="sonic2"] { background:#000 url('/static/img/sonic2-title-screen.png') center / contain no-repeat; }
+.retro-game-art[data-game="zelda3"] { background:#000 url('/static/img/zelda3-title-screen.png') center / contain no-repeat; }
+.retro-game-art[data-game="driver2"] { background:#000 url('/static/img/driver2-title-screen.png') center / contain no-repeat; }
+.retro-game-art[data-game="marioparty"] { background:#000 url('/static/img/marioparty-title-screen.png') center / contain no-repeat; }
+
+.retro-game-art[data-game="marioparty2"] { background:#000 url('/static/img/marioparty2-title-screen.png') center / contain no-repeat; }
+.retro-game-art[data-game="cmr2"] { background:#000 url('/static/img/cmr2-title-screen.png') center / contain no-repeat; }

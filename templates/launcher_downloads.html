@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Windows launcher preview · PeakDecline{% endblock %}
+{% block hls_library %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/launcher-downloads.css') }}">{% endblock %}
+{% block content %}
+<main class="launcher-downloads">
+  <a href="{{ url_for('main.index') }}">&larr; Home</a>
+  <p class="preview-label">PRIVATE PREVIEW · YOUR ACCOUNT ONLY</p>
+  <h1>Your Windows game collection</h1>
+  <p class="preview-intro">Your collection, ready to install on a Windows PC. This first test build includes three playable games and the game data for all eleven.</p>
+  {% if release %}
+  <section class="download-panel" aria-labelledby="download-title">
+    <div><h2 id="download-title">Windows 10/11 · 64-bit</h2><p>{{ 'Setup EXE' if release.is_installer else 'Portable ZIP' }} · {{ release.size_label }} · {{ release.label }}</p></div>
+    <a class="download-button" href="{{ url_for('launcher_downloads.download', release_id=release.id) }}">{{ 'Download Windows installer' if release.is_installer else 'Download Windows preview' }} <span aria-hidden="true">↓</span></a>
+    <p>No separate game-data setup. Your server saves and account credentials are not included.</p>
+  </section>
+  <section aria-labelledby="start-title"><h2 id="start-title">Start playing</h2>
+    {% if release.is_installer %}
+    <ol><li>Download and open <strong>{{ release.filename }}</strong>.</li>
+    <li>Click <strong>Install</strong>. Setup chooses the folder, unpacks the launcher and game files, and adds your desktop and Start-menu shortcuts.</li>
+    <li>Click <strong>Finish</strong> to open PeakDecline. Next time, use the <strong>PeakDecline</strong> desktop shortcut.</li></ol>
+    <p class="preview-note">Allow about 4 GB of free space including the download. No manual extraction or separate game-data setup. Reinstalling preserves your saves and settings; uninstalling also leaves them in place.</p>
+    {% else %}
+    <ol><li>Save the ZIP and choose <strong>Extract All</strong> into a short folder such as <strong>C:\Games</strong>. Allow about 4 GB of free space for the download and extracted folder.</li>
+    <li>Open the extracted <strong>PeakDecline</strong> folder and double-click <strong>Start PeakDecline.cmd</strong>.</li>
+    <li>Choose a game in ES-DE, then select <strong>Start game</strong>. New saves stay in the extracted folder.</li></ol>
+    <p class="preview-note">Keep the full PeakDecline folder path below 70 characters; the current Sonic builds have a path-length limit.</p>
+    {% endif %}
+    <p class="preview-note">This is an unsigned development build. Windows may show a publisher warning. Physical controllers and Windows hardware still need testing; these builds have been exercised under Wine on Linux.</p>
+  </section>
+  <section aria-labelledby="games-title"><h2 id="games-title">Included in this download</h2>
+    <div class="game-grid">{% for game in release.games %}<article class="game-card"><h3>{{ game.name }}</h3><p class="{{ 'ready' if game.playable else 'pending' }}">{{ 'Windows build included' if game.playable else 'Data included · Windows build pending' }}</p></article>{% endfor %}</div>
+  </section>
+  <p class="preview-note">Offline single-player preview. Online play is deferred. The launcher shows only games with Windows executables.</p>
+  <details><summary>Download integrity</summary><p>SHA-256</p><code class="checksum">{{ release.sha256 }}</code></details>
+  {% else %}
+  <section class="download-panel"><h2>The download is being prepared</h2><p>The verified Windows preview will appear here when it is ready.</p></section>
+  {% endif %}
+</main>
+{% endblock %}

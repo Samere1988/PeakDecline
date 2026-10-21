@@ -1,0 +1,434 @@
+{
+  "source": "https://colonist.io",
+  "retrieved": "2026-09-16",
+  "permission": "PeakDecline owner confirmed they hold a license for this use in the task conversation.",
+  "assets": [
+    {
+      "file": "terrain-wood.svg",
+      "source": "https://cdn.colonist.io/dist/assets/generated_tile_lumber.ce98887f6f467e76852f.svg",
+      "sha256": "76d48004be878226451fb0e47de4488329a697669829b291500325cb8be46093",
+      "viewBox": "0 0 346 400"
+    },
+    {
+      "file": "terrain-brick.svg",
+      "source": "https://cdn.colonist.io/dist/assets/generated_tile_brick.fd5dbb845772bdeba45b.svg",
+      "sha256": "2632d9dc70cf444eca3e1ff3885fb36ad52abc972935ea4ac01f5f538f55bd04",
+      "viewBox": "0 0 347 401"
+    },
+    {
+      "file": "terrain-sheep.svg",
+      "source": "https://cdn.colonist.io/dist/assets/generated_tile_wool.29bcdda6873893e2a506.svg",
+      "sha256": "166ce43a53eb61a1a96a04c7a437237a5e585ff42be7e2ecdcb1c5815b7482d9",
+      "viewBox": "0 0 346 400"
+    },
+    {
+      "file": "terrain-wheat.svg",
+      "source": "https://cdn.colonist.io/dist/assets/generated_tile_grain.50fd57746befab85ea35.svg",
+      "sha256": "1f9eda756628d7f6fb9c4c6ca9f240efc8c390641b53d7994a8439fcf32dcf2c",
+      "viewBox": "0 0 347 401"
+    },
+    {
+      "file": "terrain-ore.svg",
+      "source": "https://cdn.colonist.io/dist/assets/generated_tile_ore.1b4024908dfb91c65232.svg",
+      "sha256": "0fda94e4700f149b6bc03b89f473fcc2da7973c35bd81e0fbeb828cd65e2b788",
+      "viewBox": "0 0 347 401"
+    },
+    {
+      "file": "terrain-desert.svg",
+      "source": "https://cdn.colonist.io/dist/assets/generated_tile_desert.9e169062cabe58886069.svg",
+      "sha256": "176362935f2487312877ff99f0ff2045e540aac27197cff28f3d1f527adec187",
+      "viewBox": "0 0 347 401"
+    },
+    {
+      "file": "card-wood.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_lumber.cf22f8083cf89c2a29e7.svg",
+      "sha256": "53999239785cf1c041a6c1c65654c38cd581b9354b821a6882c8f07a92646856",
+      "viewBox": ""
+    },
+    {
+      "file": "card-brick.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_brick.5950ea07a7ea01bc54a5.svg",
+      "sha256": "c3ff527cd1c5e9469c9df50c442de8329699564d8e5ed5f8030da2fbddb8e8e4",
+      "viewBox": ""
+    },
+    {
+      "file": "card-sheep.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_wool.17a6dea8d559949f0ccc.svg",
+      "sha256": "7ee8a0e3749a6e9f1837dd00ecc6d9bb92b74d406e6c839c11527510fa69bae7",
+      "viewBox": ""
+    },
+    {
+      "file": "card-wheat.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_grain.09c9d82146a64bce69b5.svg",
+      "sha256": "af37a9a0d98fc41ce7067b0782e4ae2a771d839b6aa765a9a78c9a60669f294c",
+      "viewBox": ""
+    },
+    {
+      "file": "card-ore.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_ore.117f64dab28e1c987958.svg",
+      "sha256": "8ed686b69051f6ff2a509654535247787059ba5645ca84410ca83df572f4cabf",
+      "viewBox": ""
+    },
+    {
+      "file": "settlement-red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/settlement_red.22949197b57f9cfd968b.svg",
+      "sha256": "e220cfd87d0c634587f050d2f7882912e70f558ed47de4bb08cdcf6b0c04b1e0",
+      "viewBox": "0 0 128 128"
+    },
+    {
+      "file": "settlement-blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/settlement_blue.bad4cdb43d65c329deda.svg",
+      "sha256": "07bf016341ab818e5319f99e79becf28f2735b894f2f9d6da118aec354d63828",
+      "viewBox": "0 0 128 128"
+    },
+    {
+      "file": "settlement-orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/settlement_orange.774ddafc8cc0595acdb7.svg",
+      "sha256": "a7e40552a07650970632b4634704b1894cd41d736bb295f5a391daa0d779f2d3",
+      "viewBox": "0 0 128 128"
+    },
+    {
+      "file": "settlement-green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/settlement_green.1b78c696cd137be02fae.svg",
+      "sha256": "e88d333c7e05def4d28c2be727311546b98e8cd45146dc91e08d001c144e51ce",
+      "viewBox": "0 0 128 128"
+    },
+    {
+      "file": "city-red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_red.991ae0c7a0b95da9811d.svg",
+      "sha256": "7c9208677562c11db51f21d556ab0ebaa52bdf790e0effd7fbc4973bc7363ca6",
+      "viewBox": ""
+    },
+    {
+      "file": "city-blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_blue.43d846e83515f35f51f6.svg",
+      "sha256": "232de6b0252b6919057d6d1e314d03beb055982fb1256d0ca8986f6cd4d75205",
+      "viewBox": ""
+    },
+    {
+      "file": "city-orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_orange.f49c8fb13a589f8d0c68.svg",
+      "sha256": "a904d0839073f2577a4b316e1ab367a17c4e21464ea328ed062d35767c27f134",
+      "viewBox": ""
+    },
+    {
+      "file": "city-green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_green.d7ea2b2bde643e17efe1.svg",
+      "sha256": "1906682821ffa0e635370fc0c1889e8ca63c06eb0e488712d878efe3e89bf69f",
+      "viewBox": ""
+    },
+    {
+      "file": "road-red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/road_red.41c6cbd9278108542715.svg",
+      "sha256": "25c8b79254dd2f404e2d3378ab878a159940297e096cd31c83f13bcb0062bc7f",
+      "viewBox": "0 0 40 194"
+    },
+    {
+      "file": "road-blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/road_blue.3301e2eed15cae5a6a05.svg",
+      "sha256": "faaae2216c2d8cf1b61253462ffc9a1f1a22fb1196ed1f68edab704990e3d32c",
+      "viewBox": "0 0 40 194"
+    },
+    {
+      "file": "road-orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/road_orange.07bb26b8c1e63dd438c7.svg",
+      "sha256": "5cc37946fb9147fc53d32394e77a9a26111a103aa6f3e10e8d0cabd7a0463de6",
+      "viewBox": "0 0 39 194"
+    },
+    {
+      "file": "road-green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/road_green.d206aed3747b3687bc40.svg",
+      "sha256": "470915c174db09d429708dde358ba37ad75538ef59621277871d7873b8fe85ce",
+      "viewBox": "0 0 40 194"
+    },
+    {
+      "file": "dice-2.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_2.05d31959b2838006865b.svg",
+      "sha256": "96bfeabe0347798c7e1f60b72a7f6b0bb624b2802e22fd3edbb94f0f77f9b85b",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "port-sheep.svg",
+      "source": "https://cdn.colonist.io/dist/assets/port_wool.506dc6d8ad998d139c99.svg",
+      "sha256": "1491947786757a71ec9544f618b1e22965b9830d16837e1c43cdb58e27af2c03",
+      "viewBox": ""
+    },
+    {
+      "file": "dice-3.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_3.bdf9bed70b715ad2ab2c.svg",
+      "sha256": "9e3a15f436b3223214c4cd98efc72d2f43dbccd0ea31aa74deae7c73011e7dcf",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "port-ore.svg",
+      "source": "https://cdn.colonist.io/dist/assets/port_ore.9c7f788e01080b158853.svg",
+      "sha256": "bb0b69d3fed1f2b51ce51e218539b1c502b46286f8ece8dd851701ef0c3c0821",
+      "viewBox": ""
+    },
+    {
+      "file": "boat.svg",
+      "source": "https://cdn.colonist.io/dist/assets/ship_white_north_west.13e30ef284ecac032768.svg",
+      "sha256": "68eeb017426512d453576b954da33c64f7f32d4a6aad27ab91d557cca438d748",
+      "viewBox": "0 0 90.21 104.43"
+    },
+    {
+      "file": "dice-1.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_1.6828d855c054bbb331d3.svg",
+      "sha256": "21d4a99facce7228d735d4e2bb529be055cdaf4795693a6336ee9c09b3b5d1fc",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "dice-4.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_4.ec56593699eed0f02856.svg",
+      "sha256": "01162446ee4a407edc54715a0e228e315af5d9ba669cbdbe46bb10a206eb4f00",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "port-wood.svg",
+      "source": "https://cdn.colonist.io/dist/assets/port_lumber.fc67a372a72f6defad8f.svg",
+      "sha256": "f91a03f5b89c81ec3b67e29ab6de34a59f922e2d3fa975e0ea8e29eddf5bd155",
+      "viewBox": ""
+    },
+    {
+      "file": "port-wheat.svg",
+      "source": "https://cdn.colonist.io/dist/assets/port_grain.93b652acc5827d7e59e8.svg",
+      "sha256": "cf650e7dff159bd82fbc42004e2b256e1255d4e65732df74606658b66d7036e4",
+      "viewBox": ""
+    },
+    {
+      "file": "port-brick.svg",
+      "source": "https://cdn.colonist.io/dist/assets/port_brick.b936467e35024cbbcdc5.svg",
+      "sha256": "9061a671c8a688fb4a574f6035bbed23e7420ded878d718dcc2d26d84e8a4b08",
+      "viewBox": ""
+    },
+    {
+      "file": "port-any.svg",
+      "source": "https://cdn.colonist.io/dist/assets/port.7822db58281eb60c3346.svg",
+      "sha256": "43a5fef96866b0cdb6bdce70b937f068d7f1d1f982b84fe613548ece9182e0bd",
+      "viewBox": ""
+    },
+    {
+      "file": "dice-5.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_5.e2e4c9085fa4a5ed783a.svg",
+      "sha256": "6c9ba7faa75ebbf427e9e3ea1121b54e61d267f727ff21a23f3adf690b88668a",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "robber.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_robber.2b909f277d60f24633e8.svg",
+      "sha256": "82f613a13d4da3622397015afacd01e430f419eea4f0de74e88d727f7a8c06bc",
+      "viewBox": "0 0 64 64"
+    },
+    {
+      "file": "dice-6.svg",
+      "source": "https://cdn.colonist.io/dist/assets/dice_6.68f39630050519374015.svg",
+      "sha256": "7fc64eeb4c6357b7ffca495c727c1d70d58b8e731ee57ca69038ebbe074f13db",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "player-blue.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_blue.ccf3b0e2738233b4e592.svg",
+      "sha256": "6048f018ff1390e3943510a9da01c73514be1135a1b21984ea36b5da5cafad71",
+      "viewBox": ""
+    },
+    {
+      "file": "longest-road.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_longest_road.5cfdeb3352b20463e64b.svg",
+      "sha256": "24b9ecdd0b2a3cab9b90050aa58ab324baf7e9c49d7bf6cf78ab308e9d46e13e",
+      "viewBox": "0 0 200 200"
+    },
+    {
+      "file": "bank.svg",
+      "source": "https://cdn.colonist.io/dist/assets/bank.825b2690b4b1b694d646.svg",
+      "sha256": "b513ab48169313f0c66e459426386a4afb15376e0ae63c182547ee0c7147733d",
+      "viewBox": ""
+    },
+    {
+      "file": "trade.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_trade.db2aa231787fcdbc1a67.svg",
+      "sha256": "f2bb9b227b962ff8d1ea070bdb7831c6c42b6d1c17097f2885fd689fa47795b5",
+      "viewBox": "0 0 128 128"
+    },
+    {
+      "file": "card-development.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_devcardback.92569a1abd04a8c1c17e.svg",
+      "sha256": "8a768d090a443b13d9dc16b8cadcd9f6b0a0628894129990d84b616e0e0da833",
+      "viewBox": ""
+    },
+    {
+      "file": "card-hidden.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_rescardback.03c18312a76028b0d9c9.svg",
+      "sha256": "fd4a126653f5deddd15415c1e8d321f69d43f3d4d64fcf5f5de29cab361491be",
+      "viewBox": ""
+    },
+    {
+      "file": "player-icon.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_player.823fcffb830b912c3bc5.svg",
+      "sha256": "afaeec3f3ac58bfe8255455eec3956f02e048eb48ab0de05e8e09ed170757098",
+      "viewBox": "0 0 64 64"
+    },
+    {
+      "file": "action-background.svg",
+      "source": "https://cdn.colonist.io/dist/assets/bg_button.6fb386c356a3e9b580e2.svg",
+      "sha256": "926e4431df09d49f90b8a7e9d9d9d90440532d9a9a936e455bb811791a952331",
+      "viewBox": "0 0 141 141"
+    },
+    {
+      "file": "player-green.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_green.3caf586360d8a53b7520.svg",
+      "sha256": "006151c1bf313ca3bb59c9b592660c4c0cedb65f9048eaef66059962f0488a90",
+      "viewBox": ""
+    },
+    {
+      "file": "player-orange.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_orange.501a7e983f1b0c42c2b0.svg",
+      "sha256": "a2bd1603dc91527ce9db46edb40a98c7eec344e91bb0d3cd87f730da8f148369",
+      "viewBox": ""
+    },
+    {
+      "file": "hourglass.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_hourglass.6bc68349265ccde43880.svg",
+      "sha256": "a255f5c763c7c1b5d33380bbf0d1aedb30c1f7a56932aa4435cb2979e69683de",
+      "viewBox": "0 0 48 48"
+    },
+    {
+      "file": "ribbon.svg",
+      "source": "https://cdn.colonist.io/dist/assets/ribbon_small.f1f6f5885b2535205fe3.svg",
+      "sha256": "306d0cc58be8f535ed36eaf5a61a57ccc1735ebf9f8d7fbf33fd2936fea28d25",
+      "viewBox": "0 0 540 313"
+    },
+    {
+      "file": "player-red.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_red.e23255a1eaac03a05c9d.svg",
+      "sha256": "af87b19c8a8a6813d3c73f8455a41e3c34eae0441deaaf780f0903735bbbd952",
+      "viewBox": ""
+    },
+    {
+      "file": "largest-army.svg",
+      "source": "https://cdn.colonist.io/dist/assets/icon_largest_army.206b49b3c9d2b206f699.svg",
+      "sha256": "989e4a8d19766d75969aa4009a2f98df476b3da52308746fef8ab6ce73c8d83c",
+      "viewBox": "0 0 250 250"
+    },
+    {
+      "file": "port-pier.png",
+      "source": "https://cdn.colonist.io/dist/assets/game_spritesheet_0.094536749cb2bc828533.webp",
+      "atlas": "https://cdn.colonist.io/dist/assets/game_spritesheet_0.eed8dd9beaec437fcf0c.json",
+      "frame": {
+        "rotated": false,
+        "trimmed": true,
+        "sourceSize": {
+          "w": 96,
+          "h": 288
+        },
+        "spriteSourceSize": {
+          "x": 5,
+          "y": 0,
+          "w": 86,
+          "h": 288
+        },
+        "frame": {
+          "x": 2245,
+          "y": 1780,
+          "w": 86,
+          "h": 288
+        },
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "sha256": "397bce8d04942852924916e526d80c832b96a2baeb323aa3c529f8eba7b39959"
+    },
+    {
+      "file": "dev-knight.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_knight.a58573f2154fa93a6319.svg",
+      "sha256": "33139ef21c74c7153de00d87edd2d1f393a7f5e0503e9c4854095da358282a66",
+      "viewBox": "",
+      "retrieved": "2026-09-18"
+    },
+    {
+      "file": "dev-monopoly.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_monopoly.dfac189aaff62e271093.svg",
+      "sha256": "fc5b78cff2904f827680502c724761c9f3b3e92ba82f9e525d5f8e9050d48ee5",
+      "viewBox": "",
+      "retrieved": "2026-09-18"
+    },
+    {
+      "file": "dev-roadbuilding.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_roadbuilding.994e8f21698ce6c350bd.svg",
+      "sha256": "18598bc9e55462cc27a07de8d79fb8d2fc4eee1d87e6a335e17d9dc02a67535b",
+      "viewBox": "",
+      "retrieved": "2026-09-18"
+    },
+    {
+      "file": "dev-victory.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_vp.672597308e3a8f1100ae.svg",
+      "sha256": "0318111e99dd9493e24c61ef58eab9de4eaa39f653ed5dcf0f1ee1cc94c8ec47",
+      "viewBox": "",
+      "retrieved": "2026-09-18"
+    },
+    {
+      "file": "dev-plenty.svg",
+      "source": "https://cdn.colonist.io/dist/assets/card_yearofplenty.3df210b5455b7438db09.svg",
+      "sha256": "7d72371f47e3431dac370dd812b78b5b41a99571444733604ee1a469cdf6cc0b",
+      "viewBox": "",
+      "retrieved": "2026-09-18"
+    },
+    {
+      "file": "road-purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/road_purple.44404500b4749200ee0c.svg",
+      "sha256": "c718f43c5bff7d7a3a4efa7d9141a56d9a8c2c201062f947361461b044e4d8ca",
+      "viewBox": "0 0 40 194",
+      "retrieved": "2026-09-25"
+    },
+    {
+      "file": "road-white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/road_white.78e66baab120779d5c30.svg",
+      "sha256": "a3726163e50fb8f1d8df007c4ac102e3435f8f9bfd4d8777a384dd67f067e517",
+      "viewBox": "0 0 40 194",
+      "retrieved": "2026-09-25"
+    },
+    {
+      "file": "settlement-purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/settlement_purple.af6c0adb105271efbfb5.svg",
+      "sha256": "9347056463650d1be5c0b41b2de5fcfe7907eae7d82d4207838b57d15b9cddb0",
+      "viewBox": "0 0 128 128",
+      "retrieved": "2026-09-25"
+    },
+    {
+      "file": "settlement-white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/settlement_white.a642a431b4bb73d63dae.svg",
+      "sha256": "4813b6425f06918fea95f910491b251342536731c70f55ccb1ab7aa58cec1427",
+      "viewBox": "0 0 128 128",
+      "retrieved": "2026-09-25"
+    },
+    {
+      "file": "city-purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_purple.a9868c1fc12671447ea3.svg",
+      "sha256": "b5d96d789b2c2e31819d1f17ce7c4c74f05f50c3843b56e7fa6425523831b6c5",
+      "viewBox": "",
+      "retrieved": "2026-09-25"
+    },
+    {
+      "file": "city-white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/city_white.cca576079023a2bdc80f.svg",
+      "sha256": "ade1aee3585b9731de7ad9bb42a3ba659f7e4cc3ec82c9b13ca383429a2e8d64",
+      "viewBox": "",
+      "retrieved": "2026-09-25"
+    },
+    {
+      "file": "player-purple.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_purple.a8e5b6b5a7aadb278f99.svg",
+      "sha256": "b969e59a22db953999e39c876cdb242fc198326e008b1ab02d4bc0a1c2bfc75c",
+      "viewBox": "",
+      "retrieved": "2026-09-25"
+    },
+    {
+      "file": "player-white.svg",
+      "source": "https://cdn.colonist.io/dist/assets/player_bg_white.0c947f6527948c64d15e.svg",
+      "sha256": "24eacad5e621d8c37cea3552105068b636a24ea2661b06e9110c1ca17dacb837",
+      "viewBox": "0 0 112.3 112.3",
+      "retrieved": "2026-09-25"
+    }
+  ]
+}

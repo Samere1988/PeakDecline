@@ -1,0 +1,23 @@
+.home-portal {min-height:100dvh;display:flex;flex-direction:column;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e2e8f0;}
+.portal-header {width:100%;max-width:1200px;margin:0 auto;padding:26px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;}
+.portal-status {display:flex;align-items:center;gap:9px;color:#9ca3af;font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;}
+.portal-status>span {width:8px;height:8px;background:#10b981;border-radius:50%;}
+.portal-account {display:flex;align-items:center;gap:8px;background:#ffffff0d;border:1px solid #ffffff1a;border-radius:9px;padding:7px 12px;font-size:13px;color:#d1d5db;overflow-wrap:anywhere;max-width:65%;}
+.portal-account .user-avatar {width:22px;height:22px;margin:0;}
+.portal-main {flex:1;width:100%;max-width:1200px;margin:0 auto;padding:24px 28px 80px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.portal-brand {width:100%;max-width:720px;margin:0 0 56px;text-align:center;line-height:1;}
+.portal-brand img {display:block;width:100%;height:auto;filter:drop-shadow(0 6px 14px #0008);}
+.portal-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;width:100%;}
+.portal-card {display:flex;align-items:center;gap:18px;min-height:132px;padding:28px 24px;background:var(--bg-card);border:1px solid #ffffff12;border-radius:14px;backdrop-filter:blur(12px);box-shadow:0 4px 20px #0005;transition:transform .2s,border-color .2s,background .2s,box-shadow .2s;color:#f3f4f6;}
+.portal-card:hover {border-color:#a2536e66;background:rgba(28,26,36,.82);transform:translateY(-2px);box-shadow:0 8px 24px #0007,0 0 0 1px #a2536e33;color:white;}
+.portal-card:active {transform:translateY(0);}
+.portal-icon {display:grid;place-items:center;width:52px;height:52px;flex-shrink:0;border-radius:10px;background:#ffffff08;border:1px solid #ffffff0f;color:#d1d5db;transition:background .2s,color .2s;}
+.portal-icon svg {width:26px;height:26px;}
+.portal-card:hover .portal-icon {background:#a2536e26;border-color:#a2536e4d;color:#e282a5;}
+.portal-logout .portal-icon {color:#f87171;}
+.portal-label {flex:1;min-width:0;font-size:16px;font-weight:700;letter-spacing:.6px;line-height:1.5;text-transform:uppercase;overflow-wrap:normal;}
+.portal-chevron {width:18px;height:18px;flex-shrink:0;color:#6b7280;}
+.portal-card:focus-visible,.portal-account:focus-visible {outline:2px solid #e282a5;outline-offset:4px;}
+@media(max-width:1050px){.portal-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:600px){.portal-header{padding:20px;}.portal-main{padding:24px 20px 40px;justify-content:flex-start;}.portal-brand{margin:28px 0 40px;}.portal-grid{grid-template-columns:1fr;gap:16px;}.portal-card{min-height:112px;padding:24px 20px;gap:16px;}.portal-label{font-size:16px;}.portal-icon{width:48px;height:48px;}}
+@media(prefers-reduced-motion:reduce){.portal-card,.portal-icon{transition:none;}.portal-card:hover{transform:none;}}

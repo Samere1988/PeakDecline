@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const playbackNow = () => (typeof performance !== 'undefined'
         ? performance.now() / 1000 : Date.now() / 1000);
     let currentMediaUrl = '';
+    let youtubeSnapshot = null;
 
     const PLEX_PROGRESS_INTERVAL_MS = 10000;
     const SYNCED_THRESHOLD_SECONDS = 0.5;
@@ -352,6 +353,12 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
+    function getMediaDuration() {
+        if (Number.isFinite(video.duration)) return video.duration;
+        if (youtubeSnapshot) return youtubeSnapshot.prepared_seconds || 0;
+        return 0;
+    }
+
 
     function updateBufferedProgress() {
         if (!video) {
@@ -359,9 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const duration =
-            Number.isFinite(video.duration)
-                ? video.duration
-                : 0;
+            getMediaDuration();
 
         if (duration <= 0) {
             if (plexPlayedProgress) {
@@ -447,9 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         const duration =
-            Number.isFinite(video.duration)
-                ? video.duration
-                : 0;
+            getMediaDuration();
 
 
         const currentTime =
@@ -728,6 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (playbackEpoch === data.playback_epoch &&
                 (data.revision < playbackRevision || (!snapshot && data.revision === playbackRevision))) return false;
         playbackEpoch = data.playback_epoch;
+        youtubeSnapshot = data.youtube || null;
         playbackRevision = data.revision;
         mediaVersion = data.media_version || '';
         roomIsPlaying = data.is_playing === true;
@@ -796,9 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         const duration =
-            Number.isFinite(video.duration)
-                ? video.duration
-                : 0;
+            getMediaDuration();
 
 
         if (duration <= 0) {
@@ -808,7 +810,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const target =
             Math.min(
-                duration,
+                youtubeSnapshot && !youtubeSnapshot.complete
+                    ? Math.min(duration, Math.max(0, youtubeSnapshot.prepared_seconds - 2)) : duration,
                 Math.max(
                     0,
                     Number(targetTime) || 0
@@ -1069,6 +1072,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 (
                     isHost
                     && hasPlexMedia
+                    && !CURRENT_KEY.startsWith('youtube:')
                 )
                     ? 'inline-flex'
                     : 'none';
@@ -1390,6 +1394,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (
             !isHost
             || !ratingKey
+            || String(ratingKey).startsWith('youtube:')
             || !audioTrackSelect
             || !subtitleTrackSelect
         ) {
@@ -1488,6 +1493,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (
             !isHost
             || !CURRENT_KEY
+            || CURRENT_KEY.startsWith('youtube:')
         ) {
             return;
         }
@@ -1726,6 +1732,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
 
     function cleanupEmulator() {
+        window.peakEmulatorSave?.stop().catch(error=>PeakSaves.status(error.message));
         stopLocalBroadcast();
 
 
@@ -1860,6 +1867,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
+
+                if (CURRENT_KEY.startsWith('youtube:')) {
+                    roomIsPlaying = false;
+                    playbackIntent = false;
+                    setPlaybackClock(0, video.currentTime);
+                    playbackCommand('user_pause');
+                    return;
+                }
 
                 reportPlexProgress(
                     'stopped',
@@ -2578,7 +2593,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 data => {
                     addMessage(
                         data.user,
-                        data.text
+                        data.text,
+                        data.avatar
                     );
                 }
             );
@@ -2613,7 +2629,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 CURRENT_KEY = String(data.rating_key || '');
                 appContainer.dataset.currentKey = CURRENT_KEY;
                 if (mediaTitleElem) mediaTitleElem.innerText = data.title || 'Now Playing';
-                if (isHost && CURRENT_KEY) loadTrackOptions(CURRENT_KEY);
+                if (isHost && CURRENT_KEY && !CURRENT_KEY.startsWith('youtube:')) loadTrackOptions(CURRENT_KEY);
                 if (!sameMedia) {
                     viewerPaused = false;
                     autoplayBlocked = false;
@@ -2640,6 +2656,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     'users-list'
                 );
 
+
+            const viewerPictures = new Map();
+            socket.on('room_profiles_update', people => {
+                people.forEach(person => viewerPictures.set(person.name, person.avatar));
+            });
 
             socket.on(
                 'room_users_update',
@@ -2696,28 +2717,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     : '';
 
 
-                            uDiv.innerHTML = `
-                                <div
-                                    style="
-                                        background:#e50914;
-                                        color:white;
-                                        width:28px;
-                                        height:28px;
-                                        border-radius:50%;
-                                        display:flex;
-                                        align-items:center;
-                                        justify-content:center;
-                                        font-weight:bold;
-                                        font-size:0.85em;
-                                    "
-                                >
-                                    ${user.charAt(0).toUpperCase()}
-                                </div>
-
-                                <span style="font-weight:500;">
-                                    ${hostBadge}${user}
-                                </span>
-                            `;
+                            const name = document.createElement('span');
+                            name.style.fontWeight = '500';
+                            name.textContent = hostBadge + user;
+                            uDiv.append(profileAvatar(viewerPictures.get(user)), name);
 
 
                             uDiv.addEventListener(
@@ -3116,7 +3119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!CURRENT_KEY) {
+        if (!CURRENT_KEY || CURRENT_KEY.startsWith('youtube:')) {
             return;
         }
 
@@ -3408,7 +3411,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!CURRENT_KEY) {
+        if (!CURRENT_KEY || CURRENT_KEY.startsWith('youtube:')) {
             return;
         }
 
@@ -3526,53 +3529,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 21. CHAT DISPLAY
     // ==========================================
 
-    function addMessage(
-        user,
-        text
-    ) {
-        if (!chatBox) {
-            return;
-        }
-
-
-        const msgDiv =
-            document.createElement(
-                'div'
-            );
-
-
-        msgDiv.className =
-            'chat-msg';
-
-
-        /*
-         * Existing rendering behavior preserved.
-         * Safe text rendering is still planned for #21.
-         */
-        if (
-            user === HOST_USERNAME
-        ) {
-            msgDiv.innerHTML =
-                `<strong style="color:#e5a00d;">${user} (Host)</strong> `
-                + `<span style="color:#ececec;">${text}</span>`;
-
-        } else {
-
-            msgDiv.innerHTML =
-                `<strong>${user}</strong> `
-                + `<span style="color:#ccc;">${text}</span>`;
-        }
-
-
-        chatBox.appendChild(
-            msgDiv
-        );
-
-
-        chatBox.scrollTop =
-            chatBox.scrollHeight;
+    function addMessage(user, text, avatar) {
+        if (!chatBox) return;
+        renderProfileMessage(chatBox, user === HOST_USERNAME ? user + ' (Host)' : user, text, avatar);
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
-
 
     // ==========================================
     // 22. PLEX SEARCH RESULTS
@@ -4092,6 +4053,79 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    const youtubeForm = document.getElementById('youtube-form');
+    let youtubePollTimer = null;
+    function renderYouTubeJob(job) {
+        const busy = ['downloading', 'preparing'].includes(job.state);
+        const percent = typeof job.percent === 'number' ? Math.round(job.percent) : null;
+        let message = job.message || '';
+        if (job.media_url === currentMediaUrl && job.published) {
+            youtubeSnapshot = {prepared_seconds: job.prepared_seconds, complete: job.state === 'ready'};
+        }
+        if (busy && job.published) message += ` ${formatPlayerTime(job.prepared_seconds)} available.`;
+        if (busy && percent !== null) message += ` ${percent}%`;
+        if (busy && job.eta_seconds != null) {
+            message += ` · About ${formatPlayerTime(job.eta_seconds)} remaining`;
+        }
+        if (busy && job.elapsed_seconds != null) {
+            message += ` · ${formatPlayerTime(job.elapsed_seconds)} elapsed`;
+        }
+        if (job.stalled) message += ' · No recent progress; the server is checking for a stall.';
+        const modalError = document.getElementById('youtube-error');
+        if (modalError) {
+            modalError.textContent = message;
+            modalError.hidden = !message || job.state === 'downloading' || job.state === 'preparing';
+        }
+        const roomStatus = document.getElementById('youtube-room-status');
+        if (roomStatus) roomStatus.hidden = !message;
+        const roomMessage = document.getElementById('youtube-room-message');
+        if (roomMessage) roomMessage.textContent = message;
+        for (const id of ['youtube-progress', 'youtube-room-progress']) {
+            const bar = document.getElementById(id);
+            if (!bar) continue;
+            bar.hidden = !busy && job.state !== 'ready';
+            if (percent === null) bar.removeAttribute('value');
+            else bar.value = percent;
+        }
+        youtubeForm.querySelector('button').disabled = busy || !isHost;
+    }
+    async function updateYouTubeJob() {
+        if (!youtubeForm) return;
+        try {
+            const response = await fetch(`/api/room/${ROOM_ID}/youtube-status`);
+            if (!response.ok) throw new Error('Could not check download status.');
+            const job = await response.json();
+            const busy = ['downloading', 'preparing'].includes(job.state);
+            renderYouTubeJob(job);
+            if (busy) youtubePollTimer = setTimeout(updateYouTubeJob, 2000);
+        } catch (error) {
+            document.getElementById('youtube-error').textContent = error.message + ' Retrying…';
+            youtubePollTimer = setTimeout(updateYouTubeJob, 5000);
+        }
+    }
+    if (youtubeForm) {
+        updateYouTubeJob();
+        youtubeForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!isHost) return;
+            const status = document.getElementById('youtube-error');
+            const button = youtubeForm.querySelector('button');
+            button.disabled = true;
+            renderYouTubeJob({state: 'downloading', message: 'Starting download…'});
+            try {
+                const response = await fetch(`/api/room/${ROOM_ID}/set_youtube`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: document.getElementById('youtube-url').value})
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Could not start download.');
+                if (searchModal) searchModal.classList.remove('active');
+                clearTimeout(youtubePollTimer);
+                updateYouTubeJob();
+            } catch (error) { renderYouTubeJob({state: 'error', message: error.message}); }
+        });
+    }
+
     // ==========================================
     // 24. HLS VIDEO LOADING
     // ==========================================
@@ -4193,9 +4227,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             false,
 
                         startPosition:
-                            targetStart > 0
+                            CURRENT_KEY.startsWith('youtube:') || targetStart > 0
                                 ? targetStart
                                 : -1,
+
+                        // A growing YouTube EVENT playlist is a recording, not live TV.
+                        // Keep the host's position even as its prepared edge moves ahead.
+                        ...(CURRENT_KEY.startsWith('youtube:') ? {
+                            liveSyncDurationCount: 1000000,
+                            liveMaxLatencyDurationCount: Infinity,
+                            maxLiveSyncPlaybackRate: 1
+                        } : {}),
 
                         abrEwmaDefaultEstimate:
                             1000000,
@@ -4393,7 +4435,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
 
-    function bootGame(
+    async function bootGame(
         core,
         romPath,
         gameName
@@ -4446,6 +4488,8 @@ document.addEventListener('DOMContentLoaded', () => {
             '<div id="game" style="width:100%; height:100%;"></div>';
 
 
+        try { await PeakPrepareEmulatorSave(core,romPath); } catch(error) { PeakSaves.status(error.message); return; }
+
         window.EJS_player =
             '#game';
 
@@ -4456,7 +4500,7 @@ document.addEventListener('DOMContentLoaded', () => {
             '#007BFF';
 
         window.EJS_pathtodata =
-            'https://cdn.emulatorjs.org/stable/data/';
+            'https://cdn.emulatorjs.org/4.2.3/data/';
 
         window.EJS_gameUrl =
             '/static/'
@@ -4470,7 +4514,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         emulatorLoaderScript.src =
-            'https://cdn.emulatorjs.org/stable/data/loader.js';
+            'https://cdn.emulatorjs.org/4.2.3/data/loader.js';
 
 
         document.body.appendChild(

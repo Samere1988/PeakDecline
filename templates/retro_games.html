@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Retro Games · Peak Decline{% endblock %}
+{% block hls_library %}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/plex.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mario_kart_64.css', v='fullscreen-v4') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/retro_games.css', v='title-captures-v2') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/n64_touch.css', v='viewport-v3') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/game_viewport.css', v='1') }}">
+{% endblock %}
+{% block content %}
+<main class="mk64-page plex-container">
+<nav class="mk64-room-nav" aria-label="Game navigation"><a class="mk64-back-button" href="{{ url_for('main.games') }}">← Games</a><button id="retro-back-rooms" class="mk64-back-button" type="button" hidden>← Lobbies</button></nav>
+
+<section id="retro-room-browser" aria-label="Retro game rooms">
+  <div class="plex-header"><div class="header-title"><h1>Retro Games</h1><span>Choose a game, join friends, or watch</span></div><button id="retro-open-create" class="create-btn" type="button">+ Create Room</button></div>
+
+  <p id="retro-browser-notice" class="mk64-description" role="status">Connecting to game rooms…</p>
+  <div id="retro-room-list" class="rooms-grid" aria-label="Open game lobbies"></div>
+</section>
+<dialog id="retro-create-dialog" class="mk64-dialog" aria-labelledby="retro-create-title"><form id="retro-create-form"><h2 id="retro-create-title" tabindex="-1">Create a room</h2><label for="retro-game-select">Game</label><select id="retro-game-select" class="modal-input" required>{% for game in catalog %}<option value="{{ game.id }}" {% if not game.available %}disabled{% endif %}>{{ game.title }}{% if not game.available %} — being prepared{% endif %}</option>{% endfor %}</select><div id="retro-match-settings"></div><label for="retro-room-name">Room name</label><input id="retro-room-name" class="modal-input" maxlength="60" placeholder="Room name" aria-label="Room name" required><p>Choose a game and invite friends. Everyone playing must be ready before the host starts.</p><div class="modal-actions"><button id="retro-cancel-create" class="mk64-secondary" type="button">Cancel</button><button id="retro-room-create" class="mk64-primary" type="submit">Create Room</button></div></form></dialog>
+<section id="retro-lobby" class="mk64-lobby" aria-label="Game lobby" hidden>
+  <section id="retro-interruption" class="mk64-lobby-card" aria-label="Match interrupted" hidden>
+    <p id="retro-interruption-message" role="alert" tabindex="-1">The match went out of sync and was stopped. Everyone is back in the same lobby. Mark ready to play again.</p>
+    <button id="retro-download-report" class="mk64-secondary" type="button">Download diagnostic report</button>
+  </section>
+  <div class="mk64-lobby-header"><div><span id="retro-game-title" class="mk64-eyebrow">Game lobby</span><h1 id="retro-lobby-title">Your room</h1><p id="retro-lobby-count" class="mk64-description">Waiting for room details…</p></div><span class="mk64-phase">Choosing roles</span></div>
+  <form id="retro-change-game" class="mk64-lobby-card" hidden><label for="retro-next-game">Game for the next round</label><select id="retro-next-game" class="modal-input">{% for game in catalog %}<option value="{{ game.id }}" {% if not game.available %}disabled{% endif %}>{{ game.title }}</option>{% endfor %}</select><div id="retro-next-settings"></div><button id="retro-apply-game" class="mk64-secondary" type="submit">Choose game</button><p class="mk64-description">Player seats carry over. If the next game has fewer seats, the remaining players join the spectators.</p></form>
+  <div class="mk64-lobby-grid"><section class="mk64-lobby-card" aria-labelledby="retro-players-title"><div class="mk64-card-heading"><h2 id="retro-players-title">Players</h2><span id="retro-seat-count"></span></div><ul id="retro-room-members"></ul><h3 class="mk64-spectator-heading">Spectators</h3><ul id="retro-spectator-members"></ul></section>
+  <section class="mk64-lobby-card mk64-race-card" aria-labelledby="retro-race-title"><div class="mk64-card-heading"><h2 id="retro-race-title">Choose your place</h2></div><div id="retro-lobby-art" class="retro-game-art" role="img"></div><div class="mk64-role-actions"><button id="retro-choose-player" class="mk64-secondary" type="button">Play</button><button id="retro-choose-spectator" class="mk64-secondary" type="button">Spectate</button><button id="retro-start-race" class="mk64-primary" type="button" hidden disabled>Start Game</button><button id="retro-leave-room" class="mk64-secondary" type="button">Leave Room</button></div><label for="retro-invite">Invite link</label><input id="retro-invite" class="modal-input" readonly><button id="retro-copy-invite" class="mk64-secondary" type="button">Copy invite</button><div id="retro-controller-setup"></div><p id="retro-settings-summary" class="mk64-description"></p><p id="retro-room-status" class="mk64-description" role="status"></p></section></div>
+</section>
+
+<p id="retro-runtime-status" class="mk64-description" role="status"></p>
+<div class="mk64-role-actions"><button id="retro-close-game" class="mk64-primary" type="button" hidden>Close game and return everyone to lobby</button><button id="retro-return" class="mk64-secondary" type="button" hidden>Leave room</button></div>
+<section id="retro-spectator-area" class="mk64-play-area" aria-label="Live spectator view" hidden>
+  <h1 id="retro-spectator-title">Spectating</h1>
+  <div id="retro-spectator-screen" class="mk64-game game-viewport"><canvas id="retro-spectator-canvas" class="game-surface" width="640" height="480" tabindex="0" aria-label="Live game"></canvas><button id="retro-spectator-fullscreen" class="mk64-fullscreen" type="button">Fullscreen</button></div>
+  <div class="mk64-controls-panel"><button id="retro-spectator-sound" class="mk64-secondary" type="button">Enable sound</button><label for="retro-spectator-volume">Game volume</label><input id="retro-spectator-volume" type="range" min="0" max="100" value="100"><p id="retro-spectator-status" role="status"></p></div>
+</section>
+{% for game in games.values() %}{% include game.player_template %}{% endfor %}
+</main>
+<script id="retro-catalog" type="application/json" data-core-url="{{ url_for('main.retro_netplay_asset', filename='netplay.js')|replace('netplay.js', '') }}">{{ catalog|tojson }}</script>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/socket.io.min.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/netplay/session.js', v='1') }}" defer></script>
+<script src="{{ url_for('static', filename='js/netplay/telemetry.js', v='frame-timing-v2') }}" defer></script>
+<script src="{{ url_for('static', filename='js/netplay/rollback_transport.js', v='recovery-v2') }}" defer></script>
+<script src="{{ url_for('static', filename='js/netplay/rollback.js', v='phase-input-v4') }}" defer></script>
+<script src="{{ url_for('static', filename='js/netplay/fps_input.js', v='1') }}" defer></script>
+<script src="{{ url_for('static', filename='js/netplay/authoritative.js', v='2') }}" defer></script>
+{% set included = namespace(scripts=['js/netplay/rollback_transport.js']) %}
+{% for game in games.values() %}{% for script in game.scripts %}{% if script not in included.scripts %}
+<script src="{{ url_for('static', filename=script, v='desync-cleanup-v8') }}" defer></script>
+{% set included.scripts = included.scripts + [script] %}
+{% endif %}{% endfor %}{% endfor %}
+{% if catalog|selectattr('available')|selectattr('backend', 'equalto', 'recomp-ring-lockstep-v1')|list %}
+<script src="{{ url_for('main.retro_netplay_asset', filename='netplay.js') }}" defer></script>
+{% endif %}
+<script src="{{ url_for('static', filename='js/netplay/spectator_stream.js', v='1') }}" defer></script>
+<script src="{{ url_for('static', filename='js/netplay/spectators.js', v='2') }}" defer></script>
+<script src="{{ url_for('static', filename='js/netplay/lobby.js', v='desync-lobby-v2') }}" defer></script>
+{% endblock %}

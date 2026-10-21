@@ -1,0 +1,1 @@
+../../marioparty/runtime/renderer_compat.h

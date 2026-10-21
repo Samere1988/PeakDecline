@@ -1,0 +1,19 @@
+{
+  "rom_sha1": "166eda1c05670d337e2c3f15a5db528ae1e5d6e3",
+  "decomp": {
+    "repository": "https://github.com/mariopartyrd/marioparty2.git",
+    "commit": "020a95ae0021a5d6d4e39cf98628cb86faba129a"
+  },
+  "recompiler": {
+    "repository": "https://github.com/N64Recomp/N64Recomp.git",
+    "commit": "ffb39cdad1da5de07eaaa48bd1db4a89a7986771"
+  },
+  "renderer": {
+    "repository": "https://github.com/sm64pc/sm64ex.git",
+    "commit": "d7ca2c04364a6dd0dac58b47151e04e26887e6f0"
+  },
+  "splat": {
+    "repository": "https://github.com/Rainchus/splat.git",
+    "commit": "78c21c6d29f82ceb45301f1d501cb665a71a6b12"
+  }
+}

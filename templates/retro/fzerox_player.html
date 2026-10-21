@@ -1,0 +1,15 @@
+<section id="fzerox-play-area" class="mk64-play-area" hidden aria-label="F-Zero X game"
+         data-runtime-url="{{ url_for('main.retro_game_runtime', game_id='fzerox') }}">
+  <div class="mk64-game-heading"><h1 data-game-title>F-Zero X</h1>
+    <button data-game-restart class="mk64-secondary" type="button" hidden>Restart game for everyone</button></div>
+  <div class="retro-frame-shell game-viewport">
+    <button data-game-fullscreen class="mk64-fullscreen" type="button" aria-label="Enter fullscreen">⛶ Fullscreen</button>
+    <div data-game-frame class="retro-game-frame game-surface"></div>
+    {% from 'retro/n64_touch.html' import controls with context %}
+    {{ controls('fzerox', 'fzerox') }}
+  </div>
+  <p data-fullscreen-status class="mk64-description" role="status"></p>
+  <div class="mk64-volume-control"><label for="fzerox-volume">Game volume</label><input id="fzerox-volume" data-game-volume type="range" min="0" max="100" value="100" aria-label="Game volume"><output data-game-volume-value for="fzerox-volume">100%</output></div>
+  <p class="mk64-controls">Keyboard: arrows steer · Enter Start · X accelerate · C boost · Z / S side attack · A L</p>
+  {% set controller_id = 'fzerox' %}{% include 'retro/controller_setup.html' %}
+</section>

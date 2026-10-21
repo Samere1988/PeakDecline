@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}Live TV - PeakDecline{% endblock %}
+{% block hls_library %}{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/live_tv.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/live_tv.css', v='logo-contrast-v5') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/player_controls.css', v='shared-v2') }}">
 {% endblock %}
 
 {% block content %}
@@ -11,13 +13,13 @@
 
     <!-- LEFT SIDEBAR -->
     <div class="sidebar-left">
-        <div class="brand-header">
+        <a class="brand-header" href="{{ url_for('main.index') }}" aria-label="Peak Decline home">
             <img
                 class="brand-logo"
                 src="{{ url_for('static', filename='img/logo.png') }}"
                 alt="PeakDecline"
             >
-        </div>
+        </a>
 
         <input
             type="text"
@@ -40,26 +42,46 @@
         </div>
 
         <!-- VIDEO -->
-        <div class="video-wrapper">
+        <div id="live-player-shell" class="video-wrapper plex-player-shell controls-visible">
             <video
                 id="video-player"
                 autoplay
                 muted
                 playsinline
                 preload="auto"
-                controls
             ></video>
+            <div class="plex-player-controls" role="group" aria-label="Live TV playback controls">
+                <div class="plex-controls-row">
+                    <button id="live-play-toggle" class="plex-control-btn" type="button" aria-label="Play" title="Play">▶</button>
+                    <button id="live-mute-toggle" class="plex-control-btn" type="button" aria-label="Unmute" title="Unmute">🔇</button>
+                    <input id="live-volume" class="plex-volume" type="range" min="0" max="1" value="1" step="0.05" aria-label="Volume">
+                    <div class="plex-controls-spacer"></div>
+                    <button id="live-quality-cog" class="media-settings-cog" type="button" aria-label="Stream quality" title="Stream quality">⚙</button>
+                    <button id="live-go-live" class="plex-sync-btn" type="button" title="Sync with the shared live position">Sync</button>
+                    <button id="live-fullscreen-toggle" class="plex-control-btn" type="button" aria-label="Fullscreen" title="Fullscreen">⛶</button>
+                </div>
+            </div>
+            <div id="live-quality-panel" class="media-settings-panel" style="display:none;">
+                <div class="media-settings-title">Stream Quality</div>
+                <label for="live-quality-select">Quality</label>
+                <select id="live-quality-select" class="track-select" aria-label="Stream quality">
+                    <option value="auto">Auto (adaptive)</option>
+                    <option value="native" selected>Native resolution</option>
+                    <option value="720">720p</option>
+                    <option value="480">480p</option>
+                </select>
+                <div id="live-quality-note" class="media-settings-note" role="status" aria-live="polite">Quality changes keep you on the shared live timeline.</div>
+            </div>
         </div>
 
         <!-- NOW PLAYING BAR (keeps same IDs your JS expects) -->
-        <div class="video-info-bar" style="display:flex; justify-content:center;">
-            <div
-                class="now-playing-bar"
-                style="display:flex; align-items:center; gap:10px; padding:8px 14px; border-radius:14px; background:rgba(20,20,23,0.8); border:1px solid #222; backdrop-filter: blur(6px);"
-            >
+        <div class="video-info-bar">
+            <div class="now-playing-bar">
+                <div class="playback-status-row">
                 <span class="status-dot-red"></span>
-                <span id="current-status-text" style="font-weight:800; letter-spacing:0.5px;">LIVE</span>
-                <span style="opacity:0.7;">·</span>
+                <span id="current-status-text" role="status" aria-live="polite" aria-atomic="true" style="font-weight:800; letter-spacing:0.5px;">Select a channel to start</span>
+                </div>
+                <div class="channel-details-row">
                 <span style="opacity:0.85;">Now Playing:</span>
 
                 <img
@@ -70,6 +92,21 @@
                 />
 
                 <span id="current-channel-name" style="font-weight:900;">Select a Channel</span>
+                </div>
+                <div id="live-guide" aria-live="polite">Select a channel for programme listings</div>
+                <div class="live-status-actions">
+                    <span id="live-quality-status" role="status" aria-live="polite">Quality: Native resolution</span>
+                    <div class="live-status-buttons">
+                    <button id="live-favorite-toggle" type="button" aria-pressed="false" disabled>☆ Add Favorite</button>
+                    <button id="live-end-stream" type="button" title="Stop the shared stream for everyone watching">End stream</button>
+                    </div>
+                </div>
+                <span id="live-favorite-feedback" role="status" aria-live="polite"></span>
+                <div class="live-sync-times" aria-label="Elapsed stream playback" title="Server is the target playback position; You is your video position on the same stream timeline. Times are elapsed since the first stream chunk.">
+                    <span>Server: <span id="live-server-time">—</span></span>
+                    <span>You: <span id="live-viewer-time">—</span></span>
+                    <span id="live-sync-difference">Sync unavailable</span>
+                </div>
             </div>
         </div>
 
@@ -111,7 +148,11 @@
 {% endblock %}
 
 {% block scripts %}
+<script defer src="{{ url_for('static', filename='js/live_guide.js', v='1') }}"></script>
+<script src="{{ url_for('static', filename='js/logo_contrast.js', v='1') }}"></script>
 <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script src="{{ url_for('static', filename='js/tv_player.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.13/dist/hls.min.js"></script>
+<script src="{{ url_for('static', filename='js/tv_player.js', v='profile-pictures-v3') }}"></script>
+<script src="{{ url_for('static', filename='js/live_controls.js', v='mobile-controls-v2') }}"></script>
+<script src="{{ url_for('static', filename='js/live_quality.js', v='live-native-resolution-v1') }}"></script>
 {% endblock %}

@@ -1,0 +1,11 @@
+.launcher-downloads{max-width:980px;margin:auto;padding:40px 24px 80px;color:#edf2fb}
+.launcher-downloads a{color:#9dd9ff}.preview-label{font-size:12px;letter-spacing:.15em;color:#9bb2cb;margin-top:42px}
+.launcher-downloads h1{font-size:clamp(32px,5vw,52px);line-height:1.1;margin:16px 0}.preview-intro{max-width:720px;line-height:1.7;color:#c4d1e0;font-size:18px}
+.launcher-downloads section{margin-top:36px}.download-panel{padding:28px;border:1px solid #425875;border-radius:18px;background:#142238;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.download-panel h2{margin-top:0}.download-panel p{margin-bottom:0;color:#bfccdc}.download-panel>p{width:100%;font-size:14px;line-height:1.5}
+.launcher-downloads .download-button{display:inline-flex;gap:24px;align-items:center;padding:17px 22px;color:#07111e;background:#a6dfad;border-radius:10px;font-weight:800;text-decoration:none}.download-button:hover{background:#c5f2ca}
+.launcher-downloads a:focus-visible,.launcher-downloads summary:focus-visible{outline:3px solid #fff;outline-offset:5px}
+.launcher-downloads li{padding:7px 0;line-height:1.6}.preview-note{font-size:14px;line-height:1.7;color:#b4c1d2}
+.game-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.game-card{padding:16px;border:1px solid #344359;border-radius:10px;background:#101b2c}.game-card h3{font-size:16px;margin:0 0 10px}.game-card p{font-size:13px;margin:0}.ready{color:#b4e9bc}.pending{color:#bfccdc}
+.launcher-downloads details{margin-top:30px}.launcher-downloads summary{cursor:pointer}.checksum{overflow-wrap:anywhere;font-size:12px;color:#b4c1d2}
+@media(max-width:600px){.launcher-downloads{padding:24px 18px 60px}.download-panel{padding:20px}.download-button{width:100%;justify-content:space-between}}

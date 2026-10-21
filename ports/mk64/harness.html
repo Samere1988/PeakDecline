@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>MK64 browser development</title>
+<style>body{background:#13141a;color:white;font:16px system-ui}canvas{width:min(960px,100%);height:auto;aspect-ratio:16/9;background:black}pre{white-space:pre-wrap}</style>
+<h1>Mario Kart 64 — development build</h1>
+<p>Arrows: steer / menus · Enter: Start · X: A · C: B · Z: Z · S: R</p>
+<canvas id="mk64-canvas" width="640" height="480" tabindex="0"></canvas>
+<pre id="log" role="status"></pre>
+<script src="/mk64.js"></script>
+<script>
+const log = text => { document.querySelector('#log').textContent += text + '\n'; console.log(text); };
+const keys = new Set();
+const input = {buttons:0,x:0,y:0};
+function updateInput() {
+ input.buttons = (keys.has('Enter')?0x1000:0) | (keys.has('KeyX')?0x8000:0) | (keys.has('KeyC')?0x4000:0) | (keys.has('KeyZ')?0x2000:0) | (keys.has('KeyS')?0x10:0);
+ input.x = (keys.has('ArrowRight')?80:0) - (keys.has('ArrowLeft')?80:0);
+ input.y = (keys.has('ArrowUp')?80:0) - (keys.has('ArrowDown')?80:0);
+}
+window.addEventListener('keydown', e => { if (['Enter','KeyX','KeyC','KeyZ','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) { e.preventDefault();keys.add(e.code);updateInput(); } });
+window.addEventListener('keyup', e => {keys.delete(e.code);updateInput();});
+window.addEventListener('blur', () => {keys.clear();updateInput();});
+(async () => {
+ const module = await createMK64({canvas:document.querySelector('canvas'),noInitialRun:true,print:log,printErr:log,onAbort:log});
+ window.mk64 = module;
+ module.mk64Input = input;
+ const audioContext = new AudioContext();
+ document.addEventListener('keydown', () => audioContext.resume(), {once:true});
+ module.mk64Audio = {queuedSamples(rate) {return Math.max(0, ((window.mk64NextAudioTime||0)-audioContext.currentTime)*rate)|0;}, enqueue(pcm, rate) {
+   if (audioContext.state !== 'running') return;
+   const frames = pcm.length / 2, buffer = audioContext.createBuffer(2, frames, rate);
+   for(let i=0;i<frames;i++) {
+     buffer.getChannelData(0)[i]=pcm[i*2]/32768;
+     buffer.getChannelData(1)[i]=pcm[i*2+1]/32768;
+   }
+   const source=audioContext.createBufferSource();source.buffer=buffer;source.connect(audioContext.destination);
+   const now=audioContext.currentTime;
+   window.mk64NextAudioTime=Math.max(window.mk64NextAudioTime||0,now+0.05);
+   source.start(window.mk64NextAudioTime);window.mk64NextAudioTime+=frames/rate;
+ }};
+ if(window.mk64InputAtFrame) module.mk64InputAtFrame = window.mk64InputAtFrame;
+ if(window.mk64Multiplayer) { module.mk64Multiplayer=true; module.mk64NativeMenus=!!window.mk64NativeMenus; module.mk64LocalSlot=window.mk64LocalSlot||0; module.mk64PlayerCount=window.mk64PlayerCount||2; }
+ if(window.mk64InputsAtFrame) module.mk64InputsAtFrame=window.mk64InputsAtFrame;
+ const response = await fetch('/baserom.us.z64');
+ if (!response.ok) throw new Error('ROM unavailable');
+ module.FS.writeFile('/baserom.us.z64', new Uint8Array(await response.arrayBuffer()));
+ module.callMain([]);
+})().catch(error => { log(error.stack || error.message); window.mk64Error = String(error); });
+</script></html>

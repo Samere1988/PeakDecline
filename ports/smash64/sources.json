@@ -1,0 +1,18 @@
+{
+  "status": "browser-integrated-experimental",
+  "browser": {
+    "url": "https://github.com/turtlesoupy/BattleShip",
+    "decomp": "eddd0c9ba8ce0b9e80a225929ce466adc2e999fe",
+    "commit": "81489fae817fc08cd4dbad43a61713db8339491e"
+  },
+  "rollback": {
+    "url": "https://github.com/robin994/ssb-decomp-re-vita",
+    "commit": "f0288553da4d6fd8d3fef2bbc2a591af66e918e5",
+    "files": {
+      "netrollback.c": "c3542133700e72017ba0e399a488ac33d4ef622c8aac3e1010f36572be79ecb3",
+      "netrollback.h": "fa07bd027fdaed86d4542f9c83ddc508764efd1b2aed9308b5d56afc7ba79016",
+      "netsync.c": "5846a15b5a9e562c117158431f0f75b82c6eae6e198bcfc0b5dbfa923492b05f",
+      "netsync.h": "45dfe517c112c9cce016cef094338dc05499b9a1135ce3eaff669b92fc08e8ce"
+    }
+  }
+}

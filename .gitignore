@@ -18,3 +18,62 @@ static/img/logos*
 .idea/
 __pycache__/
 *.pyc
+
+# Downloaded room media and HLS preparation files
+instance/youtube/
+instance/catan.sqlite3*
+
+# Mario Kart source checkouts, compiler, and generated game assets
+.tmp/mk64/
+.tmp/emsdk/
+instance/mk64/
+instance/netplay/
+.tmp/retro/
+.tmp/fzerox/
+instance/fzerox/
+instance/smash64/
+.tmp/battleship-vita-inspect/
+.tmp/ssb-vita-decomp-inspect/
+.tmp/battleship-web/
+.tmp/battleship-web-configure.log
+.tmp/battleship-rollback-compile.log
+.tmp/battleship-link.log
+.tmp/smash-rollback.o
+.tmp/smash-*.log
+.tmp/smash-*.png
+.tmp/smash-*.json
+.tmp/smash-suite/
+
+# Uploaded profile images
+instance/avatars/
+
+# Perfect Dark source and browser artifacts
+.tmp/perfect-dark-web/
+.tmp/perfectdark/
+instance/perfectdark/
+.tmp/perfect-dark-netplay/
+
+# DevilutionX source, browser builds, and full game data
+.tmp/devilutionx/
+.tmp/devilutionx-source/
+instance/devilutionx/
+
+# GTA V downloaded browser build and installation staging
+instance/gta5/
+.tmp/gta5*/
+
+# Colin McRae source, toolchain and generated game data
+.tmp/opencmr2/
+instance/cmr2/
+
+# Secrets and local runtime state (accounts, sessions, saves, channel/guide databases)
+.env
+instance/
+
+# Scratch builds, logs and test output
+.tmp/
+
+# Generated or downloaded media
+static/stream/
+static/mk64-hd/
+static/img/channel-cache/

@@ -4,6 +4,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/room.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/player_controls.css', v='shared-v2') }}">
 {% endblock %}
 
 {% block content %}
@@ -68,7 +69,6 @@
                 </div>
             </div>
         </div>
-
 
         <!-- Ambient Theater Stage -->
         <div class="video-wrapper"
@@ -525,6 +525,12 @@
         </div>
         <!-- /main-video-wrapper -->
 
+        <!-- Shared media status, beneath the video like Live TV. -->
+        <div id="youtube-room-status" class="room-media-status" hidden aria-live="polite">
+            <span id="youtube-room-message" role="status"></span>
+            <progress id="youtube-room-progress" max="100" aria-label="YouTube preparation progress"></progress>
+        </div>
+
     </div>
     <!-- /room-main -->
 
@@ -581,7 +587,7 @@
              ">
 
             <h2>
-                Select Media from Plex
+                Select Media
             </h2>
 
             <button id="btn-close-search"
@@ -600,11 +606,11 @@
 
 
         <div class="search-bar-row">
-
+            <label for="plex-search-input">Plex</label>
             <input type="text"
                    id="plex-search-input"
                    class="chat-input"
-                   placeholder="Search for a movie...">
+                   placeholder="Search Plex...">
 
             <button id="btn-search-plex"
                     class="btn-choose-media"
@@ -613,6 +619,16 @@
             </button>
 
         </div>
+
+        <form id="youtube-form" class="search-bar-row">
+            <label for="youtube-url">YouTube</label>
+            <input id="youtube-url" type="url" class="chat-input" required
+                   placeholder="Paste a YouTube video link" aria-describedby="youtube-error">
+            <button type="submit" class="btn-choose-media">Download &amp; Play</button>
+        </form>
+        <p id="youtube-error" class="youtube-modal-error" role="status" hidden></p>
+        <progress id="youtube-progress" class="youtube-job-progress" max="100"
+                  aria-label="YouTube download and preparation progress" hidden></progress>
 
 
         <div id="search-results"
@@ -724,11 +740,12 @@
 
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/emulator_saves.js', v='1') }}"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
 
-<script src="{{ url_for('static', filename='js/room_player.js') }}"></script>
+<script src="{{ url_for('static', filename='js/room_player.js', v='profile-pictures-v3') }}"></script>
 
 {% endblock %}

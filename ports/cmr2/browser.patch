@@ -1,0 +1,770 @@
+diff --git a/game/Car.cpp b/game/Car.cpp
+index a03d6f0..1348458 100644
+--- a/game/Car.cpp
++++ b/game/Car.cpp
+@@ -2827,7 +2827,7 @@ void Car_UpdateSuspension(void)
+         flat.y = 0;
+         flat.z = 0x10000;
+         angle = FTOI(short, (double)FixMul(g_pCurrentCar->field_0xb1d << 16, 0x3333) * g_fixedDegreesToAngle12);
+-        ((void (__stdcall *)(FixMatrix *, FixVector *, short))FixMatrix_FromAxisAngle)(&m, &flat, angle);
++        FixMatrix_FromAxisAngle(&m, &flat, angle);
+         for (i = 0; i < 3; i++) {
+             FixMatrix_RotateVector(&flat, &basis[i], &m);
+             Car_NormalizeForceVector(&basis[i], &flat);
+@@ -5011,7 +5011,7 @@ void Car_UpdateSteering(void)
+     if (angle == 0) {
+         g_pCurrentCar->frontWheelDir = g_pCurrentCar->rearWheelDir;
+     } else {
+-        ((void (__stdcall *)(FixMatrix *, FixVector *, short))FixMatrix_FromAxisAngle)(&m, &g_pCurrentCar->up, angle);
++        FixMatrix_FromAxisAngle(&m, &g_pCurrentCar->up, angle);
+         FixMatrix_RotateVector(&t, &g_pCurrentCar->rearWheelDir, &m);
+         FixVecNormalizeLen(&g_pCurrentCar->frontWheelDir, &t);
+     }
+diff --git a/game/GameInfo.cpp b/game/GameInfo.cpp
+index dec9ff8..206f282 100644
+--- a/game/GameInfo.cpp
++++ b/game/GameInfo.cpp
+@@ -1,3 +1,10 @@
++#include <emscripten.h>
++EM_JS(int, Peak_MovieSkipRequest, (), {
++    const pressed=!!(Module.cmr2Pad?.buttons & 0x3000);
++    const skip=Module.cmr2SkipMovie || (pressed && !Module.cmr2MovieButtonHeld);
++    Module.cmr2SkipMovie=false;Module.cmr2MovieButtonHeld=pressed;
++    return skip?1:0;
++});
+ #include "port/movie.h"
+ #include "port/sys.h"
+ // The original sums the two packed DWORDs, including both high shorts.
+@@ -656,7 +663,7 @@ double g_unk0x005113b8 = 0.5;
+ static BOOL OptionMovie_PollEvents(void)
+ {
+     SysEvent event;
+-    BOOL skip = FALSE;
++    BOOL skip = Peak_MovieSkipRequest();
+     while (Sys_PollEvent(&event)) {
+         if (event.type == SYS_EVENT_KEY_DOWN &&
+             (event.key == INPUT_KEY_RETURN || event.key == INPUT_KEY_NUMPADENTER)) {
+diff --git a/game/Menu.cpp b/game/Menu.cpp
+index 2e51a7f..10580b0 100644
+--- a/game/Menu.cpp
++++ b/game/Menu.cpp
+@@ -1,3 +1,9 @@
++#include <emscripten.h>
++EM_JS(int, Peak_MenuRequest, (int id, int count), {
++    const request=Module.cmr2MenuRequest;
++    if(!request||request.menu!==id||request.index<0||request.index>=count)return 0;
++    Module.cmr2MenuRequest=null;return request.index+1;
++});
+ #include "Menu.h"
+ #include "Input.h"
+ #include "Sound.h"
+@@ -288,6 +294,8 @@ void Menu_SetNextAction(Menu *action)
+ // pairs swap with layout), 4 select, 5 back.
+ // match 86%: below the 90% bar; kept as FUNCTION on purpose so reccmp measures it (see CONVENCIONES)
+ // FUNCTION: CMR2 0x004a0570
++extern void Peak_PrepareRequestedMenu(Menu *menu);
++
+ Menu *Menu_Update(Menu *pMenu, unsigned int input)
+ {
+     BYTE bNext;
+@@ -317,6 +325,12 @@ Menu *Menu_Update(Menu *pMenu, unsigned int input)
+         g_menuActionPending = 0;
+         g_unk0x0059fa17 = 0;
+     }
++    int requested = Peak_MenuRequest(pMenu->field_0x4,pMenu->itemCount);
++    if(requested) {
++        Peak_PrepareRequestedMenu(pMenu);
++        pMenu->cursor=(BYTE)(requested-1);
++        input|=0x10;
++    }
+     if (g_menuNextAction == 0) {
+         flags = MENU_FLAGS(pMenu);
+         if (flags & 4)
+diff --git a/game/NetPlayers.cpp b/game/NetPlayers.cpp
+index adb3d6d..785a6b5 100644
+--- a/game/NetPlayers.cpp
++++ b/game/NetPlayers.cpp
+@@ -225,7 +225,10 @@ void NetPlayers_ReceiveStatistics(NetPlayerID *pId, NetStats *pStats)
+         if (g_netPlayers[i].id == *pId)
+             g_netPlayers[i].field_0xc++;
+         if ((g_netPlayers[i].flags & 0x80) && g_netPlayers[i].id == *pId && !(g_netPlayers[i].flags & 0x400000)) {
+-            if (g_unk0x00539cc8 != 0 && g_netPlayers[i].stats.seq < pStats->seq) {
++            // The wire counter wraps at 65536 ticks. Compare within its
++            // half-range so wrapping updates win while stale packets do not.
++            unsigned short advance = (unsigned short)(pStats->seq - g_netPlayers[i].stats.seq);
++            if (g_unk0x00539cc8 != 0 && advance != 0 && advance < 0x8000) {
+                 g_netPlayers[i].stats = *pStats;
+                 g_netPlayers[i].statsNew = 1;
+             }
+diff --git a/game/NetRace.cpp b/game/NetRace.cpp
+index e5402d8..99e6df6 100644
+--- a/game/NetRace.cpp
++++ b/game/NetRace.cpp
+@@ -1185,8 +1185,11 @@ int NetRace_DecodeReceivedCarState(CarNetRecord *pRec, int *pOut)
+     int diff;
+     int i;
+ 
+-    diff = (int)(unsigned short)g_localCarStats.seq - (int)pRec->lastSeq;
+-    if (diff > 0 && g_unk0x00539cc8 != 0 && diff < 100 &&
++    // These are complete snapshots. Rejecting a gap of 100 ticks left lastSeq
++    // stuck forever after a four-second outage; accept a newer snapshot and
++    // let the normal remote-clock resync handle the discontinuity.
++    diff = (unsigned short)(g_localCarStats.seq - pRec->lastSeq);
++    if (diff > 0 && g_unk0x00539cc8 != 0 && diff < 0x8000 &&
+         (unsigned short)g_localCarPacket.sector < (unsigned int)g_sectorCount) {
+         pRec->updated = 1;
+         pRec->seq = g_localCarStats.seq;
+diff --git a/game/main.cpp b/game/main.cpp
+index 69ccb1a..e3f7dae 100644
+--- a/game/main.cpp
++++ b/game/main.cpp
+@@ -1,3 +1,5 @@
++#include <emscripten.h>
++EM_JS(int, Peak_ShouldRun, (), {return !Module.cmr2Stopped;});
+ #include "port/sys.h"
+ #include "port/diagnostics.h"
+ #include "main.h"
+@@ -61,8 +63,9 @@ unsigned int CMain::Initialize(const char *commandLine)
+ 
+ 	CreateGameWindow(m_gameName);
+ 
+-	while (!CGame::m_shouldExit)
++	while (!CGame::m_shouldExit && Peak_ShouldRun())
+ 	{
++        emscripten_sleep(0);
+ 		if (CGame::m_isActive)
+ 		{
+ 			if (Sys_WaitEvent(&event))
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 9af00f2..698d94b 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-set(GAME_DIR ${PROJECT_SOURCE_DIR}/game)
++set(GAME_DIR ${PEAK_CMR_SOURCE}/game)
+ 
+ # Small standalone decoder, also usable by tests without SDL or game data.
+ add_library(opencmr2_bink STATIC video/bink_decoder.cpp)
+@@ -57,7 +57,7 @@ else()
+ endif()
+ target_link_libraries(opencmr2 PRIVATE opencmr2_platform)
+ if(WIN32)
+-    target_sources(opencmr2 PRIVATE ${PROJECT_SOURCE_DIR}/res/opencmr2.rc)
++    target_sources(opencmr2 PRIVATE ${PEAK_CMR_SOURCE}/res/opencmr2.rc)
+     # SDL3.dll (and any other runtime DLL) next to the executable.
+     add_custom_command(TARGET opencmr2 POST_BUILD
+         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:opencmr2> $<TARGET_FILE_DIR:opencmr2>
+@@ -74,68 +74,7 @@ elseif(OPENCMR2_BUILT_SDL AND NOT ANDROID)
+         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_SONAME_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:opencmr2>)
+ endif()
+ 
+-# ---- shaders (GLSL -> SPIR-V, plus MSL for Metal; embedded) ----------------------
+-# SDL_GPU takes SPIR-V on Vulkan (Linux, Windows) and MSL on Metal (macOS).
+-# The MSL comes from the same SPIR-V through SPIRV-Cross; the SPIR-V bindings
+-# already follow SDL_GPU's resource order, so they become the Metal indices.
+-option(OPENCMR2_SHADERS_MSL "Also build Metal (MSL) shaders" ${APPLE})
+-# Recent glslang releases use glslang.exe; older packages keep glslangValidator.
+-find_program(GLSLANG_VALIDATOR NAMES glslangValidator glslang REQUIRED)
+-if(OPENCMR2_SHADERS_MSL)
+-    find_program(SPIRV_CROSS_EXECUTABLE spirv-cross)
+-    if(SPIRV_CROSS_EXECUTABLE)
+-        set(SPIRV_CROSS ${SPIRV_CROSS_EXECUTABLE})
+-    else()
+-        message(STATUS "OpenCMR2: building spirv-cross from source")
+-        include(FetchContent)
+-        # The command-line tool needs the GLSL, HLSL, MSL, C++ and reflection back ends.
+-        foreach(option SPIRV_CROSS_ENABLE_TESTS SPIRV_CROSS_ENABLE_C_API SPIRV_CROSS_SHARED)
+-            set(${option} OFF CACHE BOOL "" FORCE)
+-        endforeach()
+-        set(SPIRV_CROSS_CLI ON CACHE BOOL "" FORCE)
+-        set(SPIRV_CROSS_STATIC ON CACHE BOOL "" FORCE)
+-        set(SPIRV_CROSS_SKIP_INSTALL ON CACHE BOOL "" FORCE)
+-        FetchContent_Declare(SPIRV-Cross
+-            GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Cross.git
+-            GIT_TAG vulkan-sdk-1.4.363.0
+-            GIT_SHALLOW TRUE)
+-        FetchContent_MakeAvailable(SPIRV-Cross)
+-        set(SPIRV_CROSS $<TARGET_FILE:spirv-cross>)
+-    endif()
+-endif()
+-
+-set(SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/render/shaders)
+-set(SHADER_SOURCES fixed3d.vert fixedtl.vert fixed.frag clear.vert clear.frag
+-    modern3d.vert moderntl.vert modern.frag)
+-set(SHADER_FILES)
+-foreach(shader IN LISTS SHADER_SOURCES)
+-    set(output ${CMAKE_CURRENT_BINARY_DIR}/shaders/${shader}.spv)
+-    add_custom_command(
+-        OUTPUT ${output}
+-        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/shaders
+-        COMMAND ${GLSLANG_VALIDATOR} -V --target-env vulkan1.0 -o ${output} ${SHADER_DIR}/${shader}
+-        DEPENDS ${SHADER_DIR}/${shader} ${SHADER_DIR}/common.glsl ${SHADER_DIR}/modern_common.glsl
+-        COMMENT "Compiling shader ${shader}")
+-    list(APPEND SHADER_FILES ${output})
+-    if(OPENCMR2_SHADERS_MSL)
+-        set(msl ${CMAKE_CURRENT_BINARY_DIR}/shaders/${shader}.msl)
+-        add_custom_command(
+-            OUTPUT ${msl}
+-            COMMAND ${SPIRV_CROSS} --msl --msl-version 20100 --msl-decoration-binding --output ${msl} ${output}
+-            DEPENDS ${output}
+-            COMMENT "Translating shader ${shader} to MSL")
+-        list(APPEND SHADER_FILES ${msl})
+-    endif()
+-endforeach()
+-set(SHADER_HEADER ${CMAKE_CURRENT_BINARY_DIR}/generated/shaders_spirv.h)
+-string(REPLACE ";" "|" SHADER_LIST "${SHADER_FILES}")
+-add_custom_command(
+-    OUTPUT ${SHADER_HEADER}
+-    COMMAND ${CMAKE_COMMAND} -DOUTPUT=${SHADER_HEADER} -DINPUTS=${SHADER_LIST} -P ${PROJECT_SOURCE_DIR}/cmake/embed_spirv.cmake
+-    VERBATIM
+-    DEPENDS ${SHADER_FILES} ${PROJECT_SOURCE_DIR}/cmake/embed_spirv.cmake
+-    COMMENT "Embedding shaders")
+-
++set(SHADER_HEADER ${PEAK_CMR_GENERATED}/shaders_spirv.h)
+ # ---- window icon (embedded) ------------------------------------------------------
+ # res/opencmr2.png is the source; the derived icons are regenerated with:
+ #   magick res/opencmr2.png -define icon:auto-resize=256,128,96,64,48,40,32,24,20,16 res/opencmr2.ico
+@@ -143,14 +82,14 @@ add_custom_command(
+ #   magick res/opencmr2.png -resize 256x256 -strip PNG24:res/opencmr2_256.png
+ # The BMP is the window icon; the PNG goes to the Linux icon theme with the
+ # applications menu entry.
+-set(ICON_BMP ${PROJECT_SOURCE_DIR}/res/opencmr2_icon.bmp)
+-set(ICON_PNG ${PROJECT_SOURCE_DIR}/res/opencmr2_256.png)
++set(ICON_BMP ${PEAK_CMR_SOURCE}/res/opencmr2_icon.bmp)
++set(ICON_PNG ${PEAK_CMR_SOURCE}/res/opencmr2_256.png)
+ set(ICON_HEADER ${CMAKE_CURRENT_BINARY_DIR}/generated/opencmr2_icon.h)
+ add_custom_command(
+     OUTPUT ${ICON_HEADER}
+-    COMMAND ${CMAKE_COMMAND} -DOUTPUT=${ICON_HEADER} "-DINPUTS=${ICON_BMP}|${ICON_PNG}" -P ${PROJECT_SOURCE_DIR}/cmake/embed_spirv.cmake
++    COMMAND ${CMAKE_COMMAND} -DOUTPUT=${ICON_HEADER} "-DINPUTS=${ICON_BMP}|${ICON_PNG}" -P ${PEAK_CMR_SOURCE}/cmake/embed_spirv.cmake
+     VERBATIM
+-    DEPENDS ${ICON_BMP} ${ICON_PNG} ${PROJECT_SOURCE_DIR}/cmake/embed_spirv.cmake
++    DEPENDS ${ICON_BMP} ${ICON_PNG} ${PEAK_CMR_SOURCE}/cmake/embed_spirv.cmake
+     COMMENT "Embedding the window icon")
+ 
+ # Applications menu entry: on its own, as it includes the real <windows.h>
+@@ -163,25 +102,6 @@ if(WIN32)
+ endif()
+ target_link_libraries(opencmr2_platform PUBLIC opencmr2_shortcut)
+ 
+-# ---- network (UDP with ENet, third_party/enet) -------------------------------------
+-set(ENET_DIR ${PROJECT_SOURCE_DIR}/third_party/enet)
+-add_library(enet STATIC
+-    ${ENET_DIR}/callbacks.c ${ENET_DIR}/compress.c ${ENET_DIR}/host.c ${ENET_DIR}/list.c
+-    ${ENET_DIR}/packet.c ${ENET_DIR}/peer.c ${ENET_DIR}/protocol.c ${ENET_DIR}/unix.c ${ENET_DIR}/win32.c)
+-target_include_directories(enet PUBLIC ${ENET_DIR}/include)
+-if(WIN32)
+-    target_link_libraries(enet PUBLIC ws2_32 winmm)
+-else()
+-    target_compile_definitions(enet PRIVATE HAS_FCNTL=1 HAS_POLL=1 HAS_GETADDRINFO=1 HAS_GETNAMEINFO=1
+-        HAS_INET_PTON=1 HAS_INET_NTOP=1 HAS_MSGHDR_FLAGS=1 HAS_SOCKLEN_T=1)
+-endif()
+-
+-# Sessions over ENet, without SDL: tests run hosts and clients in one process.
+-add_library(opencmr2_net STATIC net/net_session.cpp)
+-target_include_directories(opencmr2_net PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+-find_package(Threads REQUIRED)
+-target_link_libraries(opencmr2_net PUBLIC enet Threads::Threads)
+-
+ # ---- platform subsystems ---------------------------------------------------------
+ target_sources(opencmr2_platform PRIVATE
+     render/gfx_core.cpp
+@@ -193,6 +113,6 @@ target_sources(opencmr2_platform PRIVATE
+     audio/audio_sdl.cpp
+     input/input_sdl.cpp
+     video/movie.cpp
+-    net/net_api.cpp)
+-target_include_directories(opencmr2_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+-target_link_libraries(opencmr2_platform PRIVATE opencmr2_bink opencmr2_net)
++    ${PEAK_CMR_PORT}/src/net_browser.cpp)
++target_include_directories(opencmr2_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated ${PEAK_CMR_GENERATED})
++target_link_libraries(opencmr2_platform PRIVATE opencmr2_bink)
+diff --git a/src/input/input_sdl.cpp b/src/input/input_sdl.cpp
+index 62fc75b..5fa42dc 100644
+--- a/src/input/input_sdl.cpp
++++ b/src/input/input_sdl.cpp
+@@ -1,3 +1,12 @@
++#include <emscripten.h>
++EM_JS(int, Peak_MappedKeys, (), {
++    const pad=Module.cmr2Pad || {x:0,y:0,buttons:0};
++    const racing=Module.cmr2State?.mode===3;
++    return (pad.x < -20 ? 1:0) | (pad.x > 20 ? 2:0) |
++        ((pad.buttons & 0x8000 || pad.y>20) ? 4:0) | ((pad.buttons & 0x4000 || pad.y < -20) ? 8:0) |
++        (pad.buttons & 0x2000 ? 16:0) | (((pad.buttons & 0x1000 && !racing) || Module.cmr2AutoEnter) ? 32:0) |
++        ((pad.buttons & 8 || (racing && pad.buttons & 0x1000)) ? 64:0);
++});
+ // Input on SDL3: see port/input.h.
+ 
+ #include "platform/platform.h"
+@@ -385,6 +394,14 @@ extern "C" void Input_SetMouseExclusive(InputDevice *device, BOOL exclusive)
+         SDL_SetWindowRelativeMouseMode(Platform_GetWindow(), exclusive != 0);
+ }
+ 
++static const int peakKeys[7] = {INPUT_KEY_LEFT, INPUT_KEY_RIGHT, INPUT_KEY_UP, INPUT_KEY_DOWN,
++    INPUT_KEY_SPACE, INPUT_KEY_RETURN, INPUT_KEY_ESCAPE};
++static bool Peak_MappedKeyDown(int key) {
++    int mask=Peak_MappedKeys();
++    for(int i=0;i<7;i++)if(key==peakKeys[i])return (mask & (1<<i)) != 0;
++    return false;
++}
++
+ extern "C" BOOL Input_ReadKeyboard(InputDevice *device, BYTE keys[256])
+ {
+     if (s_testKeyboard) {
+@@ -407,6 +424,8 @@ extern "C" BOOL Input_ReadKeyboard(InputDevice *device, BYTE keys[256])
+                 keys[dik] = 0x80;
+         }
+     }
++    int mapped=Peak_MappedKeys();
++    for(int i=0;i<7;i++)if(mapped & (1<<i))keys[peakKeys[i]]=0x80;
+     return TRUE;
+ }
+ 
+@@ -471,6 +490,7 @@ extern "C" BOOL Input_ReadJoystick(InputDevice *device, InputJoystickState *stat
+ 
+ extern "C" BOOL Input_IsKeyDown(int key)
+ {
++    if(Peak_MappedKeyDown(key))return TRUE;
+     if (s_testKeyboard)
+         return key >= 0 && key < 256 && (s_testKeyboard[key] & 0x80);
+     int count = 0;
+diff --git a/src/platform/main.cpp b/src/platform/main.cpp
+index 1fccbf5..11c46e3 100644
+--- a/src/platform/main.cpp
++++ b/src/platform/main.cpp
+@@ -12,11 +12,14 @@
+ #endif
+ #include <SDL3/SDL_main.h>
+ 
++extern "C" void Peak_BrowserInit();
++
+ int main(int argc, char **argv)
+ {
+     SDL_SetMainReady();
+     if (!Platform_Init(argc, argv))
+         return Platform_WasSetupCanceled() ? 0 : 1;
++    Peak_BrowserInit();
+     Diagnostics::StartProfileFromEnvironment();
+     unsigned int code = CMain::Initialize(Sys_GetCommandLine());
+     Diagnostics::StopProfile();
+diff --git a/src/platform/sys.cpp b/src/platform/sys.cpp
+index b73bd0e..809d3c9 100644
+--- a/src/platform/sys.cpp
++++ b/src/platform/sys.cpp
+@@ -1,3 +1,7 @@
++#include <emscripten.h>
++EM_ASYNC_JS(int, Peak_EnsureFile, (const char *path), {
++    return Module.ensureGameFile ? await Module.ensureGameFile(UTF8ToString(path)) : 1;
++});
+ // System services on SDL3: see port/sys.h.
+ 
+ #include "platform/platform.h"
+@@ -735,7 +739,7 @@ extern "C" void Sys_Sleep(DWORD ms)
+         s_testClock->sleep(ms);
+         return;
+     }
+-    SDL_Delay(ms);
++    emscripten_sleep(ms);
+ }
+ 
+ // ---- events ----------------------------------------------------------------------
+@@ -996,7 +1000,7 @@ extern "C" BOOL Sys_ResolvePath(const char *path, BOOL forWriting, char *out, si
+         host = PathForWriting(parts);
+     } else {
+         host = ResolveForReading(path);
+-        if (host.empty())
++        if (host.empty() || !Peak_EnsureFile(host.c_str()))
+             return FALSE;
+     }
+     if (host.size() + 1 > outSize)
+diff --git a/src/render/gfx_classic.cpp b/src/render/gfx_classic.cpp
+index 98b1731..b96bd44 100644
+--- a/src/render/gfx_classic.cpp
++++ b/src/render/gfx_classic.cpp
+@@ -239,6 +239,7 @@ struct ClassicExecutor : GfxExecutor {
+         info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+         info.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL;
+         info.rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE;
++        info.rasterizer_state.enable_depth_clip = true;
+         info.depth_stencil_state.enable_depth_test = depth;
+         info.depth_stencil_state.enable_depth_write = depth;
+         info.depth_stencil_state.compare_op = SDL_GPU_COMPAREOP_ALWAYS;
+diff --git a/src/render/gfx_core.cpp b/src/render/gfx_core.cpp
+index fdf3a50..c3ede3a 100644
+--- a/src/render/gfx_core.cpp
++++ b/src/render/gfx_core.cpp
+@@ -1,3 +1,34 @@
++#include <emscripten.h>
++EM_ASYNC_JS(void, Peak_PresentFrame, (), {
++    Module.cmr2Frames = (Module.cmr2Frames || 0) + 1;
++    const now = performance.now(), next = Module.cmr2NextFrameAt || now;
++    Module.cmr2PresentWaiting = true;
++    await new Promise(resolve => {
++        let raf, pacingTimer, finished = false;
++        const finish = time => {
++            if (finished) return;
++            finished = true;
++            clearTimeout(timer);
++            clearTimeout(pacingTimer);
++            cancelAnimationFrame(raf);
++            Module.cmr2NextFrameAt = Math.max(next + 1000 / 60, time);
++            Module.cmr2PresentWaiting = false;
++            resolve();
++        };
++        // Firefox can suspend frame callbacks without marking the page hidden.
++        // Keep native simulation and input alive when that callback is withheld.
++        const timer = setTimeout(() => {
++            Module.cmr2FrameFallbacks = (Module.cmr2FrameFallbacks || 0) + 1;
++            finish(performance.now());
++        }, 1000 / 30);
++        const frame = () => {
++            const time = performance.now();
++            if (time + 0.5 >= next) finish(time);
++            else pacingTimer = setTimeout(() => finish(performance.now()), next - time);
++        };
++        raf = requestAnimationFrame(frame);
++    });
++});
+ // The renderer's front end: the gfx.h state machine, CPU copies of textures
+ // and vertex buffers, and the recording of each frame for the executor.
+ 
+@@ -13,6 +44,7 @@
+ #include <string.h>
+ 
+ #include <algorithm>
++#include <string>
+ 
+ namespace {
+ 
+@@ -378,6 +410,9 @@ static void Present(BOOL vsync, bool stretch)
+         Diagnostics::observer->BeginPresent();
+     if (s_executor != NULL)
+         s_executor->Execute(s_frame, s_textures, s_readback, true, vsync != 0, stretch);
++    static std::string lastError;
++    const char *error = SDL_GetError();
++    if (error && *error && lastError != error) { lastError=error; Sys_Log("webgpu: %s",error); }
+     s_frame.Reset();
+     s_record++;
+     s_presentedFrames++;
+@@ -388,8 +423,8 @@ static void Present(BOOL vsync, bool stretch)
+         Diagnostics::observer->EndPresent();
+ }
+ 
+-extern "C" void Gfx_Present(BOOL vsync) { Present(vsync, false); }
+-extern "C" void Gfx_PresentStretched(BOOL vsync) { Present(vsync, true); }
++extern "C" void Gfx_Present(BOOL vsync) { Present(vsync, false); Peak_PresentFrame(); }
++extern "C" void Gfx_PresentStretched(BOOL vsync) { Present(vsync, true); Peak_PresentFrame(); }
+ 
+ // Runs what is recorded so far without ending the frame.
+ static void Flush(void)
+@@ -627,7 +662,7 @@ extern "C" void Gfx_UnlockVertexBuffer(GfxVertexBuffer *)
+ 
+ extern "C" void Gfx_DrawPrimitiveVB(int primitive, GfxVertexBuffer *buffer, DWORD firstVertex, DWORD vertexCount)
+ {
+-    s_traceCaller = __builtin_return_address(0);
++    s_traceCaller = TraceFile() ? __builtin_return_address(0) : NULL;
+     if (buffer == NULL || firstVertex + vertexCount > buffer->vertices.size())
+         return;
+     RecordDraw(primitive, false, buffer->vertices.data() + firstVertex, vertexCount, NULL, 0, buffer, firstVertex);
+@@ -636,7 +671,7 @@ extern "C" void Gfx_DrawPrimitiveVB(int primitive, GfxVertexBuffer *buffer, DWOR
+ extern "C" void Gfx_DrawIndexedPrimitiveVB(int primitive, GfxVertexBuffer *buffer, DWORD firstVertex, DWORD vertexCount,
+                                            const WORD *indices, DWORD indexCount)
+ {
+-    s_traceCaller = __builtin_return_address(0);
++    s_traceCaller = TraceFile() ? __builtin_return_address(0) : NULL;
+     if (buffer == NULL || firstVertex + vertexCount > buffer->vertices.size())
+         return;
+     RecordDraw(primitive, false, buffer->vertices.data() + firstVertex, vertexCount, indices, indexCount, buffer,
+@@ -645,27 +680,27 @@ extern "C" void Gfx_DrawIndexedPrimitiveVB(int primitive, GfxVertexBuffer *buffe
+ 
+ extern "C" void Gfx_DrawPrimitive(int primitive, const GfxVertex *vertices, DWORD vertexCount)
+ {
+-    s_traceCaller = __builtin_return_address(0);
++    s_traceCaller = TraceFile() ? __builtin_return_address(0) : NULL;
+     RecordDraw(primitive, false, vertices, vertexCount, NULL, 0);
+ }
+ 
+ extern "C" void Gfx_DrawIndexedPrimitive(int primitive, const GfxVertex *vertices, DWORD vertexCount, const WORD *indices,
+                                          DWORD indexCount)
+ {
+-    s_traceCaller = __builtin_return_address(0);
++    s_traceCaller = TraceFile() ? __builtin_return_address(0) : NULL;
+     RecordDraw(primitive, false, vertices, vertexCount, indices, indexCount);
+ }
+ 
+ extern "C" void Gfx_DrawPrimitiveTL(int primitive, const GfxTLVertex *vertices, DWORD vertexCount)
+ {
+-    s_traceCaller = __builtin_return_address(0);
++    s_traceCaller = TraceFile() ? __builtin_return_address(0) : NULL;
+     RecordDraw(primitive, true, vertices, vertexCount, NULL, 0);
+ }
+ 
+ extern "C" void Gfx_DrawIndexedPrimitiveTL(int primitive, const GfxTLVertex *vertices, DWORD vertexCount,
+                                            const WORD *indices, DWORD indexCount)
+ {
+-    s_traceCaller = __builtin_return_address(0);
++    s_traceCaller = TraceFile() ? __builtin_return_address(0) : NULL;
+     RecordDraw(primitive, true, vertices, vertexCount, indices, indexCount);
+ }
+ 
+diff --git a/src/render/gfx_modern.cpp b/src/render/gfx_modern.cpp
+index 3dd07ff..09a0c64 100644
+--- a/src/render/gfx_modern.cpp
++++ b/src/render/gfx_modern.cpp
+@@ -137,7 +137,7 @@ struct ModernExecutor : GfxExecutor {
+         wantedSamples = BackSamples();
+         renderScale = std::max(25, std::min(400, Platform_GetSettingInt("video.render_scale", 100)));
+         vs3d = gpu.Shader(SHADER_CODE(modern3d_vert), SDL_GPU_SHADERSTAGE_VERTEX, 0, 3);
+-        vsTL = gpu.Shader(SHADER_CODE(moderntl_vert), SDL_GPU_SHADERSTAGE_VERTEX, 0, 3);
++        vsTL = gpu.Shader(SHADER_CODE(moderntl_vert), SDL_GPU_SHADERSTAGE_VERTEX, 0, 1);
+         fs = gpu.Shader(SHADER_CODE(modern_frag), SDL_GPU_SHADERSTAGE_FRAGMENT, 4, 1);
+         vsClear = gpu.Shader(SHADER_CODE(clear_vert), SDL_GPU_SHADERSTAGE_VERTEX, 0, 1);
+         fsClear = gpu.Shader(SHADER_CODE(clear_frag), SDL_GPU_SHADERSTAGE_FRAGMENT, 0, 1);
+@@ -339,6 +339,7 @@ struct ModernExecutor : GfxExecutor {
+         info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+         info.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL;
+         info.rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE;
++        info.rasterizer_state.enable_depth_clip = true;
+         info.depth_stencil_state.enable_depth_test = depth;
+         info.depth_stencil_state.enable_depth_write = depth;
+         info.depth_stencil_state.compare_op = SDL_GPU_COMPAREOP_ALWAYS;
+@@ -573,6 +574,7 @@ struct ModernExecutor : GfxExecutor {
+             }
+             if (pass == NULL) {
+                 pass = BeginPass(cmd, target, targetW, targetH, gameW, gameH, samples);
++                if (!pass) { Sys_Log("gfx: BeginPass failed: %s", SDL_GetError()); break; }
+                 boundPipeline = NULL;
+                 boundVertices = NULL;
+                 indicesBound = false;
+diff --git a/src/render/gpu_context.cpp b/src/render/gpu_context.cpp
+index f6cde89..ba60a45 100644
+--- a/src/render/gpu_context.cpp
++++ b/src/render/gpu_context.cpp
+@@ -98,6 +98,8 @@ GpuContext::~GpuContext()
+     if (device == NULL)
+         return;
+     SDL_WaitForGPUIdle(device);
++    SDL_ReleaseGPUFence(device, pendingReadbackFence);
++    SDL_ReleaseGPUTransferBuffer(device, pendingReadback);
+     for (auto &s : samplers)
+         SDL_ReleaseGPUSampler(device, s.second);
+     SDL_ReleaseGPUTexture(device, white2D);
+@@ -112,6 +114,7 @@ GpuContext::~GpuContext()
+ SDL_GPUDevice *GpuContext::CreateDevice(SDL_GPUShaderFormat formats, bool debug, bool withAnisotropy)
+ {
+     SDL_PropertiesID props = SDL_CreateProperties();
++    SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_WGSL_BOOLEAN, true);
+     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN,
+                            (formats & SDL_GPU_SHADERFORMAT_SPIRV) != 0);
+     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN,
+@@ -137,7 +140,7 @@ bool GpuContext::Create(int wantedAnisotropy)
+         return false;
+     }
+     bool debug = Platform_GetSettingInt("video.gpu_debug", 0) != 0;
+-    SDL_GPUShaderFormat formats = SDL_GPU_SHADERFORMAT_SPIRV;
++    SDL_GPUShaderFormat formats = SDL_GPU_SHADERFORMAT_WGSL;
+ #ifdef OPENCMR2_SHADERS_MSL
+     formats |= SDL_GPU_SHADERFORMAT_MSL;
+ #endif
+@@ -154,8 +157,7 @@ bool GpuContext::Create(int wantedAnisotropy)
+         Sys_Log("gfx: SDL_CreateGPUDevice: %s", SDL_GetError());
+         return false;
+     }
+-    if (!(SDL_GetGPUShaderFormats(device) & SDL_GPU_SHADERFORMAT_SPIRV))
+-        shaderFormat = SDL_GPU_SHADERFORMAT_MSL;
++    shaderFormat = SDL_GPU_SHADERFORMAT_WGSL;
+     if (!SDL_ClaimWindowForGPUDevice(device, window)) {
+         Sys_Log("gfx: SDL_ClaimWindowForGPUDevice: %s", SDL_GetError());
+         return false;
+@@ -209,7 +211,21 @@ SDL_GPUShader *GpuContext::Shader(const unsigned char *spirv, size_t spirvSize,
+     info.stage = stage;
+     info.num_samplers = samplerCount;
+     info.num_uniform_buffers = uniforms;
+-    SDL_GPUShader *shader = SDL_CreateGPUShader(device, &info);
++    SDL_GPUSampledTextureSlotDescription sampled[4] = {};
++    for (int i = 0; i < samplerCount; i++) {
++        sampled[i].texture_type = (i & 1) ? SDL_GPU_TEXTURETYPE_CUBE : SDL_GPU_TEXTURETYPE_2D;
++        sampled[i].sample_type = SDL_GPU_SHADERTEXTURESAMPLETYPE_FILTERABLE_FLOAT;
++        sampled[i].sampler_type = SDL_GPU_SHADERSAMPLERTYPE_FILTERING;
++    }
++    SDL_GPUShaderResourceLayout layout = {};
++    layout.stage = stage;
++    layout.num_samplers = samplerCount;
++    layout.num_uniform_buffers = uniforms;
++    layout.sampled_texture_slots = samplerCount ? sampled : nullptr;
++    SDL_GPUShaderWithResourceLayoutCreateInfo full = {};
++    full.code_size = info.code_size; full.code = info.code; full.entrypoint = info.entrypoint; full.format = info.format;
++    full.resource_layout = &layout;
++    SDL_GPUShader *shader = SDL_CreateGPUShaderWithResourceLayout(device, &full);
+     if (shader == NULL)
+         Sys_Log("gfx: shader: %s", SDL_GetError());
+     return shader;
+@@ -512,8 +528,12 @@ void GpuContext::DestroyVertexBuffer(GfxVertexBuffer *b)
+ 
+ void GpuContext::UploadGeometry(SDL_GPUCommandBuffer *cmd, const GfxFrame &frame)
+ {
+-    uint32_t vertexBytes = (uint32_t)frame.vertices.size();
+-    uint32_t indexBytes = (uint32_t)(frame.indices.size() * 2);
++    uint32_t vertexDataBytes = (uint32_t)frame.vertices.size();
++    uint32_t indexDataBytes = (uint32_t)(frame.indices.size() * 2);
++    // WebGPU buffer copies require four-byte aligned sizes and offsets.
++    // Keep the draw's index count unchanged; pad only the transfer storage.
++    uint32_t vertexBytes = (vertexDataBytes + 3u) & ~3u;
++    uint32_t indexBytes = (indexDataBytes + 3u) & ~3u;
+     if (vertexBytes == 0 && indexBytes == 0)
+         return;
+     EnsureBuffer(frameVertices, frameVertexCapacity, std::max(vertexBytes, 4u), SDL_GPU_BUFFERUSAGE_VERTEX);
+@@ -521,9 +541,13 @@ void GpuContext::UploadGeometry(SDL_GPUCommandBuffer *cmd, const GfxFrame &frame
+     SDL_GPUTransferBuffer *tb = Staging(vertexBytes + indexBytes);
+     // Cycled: a fresh area when the GPU still reads the previous frame's.
+     uint8_t *map = (uint8_t *)SDL_MapGPUTransferBuffer(device, tb, true);
+-    memcpy(map, frame.vertices.data(), vertexBytes);
+-    if (indexBytes)
+-        memcpy(map + vertexBytes, frame.indices.data(), indexBytes);
++    memcpy(map, frame.vertices.data(), vertexDataBytes);
++    if (vertexBytes > vertexDataBytes)
++        memset(map + vertexDataBytes, 0, vertexBytes - vertexDataBytes);
++    if (indexDataBytes)
++        memcpy(map + vertexBytes, frame.indices.data(), indexDataBytes);
++    if (indexBytes > indexDataBytes)
++        memset(map + vertexBytes + indexDataBytes, 0, indexBytes - indexDataBytes);
+     SDL_UnmapGPUTransferBuffer(device, tb);
+     SDL_GPUCopyPass *copy = SDL_BeginGPUCopyPass(cmd);
+     if (vertexBytes) {
+@@ -605,12 +629,37 @@ void GpuContext::BindTextures(SDL_GPURenderPass *pass, const GfxDrawState &s)
+ void GpuContext::Present(SDL_GPUCommandBuffer *cmd, SDL_GPUTexture *picture, int renderW, int renderH, int gameW,
+                          int gameH, GfxReadback &readback, bool vsync, bool stretch)
+ {
++    auto collectReadback = [&](SDL_GPUTransferBuffer *buffer, int readW, int readH, int w, int h) {
++        const uint32_t *map = (const uint32_t *)SDL_MapGPUTransferBuffer(device, buffer, false);
++        if (!map) { Sys_Log("gfx: readback map: %s", SDL_GetError()); return; }
++        readback.pixels.resize((size_t)w * h);
++        for (int y = 0; y < h; y++) {
++            int py = std::min(readH - 1, (2 * y + 1) * readH / (2 * h));
++            for (int x = 0; x < w; x++) {
++                int px = std::min(readW - 1, (2 * x + 1) * readW / (2 * w));
++                readback.pixels[(size_t)y * w + x] = map[(size_t)py * readW + px];
++            }
++        }
++        SDL_UnmapGPUTransferBuffer(device, buffer);
++        readback.readyWidth = w;
++        readback.readyHeight = h;
++        readback.ready = true;
++    };
++    // Lens-flare visibility already consumes a previous frame. Never wait for
++    // browser GPU download callbacks on the current frame's presentation path.
++    if (pendingReadbackFence && SDL_QueryGPUFence(device, pendingReadbackFence)) {
++        collectReadback(pendingReadback, pendingReadW, pendingReadH, pendingOutputW, pendingOutputH);
++        SDL_ReleaseGPUFence(device, pendingReadbackFence);
++        SDL_ReleaseGPUTransferBuffer(device, pendingReadback);
++        pendingReadbackFence = NULL;
++        pendingReadback = NULL;
++    }
+     // Read back before the frame is shown (the lens flare test). The request
+     // is in the game's pixels; each is taken from the middle of the picture
+     // pixels it covers.
+     SDL_GPUTransferBuffer *readbackBuffer = NULL;
+-    int readW = 0, readH = 0;
+-    if (readback.requested && readback.width > 0 && readback.height > 0) {
++    int readW = 0, readH = 0, outputW = 0, outputH = 0;
++    if (!pendingReadback && readback.requested && readback.width > 0 && readback.height > 0) {
+         int x = std::max(0, std::min(readback.x, gameW - 1));
+         int y = std::max(0, std::min(readback.y, gameH - 1));
+         int w = std::min(readback.width, gameW - x), h = std::min(readback.height, gameH - y);
+@@ -630,8 +679,8 @@ void GpuContext::Present(SDL_GPUCommandBuffer *cmd, SDL_GPUTexture *picture, int
+         SDL_GPUTextureTransferInfo dst = { readbackBuffer, 0, 0, 0 };
+         SDL_DownloadFromGPUTexture(copy, &src, &dst);
+         SDL_EndGPUCopyPass(copy);
+-        readback.readyWidth = w;
+-        readback.readyHeight = h;
++        outputW = w;
++        outputH = h;
+     }
+ 
+     // OPENCMR2_CAPTURE=dir: the picture shown every OPENCMR2_CAPTURE_EVERY
+@@ -656,7 +705,7 @@ void GpuContext::Present(SDL_GPUCommandBuffer *cmd, SDL_GPUTexture *picture, int
+     unsigned frameNumber = presented++;
+ 
+     if (vsync != presentModeVsync) {
+-        SDL_GPUPresentMode mode = vsync ? SDL_GPU_PRESENTMODE_VSYNC : SDL_GPU_PRESENTMODE_IMMEDIATE;
++        SDL_GPUPresentMode mode = SDL_GPU_PRESENTMODE_VSYNC;
+         if (!vsync && !SDL_WindowSupportsGPUPresentMode(device, window, mode))
+             mode = SDL_GPU_PRESENTMODE_MAILBOX;
+         if (SDL_WindowSupportsGPUPresentMode(device, window, mode))
+@@ -686,8 +735,12 @@ void GpuContext::Present(SDL_GPUCommandBuffer *cmd, SDL_GPUTexture *picture, int
+ 
+     if (readbackBuffer != NULL || captureBuffer != NULL) {
+         SDL_GPUFence *fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
+-        SDL_WaitForGPUFences(device, true, &fence, 1);
+-        SDL_ReleaseGPUFence(device, fence);
++        if (captureBuffer != NULL) {
++            SDL_WaitForGPUFences(device, true, &fence, 1);
++            SDL_ReleaseGPUFence(device, fence);
++        } else {
++            pendingReadbackFence = fence;
++        }
+     }
+     if (captureBuffer != NULL) {
+         void *pixels = SDL_MapGPUTransferBuffer(device, captureBuffer, false);
+@@ -701,19 +754,14 @@ void GpuContext::Present(SDL_GPUCommandBuffer *cmd, SDL_GPUTexture *picture, int
+         SDL_ReleaseGPUTransferBuffer(device, captureBuffer);
+     }
+     if (readbackBuffer != NULL) {
+-        const uint32_t *map = (const uint32_t *)SDL_MapGPUTransferBuffer(device, readbackBuffer, false);
+-        int w = readback.readyWidth, h = readback.readyHeight;
+-        readback.pixels.resize((size_t)w * h);
+-        for (int y = 0; y < h; y++) {
+-            int py = std::min(readH - 1, (2 * y + 1) * readH / (2 * h));
+-            for (int x = 0; x < w; x++) {
+-                int px = std::min(readW - 1, (2 * x + 1) * readW / (2 * w));
+-                readback.pixels[(size_t)y * w + x] = map[(size_t)py * readW + px];
+-            }
++        if (captureBuffer != NULL) {
++            collectReadback(readbackBuffer, readW, readH, outputW, outputH);
++            SDL_ReleaseGPUTransferBuffer(device, readbackBuffer);
++        } else {
++            pendingReadback = readbackBuffer;
++            pendingReadW = readW; pendingReadH = readH;
++            pendingOutputW = outputW; pendingOutputH = outputH;
+         }
+-        SDL_UnmapGPUTransferBuffer(device, readbackBuffer);
+-        SDL_ReleaseGPUTransferBuffer(device, readbackBuffer);
+-        readback.ready = true;
+         readback.requested = false;
+     } else if (captureBuffer == NULL) {
+         SDL_SubmitGPUCommandBuffer(cmd);
+diff --git a/src/render/gpu_context.h b/src/render/gpu_context.h
+index 2b6549c..e624f9e 100644
+--- a/src/render/gpu_context.h
++++ b/src/render/gpu_context.h
+@@ -41,6 +41,9 @@ struct GpuContext {
+     SDL_GPUTextureFormat colorFormat = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM;
+     SDL_GPUTextureFormat depthFormat = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
+     SDL_GPUTexture *white2D = nullptr, *whiteCube = nullptr;
++    SDL_GPUTransferBuffer *pendingReadback = nullptr;
++    SDL_GPUFence *pendingReadbackFence = nullptr;
++    int pendingReadW = 0, pendingReadH = 0, pendingOutputW = 0, pendingOutputH = 0;
+     bool bcSupported = true;
+     int anisotropy = 1;
+     bool smoothScaling = true;      // video.smooth_scaling: linear filtering to the window
+diff --git a/src/video/movie.cpp b/src/video/movie.cpp
+index 914f91b..6d98422 100644
+--- a/src/video/movie.cpp
++++ b/src/video/movie.cpp
+@@ -1,3 +1,8 @@
++#include <emscripten.h>
++EM_JS(void, Peak_MovieState, (int frame, int count, const unsigned char *pixels, int size), {
++    let sum=0;for(let i=0;i<size;i+=4096)sum+=HEAPU8[pixels+i];
++    Module.cmr2Movie={frame,count,pixels:sum};
++});
+ // Bink 1 playback: decode sequential frames and queue the selected sound track.
+ #include "port/audio.h"
+ #include "port/gfx.h"
+@@ -91,6 +96,7 @@ extern "C" void Movie_DecodeFrame(Movie *movie)
+         return;
+     }
+     movie->decodedCurrent = true;
++    Peak_MovieState(movie->frame,movie->info.frames,movie->decoded.bgrx.data(),movie->decoded.bgrx.size());
+     if (movie->audio && !movie->decoded.audio.empty() &&
+         !Audio_QueueStream(movie->audio, movie->decoded.audio.data(), movie->decoded.audio.size())) {
+         Sys_Log("movie: cannot queue audio");

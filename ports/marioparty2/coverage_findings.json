@@ -1,0 +1,14 @@
+{
+  "mg-11-DayAtTheRaces": {
+    "status": "VISUAL_ISSUE",
+    "note": "Runs to completion, but the race-camera capture at tick 16289 shows missing/corrupted track geometry. Runtime completion alone is not a visual pass."
+  },
+  "mg-23-FiletRelay": {
+    "status": "VISUAL_ISSUE",
+    "note": "Completes with matching simulation state, but the split-screen gameplay captures show missing player body geometry (heads/feet render separately)."
+  },
+  "mg-67-TorpedoTargets": {
+    "status": "VISUAL_ISSUE",
+    "note": "Completes and matches replay state, but both split-screen views show missing submarine hull geometry; crew/windows and propellers render as disconnected pieces."
+  }
+}

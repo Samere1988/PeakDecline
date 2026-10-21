@@ -1,0 +1,26 @@
+{% macro controls(prefix, profile="mk64") %}
+    {% set z_label = 'Z shield button' if profile == 'smash64' else 'Z side attack' if profile == 'fzerox' else 'Z item button' %}
+    {% set r_label = 'R grab button' if profile == 'smash64' else 'R side attack' if profile == 'fzerox' else 'R drift button' %}
+    {% set b_label = 'B special attack button' if profile == 'smash64' else 'B boost button' if profile == 'fzerox' else 'B brake button' %}
+    {% set a_label = 'A attack button' if profile == 'smash64' else 'A accelerate button' %}
+    <div id="{{ prefix }}-touch-controls" class="mk64-touch-controls n64-touch-controls" aria-label="Touch game controls" hidden>
+      <div class="mk64-touch-left">
+        <button type="button" class="mk64-touch-button mk64-touch-l" data-n64-button="l" aria-label="L button"><img src="{{ url_for('static', filename='assets/n64-controls/L.png') }}" alt="" draggable="false"></button>
+        <button type="button" class="mk64-touch-button mk64-touch-z-left" data-n64-button="z" aria-label="{{ z_label }}"><img src="{{ url_for('static', filename='assets/n64-controls/Z.png') }}" alt="" draggable="false"></button>
+        <div id="{{ prefix }}-touch-stick" data-n64-stick class="mk64-touch-stick" role="group" aria-label="Analog stick"><img class="n64-stick-base" src="{{ url_for('static', filename='assets/n64-controls/thumbstick-background.png') }}" alt=""><img class="mk64-touch-knob" src="{{ url_for('static', filename='assets/n64-controls/thumbstick-pad_arcade.png') }}" alt=""></div>
+      </div>
+      <div class="mk64-touch-right">
+        <button type="button" class="mk64-touch-button mk64-touch-start" data-n64-button="start" aria-label="Start button"><img src="{{ url_for('static', filename='assets/n64-controls/start_rounded_big.png') }}" alt="" draggable="false"></button>
+        <button type="button" class="mk64-touch-button mk64-touch-z-right" data-n64-button="z" aria-label="{{ z_label }}"><img src="{{ url_for('static', filename='assets/n64-controls/Z.png') }}" alt="" draggable="false"></button>
+        <button type="button" class="mk64-touch-button mk64-touch-r" data-n64-button="r" aria-label="{{ r_label }}"><img src="{{ url_for('static', filename='assets/n64-controls/R.png') }}" alt="" draggable="false"></button>
+        <div class="mk64-touch-c-buttons" aria-label="C buttons">
+          <button type="button" data-n64-button="cUp" aria-label="C up"><img src="{{ url_for('static', filename='assets/n64-controls/c_up.png') }}" alt="" draggable="false"></button>
+          <button type="button" data-n64-button="cLeft" aria-label="C left"><img src="{{ url_for('static', filename='assets/n64-controls/c_left.png') }}" alt="" draggable="false"></button>
+          <button type="button" data-n64-button="cRight" aria-label="C right"><img src="{{ url_for('static', filename='assets/n64-controls/c_right.png') }}" alt="" draggable="false"></button>
+          <button type="button" data-n64-button="cDown" aria-label="C down"><img src="{{ url_for('static', filename='assets/n64-controls/c_down.png') }}" alt="" draggable="false"></button>
+        </div>
+        <button type="button" class="mk64-touch-button mk64-touch-b" data-n64-button="b" aria-label="{{ b_label }}"><img src="{{ url_for('static', filename='assets/n64-controls/B.png') }}" alt="" draggable="false"></button>
+        <button type="button" class="mk64-touch-button mk64-touch-a" data-n64-button="a" aria-label="{{ a_label }}"><img src="{{ url_for('static', filename='assets/n64-controls/A.png') }}" alt="" draggable="false"></button>
+      </div>
+    </div>
+{% endmacro %}

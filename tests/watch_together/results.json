@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-08T17:55:17.361Z",
-  "sourceHash": "f18b5fbe29ba5c936c3d88eac069e94e549ba409a97feb49c5849098428c050f",
+  "generatedAt": "2026-09-10T14:28:26.979Z",
+  "sourceHash": "85d0bb953fe6bd8bd5e9d56365f165b8d49d916c293c201dfcb9770cf125f5aa",
   "source": "static/js/room_player.js + app/routes.py",
   "method": "15 isolated JS VMs, simulated media and network timing, real authenticated Flask-SocketIO test clients, in-memory SQLite",
   "results": [

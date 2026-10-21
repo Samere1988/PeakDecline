@@ -23,6 +23,13 @@ class User(db.Model, UserMixin):
     is_superuser = db.Column(db.Boolean, default=False)
     is_verified = db.Column(db.Boolean, default=False)
 
+    avatar = db.Column(db.String(80), nullable=True)
+
+    @property
+    def avatar_url(self):
+        from flask import url_for
+        return url_for("auth.avatar", filename=self.avatar) if self.avatar else url_for("static", filename="img/avatar-default.svg")
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -45,6 +52,13 @@ class Channel(db.Model):
     brand = db.Column(db.String(120), nullable=True)
     is_playing = db.Column(db.String(255), nullable=True)
     logo = db.Column(db.String(500))
+
+class ChannelPlayCount(db.Model):
+    __bind_key__ = 'channels_db'
+    __tablename__ = 'channel_play_counts'
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), primary_key=True)
+    play_count = db.Column(db.Integer, nullable=False, default=0)
+
 
 # --- ROOM MODEL ---
 class Room(db.Model):

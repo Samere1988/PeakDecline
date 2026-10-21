@@ -6,12 +6,13 @@ import requests
 from datetime import datetime, timedelta
 from urllib.parse import urlencode, unquote
 
-from flask import Blueprint, render_template, jsonify, send_from_directory, current_app, url_for, Response, request
+from flask import Blueprint, render_template, jsonify, send_from_directory, current_app, url_for, Response, request, redirect
 from flask_login import login_required, current_user
 from flask_socketio import emit, join_room
 
 from . import db, socketio
-from .models import Channel, Room
+from .models import Channel, ChannelPlayCount, Room
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from app.utils import get_plex_server
 from app.services.streamer import streamer
 
@@ -34,6 +35,37 @@ connected_sids = {}
 
 # Live TV page-specific presence
 live_tv_occupancy = {}  # sid -> username
+live_tv_empty_token = None
+
+
+def _schedule_empty_live_tv_cleanup():
+    """Called under streamer.lock; rejoining invalidates an older countdown."""
+    global live_tv_empty_token
+    if live_tv_occupancy:
+        return
+    token = live_tv_empty_token = uuid.uuid4().hex
+    app = current_app._get_current_object()
+    delay = app.config.get('LIVE_TV_EMPTY_GRACE_SECONDS', 60)
+
+    def stop_if_still_empty():
+        global live_tv_empty_token
+        socketio.sleep(delay)
+        with app.app_context(), streamer.lock:
+            if token != live_tv_empty_token or live_tv_occupancy:
+                return
+            live_tv_empty_token = None
+            if streamer.process is None:
+                return
+            streamer.revision += 1
+            try:
+                streamer.stop_stream()
+                Channel.query.update({Channel.is_playing: '0'})
+                db.session.commit()
+            finally:
+                streamer.revision += 1
+            socketio.emit('channel_changed', _live_status())
+
+    socketio.start_background_task(stop_if_still_empty)
 
 # Watch Together room-specific presence
 room_occupancy = {}  # room_id -> {sid: username}
@@ -90,7 +122,14 @@ def _unique_live_tv_users():
     return users
 
 
+def _viewer_profiles(names):
+    from .models import User
+    profiles = {user.username: user for user in User.query.filter(User.username.in_(names)).all()}
+    return [dict(name=name, avatar='/profile/pictures/' + profiles[name].avatar if name in profiles and profiles[name].avatar else '/static/img/avatar-default.svg') for name in names]
+
+
 def _emit_live_tv_users():
+    socketio.emit("live_tv_profiles_update", _viewer_profiles(_unique_live_tv_users()), to="live_tv")
     socketio.emit(
         "live_tv_users_update",
         _unique_live_tv_users(),
@@ -111,11 +150,21 @@ def _unique_room_users(room_id):
 
 
 def _emit_room_users(room_id):
+    socketio.emit("room_profiles_update", _viewer_profiles(_unique_room_users(room_id)), to=f"room_{_room_key(room_id)}")
     socketio.emit(
         "room_users_update",
         _unique_room_users(room_id),
         to=f"room_{_room_key(room_id)}"
     )
+
+
+def _youtube_room_snapshot(room):
+    import re
+    from app.services.youtube_downloads import youtube_downloads
+    match = re.fullmatch(r'/api/room/youtube-files/([a-f0-9]{32})/index\.m3u8', room.current_media_url or '')
+    if match:
+        return youtube_downloads.playlist_snapshot(youtube_downloads.root(current_app) / match[1])
+    return None
 
 
 def _get_room_state_payload(room):
@@ -145,6 +194,7 @@ def _get_room_state_payload(room):
         "url": room.current_media_url,
         "title": room.current_media_title,
         "rating_key": room.current_media_key,
+        "youtube": _youtube_room_snapshot(room),
         "status": status,
         "is_playing": status == "playing",
         "current_time": current_time,
@@ -288,7 +338,8 @@ def _schedule_host_transfer(room_id, leaving_username):
             db.session.commit()
 
         socketio.emit("host_changed", {"new_host": new_host_username}, to=f"room_{target_room_id}")
-        _emit_room_users(target_room_id)
+        with app.app_context():
+            _emit_room_users(target_room_id)
 
     socketio.start_background_task(transfer_after_grace, room_id, leaving_username)
 
@@ -305,10 +356,13 @@ def sio_connect():
 
 @socketio.on("join_live_tv")
 def handle_join_live_tv():
+    global live_tv_empty_token
     join_room("live_tv")
 
     username = current_user.username if current_user.is_authenticated else "Guest"
-    live_tv_occupancy[request.sid] = username
+    with streamer.lock:
+        live_tv_occupancy[request.sid] = username
+        live_tv_empty_token = None
 
     _emit_live_tv_users()
 
@@ -365,9 +419,12 @@ def sio_disconnect(reason=None):
     socketio.emit("update_users", sorted(list(online_users)))
 
     # 1B. Live TV Presence Cleanup
-    if request.sid in live_tv_occupancy:
-        live_tv_occupancy.pop(request.sid, None)
-        _emit_live_tv_users()
+    with streamer.lock:
+        if request.sid in live_tv_occupancy:
+            live_tv_occupancy.pop(request.sid, None)
+            _emit_live_tv_users()
+            if not live_tv_occupancy:
+                _schedule_empty_live_tv_cleanup()
 
     # 2. Watch Together Room Occupancy Cleanup
     room_id = sid_to_room.pop(request.sid, None)
@@ -428,9 +485,9 @@ def sio_chat_message(message):
         return
 
     if room_id:
-        socketio.emit("chat_message", {"user": username, "text": text[:500]}, to=f"room_{_room_key(room_id)}")
+        socketio.emit("chat_message", {"user": current_user.username if current_user.is_authenticated else username, "avatar": current_user.avatar_url if current_user.is_authenticated else "/static/img/avatar-default.svg", "text": text[:500]}, to=f"room_{_room_key(room_id)}")
     else:
-        socketio.emit("chat_message", {"user": username, "text": text[:500]})
+        socketio.emit("chat_message", {"user": current_user.username if current_user.is_authenticated else username, "avatar": current_user.avatar_url if current_user.is_authenticated else "/static/img/avatar-default.svg", "text": text[:500]})
 
 
 @socketio.on("request_users")
@@ -442,6 +499,11 @@ def sio_request_users():
 @main_bp.route('/')
 def index():
     return render_template('index.html')
+
+
+@main_bp.route('/requests')
+def plex_requests():
+    return redirect(current_app.config.get('PLEX_REQUESTS_URL') or os.getenv('PLEX_REQUESTS_URL', 'https://requests.peakdecline.com'))
 
 
 @main_bp.route('/live-tv')
@@ -459,55 +521,160 @@ def plex_landing():
 
 
 # --- API: CHANNELS & PLAYBACK ---
+@main_bp.route('/api/channels/<int:channel_id>/guide')
+@login_required
+def channel_guide(channel_id):
+    Channel.query.get_or_404(channel_id)
+    from .services.guide import lookup
+    response = jsonify(lookup(channel_id))
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+@main_bp.route('/channel-logos/<filename>')
+def cached_channel_logo(filename):
+    import re
+    if not re.fullmatch(r'[a-f0-9]{64}\.(png|jpg|webp|gif)', filename):
+        return '', 404
+    response = send_from_directory(os.path.join(current_app.static_folder, 'img', 'channel-cache'), filename, max_age=31536000)
+    response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response
+
+
 @main_bp.route('/api/channels')
 @login_required
 def get_channels():
-    channels = Channel.query.all()
+    channels = (db.session.query(Channel, ChannelPlayCount.play_count)
+                .outerjoin(ChannelPlayCount, Channel.id == ChannelPlayCount.channel_id)
+                .order_by(db.func.coalesce(ChannelPlayCount.play_count, 0).desc(),
+                          db.func.lower(Channel.name), Channel.id).all())
     channel_list = []
-    for channel in channels:
+    for channel, play_count in channels:
         channel_list.append({
-            'id': channel.id,
+            'id': int(channel.id),
+            'play_count': play_count or 0,
             'name': channel.name,
             'url': channel.url,
             'Favorites': str(channel.favorites).lower() in ['1', 'true', 'yes'],
             'is_playing': str(channel.is_playing).lower() in ['1', 'true', 'yes'],
             'logo': channel.logo
         })
-    return jsonify(channel_list)
+    response = jsonify(channel_list)
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+@main_bp.route('/api/channels/<int:channel_id>/favorite', methods=['PUT'])
+@login_required
+def set_channel_favorite(channel_id):
+    channel = Channel.query.get_or_404(channel_id)
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or type(data.get('favorite')) is not bool:
+        return jsonify(error='favorite must be a boolean'), 400
+    channel.favorites = '1' if data['favorite'] else '0'
+    db.session.commit()
+    socketio.emit('channels_updated')
+    return jsonify(id=int(channel.id), Favorites=data['favorite'])
 
 
 @main_bp.route('/api/play/<int:channel_id>', methods=['POST'])
 @login_required
 def play_channel(channel_id):
     channel = Channel.query.get_or_404(channel_id)
-    Channel.query.update({Channel.is_playing: '0'})
-    channel.is_playing = '1'
-    db.session.commit()
-
-    success, msg = streamer.start_stream(channel.id, channel.url, channel.name)
-    if success:
-        socketio.emit('channel_changed', {'channel_id': channel.id, 'name': channel.name})
-        return jsonify({'status': 'success', 'message': msg})
-
-    return jsonify({'error': msg}), 500
+    with streamer.lock:
+        if (str(streamer.current_channel_id) == str(channel_id) and streamer.process
+                and streamer.process.poll() is None):
+            success, msg = True, 'Channel already playing'
+        else:
+            success, msg = streamer.start_stream(channel_id, channel.url, channel.name)
+        Channel.query.update({Channel.is_playing: '0'})
+        if success:
+            channel.is_playing = '1'
+            statement = sqlite_insert(ChannelPlayCount).values(channel_id=channel.id, play_count=1)
+            db.session.execute(statement.on_conflict_do_update(
+                index_elements=['channel_id'],
+                set_={'play_count': ChannelPlayCount.play_count + 1}))
+        db.session.commit()
+        state = _live_status()
+        socketio.emit('channel_changed', state)
+        if success:
+            socketio.emit('channels_updated')
+            if not live_tv_occupancy:
+                _schedule_empty_live_tv_cleanup()
+            return jsonify(status='success', message=msg, state=state)
+        return jsonify(error=msg, state=state), 500
 
 
 @main_bp.route('/api/status')
 @login_required
 def api_status():
-    active_channel = Channel.query.filter(
-        (Channel.is_playing == '1') | (Channel.is_playing == 'true')
-    ).first()
+    response = jsonify(_live_status())
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
-    return jsonify({
+
+@main_bp.route('/api/live/stop', methods=['POST'])
+@login_required
+def stop_live_stream():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify(error='Expected stream session'), 400
+    with streamer.lock:
+        if data.get('stream_session') != streamer.session_id:
+            return jsonify(error='Stream changed. Try again.', state=_live_status()), 409
+        streamer.revision += 1
+        try:
+            streamer.stop_stream()
+            Channel.query.update({Channel.is_playing: '0'})
+            db.session.commit()
+        finally:
+            streamer.revision += 1
+        state = _live_status()
+        socketio.emit('channel_changed', state)
+        socketio.emit('channels_updated')
+        return jsonify(state=state)
+
+
+def _live_status():
+    running = streamer.process is not None and streamer.process.poll() is None
+    active_channel = db.session.get(Channel, streamer.current_channel_id) if running and streamer.current_channel_id else None
+    return {
         "is_streaming": active_channel is not None,
-        "current_channel_id": active_channel.id if active_channel else None,
+        "current_channel_id": int(active_channel.id) if active_channel else None,
         "current_channel_name": active_channel.name if active_channel else None,
         "current_channel_logo": active_channel.logo if active_channel else None,
-    })
+        "stream_epoch": streamer.epoch,
+        "stream_revision": streamer.revision,
+        "stream_session": streamer.session_id,
+    }
 
 
 # --- API: USER TRACKING ---
+@main_bp.route('/api/live-clock/<int:channel_id>')
+@login_required
+def live_clock_state(channel_id):
+    from .services.live_clock import live_clock
+    if (str(streamer.current_channel_id) != str(channel_id) or not streamer.process
+            or streamer.process.poll() is not None):
+        return jsonify(error='Stream unavailable', reason='inactive_stream'), 503
+    playlist = streamer.clock_playlist_path
+    if not playlist and streamer.current_channel_dir:
+        # The root index is a master playlist with no chunk timestamps.
+        native = os.path.join(streamer.current_channel_dir, '0', 'index.m3u8')
+        playlist = native if os.path.isfile(native) else os.path.join(streamer.current_channel_dir, 'index.m3u8')
+    if not playlist:
+        return jsonify(error='Stream clock unavailable', reason='missing_playlist'), 503
+    try:
+        snapshot = live_clock.snapshot(playlist, channel_id)
+    except OSError:
+        return jsonify(error='Stream clock unavailable', reason='unreadable_playlist'), 503
+    except (ValueError, OverflowError):
+        return jsonify(error='Stream clock unavailable', reason='invalid_timestamps'), 503
+    response = jsonify(snapshot)
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
 @main_bp.route('/api/heartbeat', methods=['POST'])
 def heartbeat():
     if current_user.is_authenticated:
@@ -716,6 +883,63 @@ def proxy_plex_image():
         )
     except Exception:
         return "Error", 500
+
+
+@main_bp.route('/api/room/<room_id>/set_youtube', methods=['POST'])
+@login_required
+def set_room_youtube(room_id):
+    from app.services.youtube import parse_youtube_url
+
+    room = db.session.get(Room, room_id)
+    if not room:
+        return jsonify(error='Room not found'), 404
+    if str(room.host_id) != str(current_user.id):
+        return jsonify(error='Only the host can change media'), 403
+    data = request.get_json(silent=True)
+    try:
+        video_id, offset = parse_youtube_url(data.get('url') if isinstance(data, dict) else None)
+    except ValueError as error:
+        return jsonify(error=str(error)), 400
+    from app.services.youtube_downloads import youtube_downloads
+    try:
+        job = youtube_downloads.start(
+            current_app._get_current_object(), room.id, current_user.id, video_id, offset,
+            room_states.get(str(room.id), {}).get('media_version', ''), room.current_media_url, socketio)
+    except ValueError as error:
+        return jsonify(error=str(error)), 409
+    return jsonify(success=True, **job), 202
+
+
+@main_bp.route('/api/room/<room_id>/youtube-status')
+@login_required
+def youtube_status(room_id):
+    from app.services.youtube_downloads import youtube_downloads
+    room = db.session.get(Room, room_id)
+    if not room:
+        return jsonify(error='Room not found'), 404
+    job = youtube_downloads.jobs.get(str(room_id))
+    return jsonify(youtube_downloads.public(job) if job else {'state': 'idle', 'message': ''})
+
+
+@main_bp.route('/api/room/youtube-files/<job_id>/<filename>')
+@login_required
+def youtube_file(job_id, filename):
+    import re
+    from app.services.youtube_downloads import youtube_downloads
+    if (not re.fullmatch(r'[a-f0-9]{32}', job_id)
+            or not re.fullmatch(r'(index\.m3u8|seg_[0-9]+\.ts)', filename)):
+        return jsonify(error='File not found'), 404
+    directory = youtube_downloads.root(current_app) / job_id
+    mimetype = 'application/vnd.apple.mpegurl' if filename.endswith('.m3u8') else 'video/mp2t'
+    if filename.endswith('.m3u8'):
+        # EVENT playlists grow while FFmpeg runs. Never cache an earlier snapshot.
+        try:
+            playlist = (directory / filename).read_text()
+        except OSError:
+            return jsonify(error='Playlist not ready'), 404
+        playlist = playlist.replace('#EXTM3U', '#EXTM3U\n#EXT-X-START:TIME-OFFSET=0,PRECISE=YES', 1)
+        return Response(playlist, mimetype=mimetype, headers={'Cache-Control': 'no-store'})
+    return send_from_directory(directory, filename, mimetype=mimetype, conditional=True, max_age=3600)
 
 
 @main_bp.route(
@@ -2000,6 +2224,10 @@ def _playback_command(data):
     if ('media_version' in data and
             data['media_version'] != state.get('media_version', '')):
         return None
+    room = db.session.get(Room, int(room_id))
+    snapshot = _youtube_room_snapshot(room) if room else None
+    if snapshot and not snapshot['complete']:
+        position = min(position, max(0, snapshot['prepared_seconds'] - 2))
     return room_id, position
 
 
@@ -2177,6 +2405,18 @@ def games():
 @login_required
 def peakdecline_derby():
     return render_template('horse_race.html')
+
+
+from .netplay import register_routes as register_retro_routes
+register_retro_routes(main_bp)
+from .gta5 import register_routes as register_gta5_routes
+register_gta5_routes(main_bp)
+
+
+@main_bp.route('/games/catan')
+@login_required
+def catan_room():
+    return render_template('catan.html', player_name=current_user.username, online=True)
 
 
 @main_bp.route('/arcade/emulator')

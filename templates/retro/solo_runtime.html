@@ -1,0 +1,7 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ game.title }}</title>
+<style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}canvas{display:block;width:100%;height:100%;object-fit:contain;outline:none}#loading{position:absolute;inset:40% 5% auto;color:#eee;text-align:center;font:16px system-ui}</style></head>
+<body data-engine="{{ game.id }}" data-build-url="{{ build_url }}" data-data-url="{{ rom_url }}" data-save-url="{{ save_url }}" data-save-key="{{ current_user.get_id() }}">
+<canvas id="canvas" tabindex="0" aria-label="{{ game.title }}"></canvas><p id="loading" role="status">Loading {{ game.title }}…</p>
+<script src="{{ url_for('static',filename='js/netplay/account_saves.js') }}"></script>
+<script src="{{ url_for('static',filename='js/netplay/solo_runtime.js') }}"></script>
+</body></html>

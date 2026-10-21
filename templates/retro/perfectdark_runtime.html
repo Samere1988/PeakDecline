@@ -1,0 +1,42 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#000;width:100%;height:100%;overflow:hidden}canvas{width:100%;height:100%;object-fit:contain;outline:none}
+</style></head><body data-save-url="{{ save_url|default('') }}" data-save-key="{{ current_user.get_id() }}"><canvas id="canvas" width="640" height="480" tabindex="0"></canvas>
+<script>window.PeakNet={};</script>
+<script src="{{ url_for('static',filename='js/netplay/perfectdark_saves.js') }}"></script>
+<script src="{{ url_for('static',filename='js/netplay/perfectdark_engine.js') }}"></script>
+<script>
+(()=>{
+const bridge=parent.peakPerfectDarkBridge;if(!bridge)return;
+const canvas=document.getElementById('canvas');
+const audio=new AudioContext({sampleRate:22020}),gain=audio.createGain();gain.gain.value=0;gain.connect(audio.destination);
+window.setPeakGameVolume=value=>{gain.gain.value=Number(value)||0;};
+window.resumePeakGameAudio=()=>audio.resume().catch(()=>{});
+window.setPeakReplayAudio=value=>{
+ Module.peakReplayAudio=!!value;
+ if(!value&&Module.pdAudio){Module.pdAudio.nextTime=audio.currentTime;Module.pdAudio.started=false;}
+};
+const fail=message=>bridge.failed(String(message));
+window.Module={canvas,pdCanvasWidth:640,pdCanvasHeight:480,pdCanvasResizePending:true,pdAudioContext:audio,peakAudioGain:gain,peakReplayAudio:true,
+ pdMouseDeltaX:0,pdMouseDeltaY:0,
+ arguments:['--basedir','/data','--savedir','/save','--no-crash-handler','--peak-controlled'],
+ locateFile:name=>{{ build_url|tojson }}+name,
+ print:()=>{},printErr:text=>{if(/FATAL|Aborted|RuntimeError/.test(text))fail(text);},onAbort:fail,
+ preRun:[()=>{
+  Module.FS.mkdir('/data');Module.FS.mkdir('/save');
+  Module.FS.writeFile('/save/pd.ini','[Video]\nDefaultWidth=640\nDefaultHeight=480\nDecoupledRendering=0\n[Game]\nSkipIntro=0\n');
+  Module.addRunDependency('peak-rom');
+  Promise.resolve().then(()=>window.peakPreparePerfectDarkSaves?.(Module.FS,bridge)).then(()=>fetch({{ rom_url|tojson }})).then(async response=>{
+   if(!response.ok)throw new Error('Game data could not be loaded.');
+   const data=new Uint8Array(await response.arrayBuffer());
+   if(data.length!==33554432||data[0]!==0x80||data[0x3e]!==0x45||data[0x3f]!==1)throw new Error('Unexpected Perfect Dark game data.');
+   Module.FS.writeFile('/data/pd.ntsc-final.z64',data,{canOwn:true});Module.removeRunDependency('peak-rom');
+  }).catch(error=>fail(error.message));
+ }],
+ onRuntimeInitialized:()=>{
+  if(Module._peakPdConfigure(bridge.players,bridge.seed)!==1)return fail('Game configuration was rejected.');
+  setTimeout(()=>{try{const engine=new PeakNet.PerfectDarkEngine(Module,bridge.players);engine.setPresentation(false);bridge.ready(engine,canvas);}catch(e){fail(e.message);}},0);
+ }
+};
+const script=document.createElement('script');script.src={{ (build_url+'pd.js')|tojson }};script.onerror=()=>fail('Game runtime could not be loaded.');document.body.append(script);
+})();
+</script></body></html>

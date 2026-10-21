@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}GTA V · PeakDecline{% endblock %}
+{% block content %}
+<main style="max-width:880px;margin:48px auto;padding:28px;background:#151a23;border:1px solid #303948;border-radius:18px;color:#eef2f8">
+  <a href="{{ url_for('main.games') }}" style="color:#b3cfff">← Games</a>
+  <p style="color:#aebacf;margin-top:30px;letter-spacing:.15em">PLAY IN YOUR BROWSER</p>
+  <h1 style="font-size:clamp(36px,7vw,64px);margin:12px 0">Grand Theft Auto V</h1>
+  <p style="font-size:19px;line-height:1.6">Explore Los Santos in sandbox mode or start the story.</p>
+  <p style="color:#b6c0ce;line-height:1.7">Single player · Keyboard, mouse or gamepad<br>Progress is saved to your PeakDecline account and restored on other browsers and devices. Wait for “Saved to your account” before switching devices.</p>
+  {% if available %}
+  <p id="gta-check" role="status">Checking browser support…</p>
+  <div id="gta-launch" hidden style="display:flex;gap:14px;flex-wrap:wrap;margin:26px 0">
+    <a class="gta-start" href="{{ url_for('main.gta5_play', mode='sandbox', low=1, fps=30, res='2560x1440') }}">Sandbox Mode</a>
+    <a class="gta-start gta-secondary" href="{{ url_for('main.gta5_play', mode='story', low=1, fps=30, res='2560x1440') }}">Story Mode</a>
+  </div>
+  <p style="color:#b6c0ce;line-height:1.7">The first launch downloads game data and may take several minutes. A desktop browser with hardware acceleration is recommended. Keep one game tab open at a time.</p>
+  <details style="margin-top:24px;color:#b6c0ce"><summary>Controls and performance</summary><p>WASD to move, mouse to look, F to enter a vehicle, Space to jump, and Escape for the game menu. Click the game to capture the mouse.</p><p>The default profile uses 1440p, 30 FPS and reduced memory. Loading and frame rate depend on your device. This is an experimental browser port.</p></details>
+  <noscript>Enable JavaScript to play.</noscript>
+  <script>
+  (async () => {
+    const status = document.getElementById('gta-check');
+    try {
+      if (!crossOriginIsolated || typeof SharedArrayBuffer === 'undefined' || typeof OffscreenCanvas === 'undefined') throw Error('This browser cannot provide the isolated game workers. Try a recent desktop Chrome or Edge browser.');
+      if (!WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,5,4,1,7,0,1]))) throw Error('Update Chrome or Edge to a version with WebAssembly Memory64 support.');
+      if (!window.isSecureContext || !navigator.gpu) throw Error('Use a recent Chrome or Edge browser with hardware acceleration enabled. WebGPU is required.');
+      const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+      if (!adapter) throw Error('No compatible graphics adapter was found. Check your browser’s hardware acceleration settings.');
+      if (!adapter.features.has('texture-compression-bc')) throw Error('Your graphics adapter does not support the texture compression this port needs. Try a desktop computer.');
+      status.textContent = 'Browser graphics available. Choose a mode to begin.';
+      document.getElementById('gta-launch').hidden = false;
+    } catch (error) { status.textContent = error.message; }
+  })();
+  </script>
+  {% else %}
+  <p role="status">GTA V is being installed. Check back shortly.</p>
+  {% endif %}
+</main>
+<style>.gta-start{display:inline-block;padding:14px 22px;background:#b7ef68;color:#152008;border-radius:9px;text-decoration:none;font-weight:700}.gta-secondary{background:#283345;color:#eef2f8}#gta-launch[hidden]{display:none!important}</style>
+{% endblock %}

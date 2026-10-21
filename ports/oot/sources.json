@@ -1,0 +1,5 @@
+{
+  "repository": "https://github.com/zalo/Shipwright.git",
+  "commit": "f81ff64afdd8e0489237bd03c6b026582f6dc70d",
+  "branch": "feature/emscripten-web-port"
+}
