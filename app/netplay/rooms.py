@@ -29,6 +29,9 @@ NAMESPACE = '/retro'
 WINDOW = 16
 MK64_HISTORY = 1200
 MK64_RECONNECT_SECONDS = 15
+CHAT_HISTORY = 50
+CHAT_LENGTH = 300
+CHAT_BURST, CHAT_BURST_SECONDS = 5, 10
 
 
 def rollback_ice_servers(app):
@@ -416,7 +419,8 @@ def register(app, socketio):
             room['credentials'][request.sid] = dict(user=str(current_user.get_id()), token=secrets.token_urlsafe(32))
             membership[request.sid] = code
             join_room('retro:' + code)
-            emit('room', dict(state(code, room), memberId=request.sid, resumeToken=room['credentials'][request.sid]['token']))
+            emit('room', dict(state(code, room), memberId=request.sid, resumeToken=room['credentials'][request.sid]['token'],
+                              chat=room.get('chat', [])))
             if room['phase'] in ('loading', 'running'):
                 emit('prepare', preparation(code, room))
             publish(code)
@@ -452,6 +456,32 @@ def register(app, socketio):
                 return
             room['members'][request.sid]['ready'] = data['ready']
             publish(code)
+
+    @socketio.on('chat', namespace=NAMESPACE)
+    def chat(data):
+        with lock:
+            code = membership.get(request.sid)
+            room = rooms.get(code)
+            if not room or not isinstance(data, dict) or not isinstance(data.get('text'), str):
+                return
+            # Collapse whitespace so one message cannot push the lobby around with blank lines.
+            text = ' '.join(data['text'].split())[:CHAT_LENGTH]
+            if not text:
+                return
+            # Rate state stays off the member record, which is broadcast in every room update.
+            now = monotonic()
+            recent = [at for at in room.setdefault('chat_rate', {}).get(request.sid, ()) if now - at < CHAT_BURST_SECONDS]
+            if len(recent) >= CHAT_BURST:
+                return error('Slow down a little before sending another message.')
+            room['chat_rate'][request.sid] = recent + [now]
+            person = room['members'][request.sid]
+            room['chat_sequence'] = room.get('chat_sequence', 0) + 1
+            entry = dict(id=room['chat_sequence'], member=request.sid, name=person['name'],
+                         avatar=person['avatar'], text=text)
+            history = room.setdefault('chat', [])
+            history.append(entry)
+            del history[:-CHAT_HISTORY]
+            emit('chat', entry, code)
 
     def loading_timeout(code, epoch, seconds=90):
         socketio.sleep(seconds)
@@ -1370,7 +1400,7 @@ def register(app, socketio):
                     recovery = dict(through=room['completed'], checkpointFrame=checkpoint[0], checkpointHash=checkpoint[1], next=1)
                     room['party_recoveries'].pop(old, None)
                     room['party_recoveries'][request.sid] = recovery
-                    emit('room', dict(state(code, room), memberId=request.sid, resumeToken=credential['token']))
+                    emit('room', dict(state(code, room), memberId=request.sid, resumeToken=credential['token'], chat=room.get('chat', [])))
                     emit('prepare', dict(preparation(code, room), recovery={k: recovery[k] for k in ('through', 'checkpointFrame')}))
                     publish(code)
                     return
@@ -1387,7 +1417,7 @@ def register(app, socketio):
                 person['loaded'] = False
                 for key in ('kart_pending', 'kart_acked', 'kart_baseline', 'kart_anchor', 'kart_bootstrap', 'kart_bootstrap_requested', 'kart_pending_anchor'):
                     person.pop(key, None)
-                emit('room', dict(state(code, room), memberId=request.sid, resumeToken=credential['token']))
+                emit('room', dict(state(code, room), memberId=request.sid, resumeToken=credential['token'], chat=room.get('chat', [])))
                 emit('prepare', preparation(code, room))
                 publish(code)
                 return
@@ -1397,7 +1427,7 @@ def register(app, socketio):
                     emit('sync_resumed', dict(state(code,room), memberId=request.sid, resumeToken=credential['token']))
                 else:
                     person['loaded'] = False
-                    emit('room',dict(state(code,room),memberId=request.sid,resumeToken=credential['token']))
+                    emit('room',dict(state(code,room),memberId=request.sid,resumeToken=credential['token'], chat=room.get('chat', [])))
                     emit('prepare',preparation(code,room))
                 publish(code)
                 return
@@ -1408,7 +1438,7 @@ def register(app, socketio):
                                      resumeToken=credential['token'], baseline=relay.bootstrap()))
             else:
                 person['loaded'] = False
-                emit('room',dict(state(code,room),memberId=request.sid,resumeToken=credential['token']))
+                emit('room',dict(state(code,room),memberId=request.sid,resumeToken=credential['token'], chat=room.get('chat', [])))
                 person['resuming'] = True
                 emit('prepare',dict(preparation(code,room),resumeSequence=relay.received[person['slot']] if person['slot'] is not None else 0))
             if request.sid == room['sids'][0]:

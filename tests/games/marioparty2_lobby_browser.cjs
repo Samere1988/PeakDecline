@@ -11,7 +11,7 @@ const {chromium}=require(path.join(process.env.HOME,'.cache/codex-runtimes/codex
   await page.locator('#retro-lobby').waitFor({state:'visible'});
   await page.locator('#retro-controller-setup #marioparty2-controller-panel').waitFor({state:'visible'});
   assert.match(await page.locator('#retro-seat-count').textContent(),/\/4 seats/);
-  assert.equal(await page.locator('#retro-room-status').textContent(),'');
+  assert.equal(await page.locator('#retro-room-status').textContent(),'Ready up when you’re set.');
   await page.locator('#marioparty2-controller-panel summary').click();
   assert(await page.locator('#marioparty2-controller-panel').getAttribute('open')!==null);
   assert.equal(await page.locator('#marioparty2-controller-bindings').evaluate(el=>getComputedStyle(el).display),'grid');

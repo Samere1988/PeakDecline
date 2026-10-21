@@ -139,6 +139,33 @@ class RetroTests(unittest.TestCase):
         self.emit(clients[0], 'input', dict(epoch=0, frame=2, pad=pad))
         self.assertEqual(self.events(clients[0], 'frameset')[0]['frame'], 2)
 
+    def test_lobby_chat_is_room_scoped_bounded_and_rate_limited(self):
+        clients, code = self.room(count=2)
+        outsider = self.connect('outsider')
+        self.emit(outsider, 'chat', dict(text='not in a room'))
+        self.emit(clients[0], 'chat', dict(text='  hello \n\n  everyone  '))
+        self.emit(clients[0], 'chat', dict(text='   '))
+        self.emit(clients[0], 'chat', 'not a dict')
+        for client in clients:
+            messages = self.events(client, 'chat')
+            self.assertEqual([m['text'] for m in messages], ['hello everyone'])
+            self.assertEqual(messages[0]['name'], 'Player 0')
+            self.assertEqual(set(messages[0]), {'id', 'member', 'name', 'avatar', 'text'})
+        self.assertEqual(self.events(outsider, 'chat'), [])
+        self.emit(clients[1], 'chat', dict(text='x' * 1000))
+        self.assertEqual(len(self.events(clients[0], 'chat')[0]['text']), 300)
+        for index in range(4):
+            self.emit(clients[1], 'chat', dict(text='spam %d' % index))
+        self.assertEqual(self.events(clients[1], 'room_error'), [])
+        self.emit(clients[1], 'chat', dict(text='one too many'))
+        self.assertEqual(len(self.events(clients[1], 'room_error')), 1)
+        self.assertEqual(len(self.events(clients[0], 'chat')), 4)
+        late = self.connect('late')
+        self.emit(late, 'join', dict(code=code, compatibility=self.descriptor))
+        history = self.events(late, 'room')[0]['chat']
+        self.assertEqual([m['id'] for m in history], [1, 2, 3, 4, 5, 6])
+        self.assertNotIn('chat', self.events(late, 'rooms')[-1][0] if self.events(late, 'rooms') else {})
+
     def test_nested_runtime_assets_remain_allowlisted(self):
         from dataclasses import replace
         nested = 'assets/custom/fonts/test.ttf'

@@ -35,6 +35,10 @@
             if (error) return;
             roundTrips.push(performance.now() - at);
             if (roundTrips.length > 8) roundTrips.shift();
+            const ms = Math.round(roundTrips[roundTrips.length - 1]), meter = $('retro-latency');
+            meter.hidden = false;
+            meter.dataset.quality = ms < 80 ? 'good' : ms < 160 ? 'fair' : 'poor';
+            $('retro-latency-value').textContent = `${ms} ms to server`;
             network?.latency(game?.id === 'mk64' ? roundTrips[roundTrips.length - 1] : Math.max(...roundTrips));
         });
     }
@@ -75,16 +79,27 @@
         if (room.choosing) parts.push(`${room.choosing} choosing`);
         return parts.join(' · ');
     }
-    function memberTitle(member) {
+    function phaseState(room) {
+        if (room.schemaVersion !== 1) return 'updating';
+        if (room.phase === 'ended') return 'ended';
+        if (room.phase !== 'lobby') return 'playing';
+        return room.playing >= 1 && room.ready === room.playing && !room.choosing ? 'ready' : 'waiting';
+    }
+    function tag(text, kind) {
+        const label = document.createElement('span');
+        label.className = 'retro-tag retro-tag-' + kind; label.textContent = text;
+        return label;
+    }
+    function person(member, detail) {
+        const identity = document.createElement('div'); identity.className = 'retro-person';
         const title = document.createElement('strong');
-        title.textContent = member.name;
-        if (member.id === hostId) {
-            const badge = document.createElement('span');
-            badge.className = 'mk64-host-badge'; badge.textContent = '👑';
-            badge.setAttribute('role', 'img'); badge.setAttribute('aria-label', 'Host');
-            title.append(badge);
-        }
-        return title;
+        const name = document.createElement('span'); name.textContent = member.name;
+        title.append(name);
+        if (member.id === hostId) title.append(tag('Host', 'host'));
+        if (member.id === memberId) title.append(tag('You', 'you'));
+        identity.append(title);
+        if (detail) { const small = document.createElement('small'); small.textContent = detail; identity.append(small); }
+        return identity;
     }
 
     function notice(message) { (started ? $('retro-runtime-status') : code ? lobbyNotice : browserNotice).textContent = message; }
@@ -108,39 +123,41 @@
         const rooms = Array.isArray(rawRooms) ? rawRooms.map(roomDetails) : [];
         const list = $('retro-room-list');
         list.replaceChildren();
-        browserNotice.textContent = rooms.length ? `${rooms.length} open ${rooms.length === 1 ? 'lobby' : 'lobbies'}` : 'No open lobbies yet. Create one to get started.';
+        browserNotice.textContent = rooms.length ? `${rooms.length} open ${rooms.length === 1 ? 'room' : 'rooms'}` : '';
         if (!rooms.length) {
             const empty = document.createElement('div');
-            empty.className = 'no-rooms';
+            empty.className = 'retro-empty';
             const title = document.createElement('h2');
-            title.textContent = 'No active rooms';
+            title.textContent = 'No rooms open right now';
             const description = document.createElement('p');
-            description.textContent = 'Click “+ Create Room” to host a game.';
+            description.textContent = 'Start one, pick a game, and send friends the invite link. Anyone can join to play or just watch.';
             empty.append(title, description); list.append(empty); return;
         }
         for (const room of rooms) {
-            const card = document.createElement('article'); card.className = 'room-card';
-            const poster = document.createElement('div'); poster.className = 'room-poster retro-game-art';
+            const card = document.createElement('article'); card.className = 'retro-room-card room-card';
+            const poster = document.createElement('div'); poster.className = 'retro-game-art';
             artwork(poster, room.game);
-            const badge = document.createElement('span'); badge.className = 'live-badge';
-            badge.textContent = occupancy(room);
-            poster.append(badge);
-            const info = document.createElement('div'); info.className = 'room-info';
-            const name = document.createElement('h2'); name.className = 'room-name'; name.textContent = room.name || 'Game room';
-            const description = document.createElement('p'); description.className = 'now-playing';
-            description.textContent = `${room.game.title} · ${room.phase === 'running' ? 'Game in progress' : room.phase === 'loading' ? 'Game loading' : room.phase === 'ended' ? 'Round ended' : `${room.ready}/${room.playing} players ready`}`;
-            const host = document.createElement('div'); host.className = 'room-users';
-            const hostName = room.members.find(member => member.id === room.host)?.name || 'Host';
+            const info = document.createElement('div'); info.className = 'retro-room-body';
+            const heading = document.createElement('div'); heading.className = 'retro-room-title';
+            const titles = document.createElement('div');
+            const name = document.createElement('h2'); name.textContent = room.name || 'Game room';
+            const description = document.createElement('p'); description.className = 'retro-room-game'; description.textContent = room.game.title;
+            titles.append(name, description);
+            const status = document.createElement('span'); status.className = 'retro-phase';
+            Object.assign(status.dataset, {state: phaseState(room)});
+            status.textContent = room.phase === 'running' ? 'Playing' : room.phase === 'loading' ? 'Loading' : room.phase === 'ended' ? 'Round over' : `${room.ready}/${room.playing} ready`;
+            heading.append(titles, status);
             const hostMember = room.members.find(member => member.id === room.host);
-            host.append(profileAvatar(hostMember?.avatar), document.createTextNode(`Hosted by ${hostName}`));
-            const roster = document.createElement('div'); roster.className = 'listed-players';
-            room.members.filter(member => member.id !== room.host).forEach(member => {
-                const person = document.createElement('span'); person.className = 'listed-person';
-                person.append(profileAvatar(member.avatar), document.createTextNode(member.name));
-                roster.append(person);
-            });
-            const actions = document.createElement('div'); actions.className = 'card-actions';
-            const join = document.createElement('button'); join.className = 'mk64-primary'; join.type = 'button';
+            const people = document.createElement('div'); people.className = 'retro-room-people';
+            const stack = document.createElement('span'); stack.className = 'retro-avatar-stack';
+            for (const member of [hostMember, ...room.members.filter(member => member.id !== room.host)].filter(Boolean).slice(0, 5)) {
+                const picture = profileAvatar(member.avatar); picture.title = member.name; stack.append(picture);
+            }
+            const summary = document.createElement('span');
+            summary.textContent = `${hostMember?.name || 'Host'}${room.joined > 1 ? ` + ${room.joined - 1} more` : ''} · ${room.playing}/${room.maxPlayers} playing`;
+            people.append(stack, summary);
+            const actions = document.createElement('div');
+            const join = document.createElement('button'); join.className = 'retro-button retro-button-primary'; join.type = 'button';
             const ownRoom = room.code === code;
             const canRejoin = room.phase === 'running' && ['marioparty','marioparty2'].includes(room.game.id) && readResume(room.code);
             join.textContent = ownRoom ? 'Return to room' : canRejoin ? 'Rejoin match' : ['running', 'loading'].includes(room.phase) ? 'Spectate' : 'Join room';
@@ -151,9 +168,7 @@
                 } else joinRoom(room);
             });
             actions.append(join);
-            info.append(name, description);
-            if (roster.children.length) info.append(roster);
-            info.append(host, actions); card.append(poster, info); list.append(card);
+            info.append(heading, people, actions); card.append(poster, info); list.append(card);
         }
     }
     function renderLobby(raw) {
@@ -166,7 +181,7 @@
             const selected = field.choices.find(choice => choice.value === room.settings?.[field.key]);
             return field.label + ': ' + (selected?.label || '—');
         }).join(' · ');
-        $('retro-game-title').textContent = game.title + ' lobby';
+        $('retro-game-title').textContent = game.title;
         artwork($('retro-lobby-art'), game);
         $('retro-invite').value = location.origin + location.pathname + '?room=' + code;
         hostId = room.host;
@@ -178,55 +193,61 @@
         const controllerArea=$('retro-controller-setup');
         if(controllerArea){
             if(controllerArea.dataset.game!==game.id){controllerArea.replaceChildren();controllerArea.dataset.game=game.id;}
-            controllerArea.hidden=typeof PeakNet.adapters.get(game.adapter)?.lobby!=='function';
+            const hasControls = typeof PeakNet.adapters.get(game.adapter)?.lobby==='function';
+            controllerArea.hidden=!hasControls;
+            $('retro-controller-card').hidden = !hasControls || role !== 'player';
             PeakNet.adapters.get(game.adapter)?.lobby?.({role});
         }
         const compatible = room.schemaVersion === 1;
         const choosing = compatible && room.phase === 'lobby' && !returning;
-        document.querySelector('.mk64-phase').textContent = !compatible ? 'Updating room' : room.phase === 'ended' ? 'Round ended' : room.phase !== 'lobby' ? 'Game in progress' : room.playing >= 1 && room.ready === room.playing && !room.choosing ? 'Ready to start' : 'Choosing roles';
+        const phase = $('retro-phase');
+        phase.dataset.state = phaseState(room);
+        phase.textContent = {updating: 'Updating room', ended: 'Round over', playing: 'Game in progress',
+            ready: 'Everyone’s ready', waiting: 'Waiting for players'}[phase.dataset.state];
         $('retro-seat-count').textContent = `${room.playing}/${room.maxPlayers} seats`;
+        const canTakeSeat = choosing && role !== 'player' && room.playing < room.maxPlayers;
         const list = $('retro-room-members'); list.replaceChildren();
         for (let seat = 0; seat < room.maxPlayers; seat++) {
             const member = room.members.find(entry => entry.role === 'player' && entry.slot === seat);
-            const row = document.createElement('li');
-            const avatar = document.createElement('span'); avatar.className = `mk64-seat-avatar${member ? '' : ' empty'}`;
-            avatar.textContent = member ? member.name.slice(0, 1).toUpperCase() : `${seat + 1}`;
-            const identity = document.createElement('div'); identity.className = 'mk64-seat-name';
-            const title = member ? memberTitle(member) : document.createElement('strong');
-            if (!member) title.textContent = 'Waiting for player';
-            const detail = document.createElement('small'); detail.textContent = `Seat ${seat + 1}${member?.id === memberId ? ' · You' : ''}`;
-            identity.append(title, detail); row.append(member ? profileAvatar(member.avatar) : avatar, identity);
+            const row = document.createElement('li'); row.className = 'retro-seat';
+            const port = document.createElement('span'); port.className = 'retro-port'; port.textContent = 'P' + (seat + 1);
             if (member) {
-                const readyState = document.createElement('div'); readyState.className = 'mk64-ready-state';
-                const marker = member.id === memberId ? document.createElement('button') : document.createElement('span');
-                marker.className = `mk64-ready-marker${member.ready ? ' is-ready' : ''}`;
-                marker.textContent = '✓';
-                if (member.id === memberId) {
-                    marker.id = 'retro-ready'; marker.type = 'button';
-                    marker.disabled = !choosing;
-                    marker.setAttribute('aria-label', member.ready ? 'Cancel ready' : 'Mark ready');
-                    marker.setAttribute('aria-pressed', String(member.ready));
-                    marker.addEventListener('click', () => {
-                        if (code && !started && role === 'player') connect().emit('ready', {ready: !member.ready});
-                    });
-                } else marker.setAttribute('aria-hidden', 'true');
-                const tag = document.createElement('span'); tag.className = 'mk64-seat-tag';
-                tag.textContent = member.ready ? 'Ready' : 'Not ready';
-                readyState.append(marker, tag); row.append(readyState);
+                row.classList.toggle('is-you', member.id === memberId);
+                const readyState = document.createElement('span');
+                readyState.className = 'retro-ready-state' + (member.ready ? ' is-ready' : '');
+                readyState.textContent = member.ready ? 'Ready' : 'Not ready';
+                row.append(port, profileAvatar(member.avatar), person(member, member.connected === false ? 'Reconnecting…' : ''), readyState);
+            } else {
+                row.classList.add('is-open');
+                const label = document.createElement('span'); label.className = 'retro-open-label'; label.textContent = 'Open seat';
+                row.append(port, label);
+                // Seats fill in order, so one button covers every open seat.
+                if (canTakeSeat && seat === room.playing) {
+                    const take = document.createElement('button'); take.type = 'button';
+                    take.className = 'retro-button'; take.textContent = 'Take seat';
+                    take.addEventListener('click', () => socket.emit('role', {role: 'player'}));
+                    row.append(take);
+                }
             }
             list.append(row);
         }
         const watchers = $('retro-spectator-members'); watchers.replaceChildren();
-        for (const member of room.members.filter(entry => entry.role !== 'player')) {
+        const watching = room.members.filter(entry => entry.role !== 'player');
+        $('retro-spectator-count').textContent = String(watching.length);
+        for (const member of watching) {
             const item = document.createElement('li');
-            const identity = document.createElement('div'); identity.className = 'mk64-seat-name';
-            const detail = document.createElement('small');
-            detail.textContent = `${member.role === 'spectator' ? 'Watching' : 'Choosing a role'}${member.id === memberId ? ' · You' : ''}`;
-            identity.append(memberTitle(member), detail);
-            item.append(profileAvatar(member.avatar), identity);
+            item.append(profileAvatar(member.avatar), person(member, member.role === 'spectator' ? 'Watching' : 'Choosing a role'));
             watchers.append(item);
         }
-        if (!watchers.children.length) { const item = document.createElement('li'); item.className = 'mk64-empty-spectators'; item.textContent = 'No spectators yet'; watchers.append(item); }
+        if (!watchers.children.length) { const item = document.createElement('li'); item.className = 'retro-empty-line'; item.textContent = 'Nobody is watching yet.'; watchers.append(item); }
+        const host = room.members.find(member => member.id === room.host);
+        const hostLine = $('retro-host-line'); hostLine.replaceChildren();
+        if (host) {
+            const text = document.createElement('span'); const name = document.createElement('strong');
+            name.textContent = host.id === memberId ? 'you' : host.name;
+            text.append('Hosted by ', name);
+            hostLine.append(profileAvatar(host.avatar), text);
+        }
         const isHost = memberId === room.host;
         $('retro-change-game').hidden = !isHost || room.phase !== 'lobby';
         if ($('retro-change-game').dataset.game !== game.id || $('retro-change-game').dataset.epoch !== String(room.epoch)) {
@@ -242,9 +263,18 @@
         $('retro-choose-player').disabled = !choosing || role !== 'player' && room.playing >= room.maxPlayers;
         $('retro-choose-spectator').setAttribute('aria-pressed', String(role === 'spectator'));
         $('retro-choose-spectator').disabled = !choosing;
+        const readyButton = $('retro-ready');
+        readyButton.hidden = role !== 'player';
+        readyButton.disabled = !choosing;
+        readyButton.setAttribute('aria-pressed', String(!!me?.ready));
+        readyButton.textContent = me?.ready ? 'Ready' : 'Ready up';
+        readyButton.title = me?.ready ? 'Select to cancel ready' : '';
         startButton.hidden = !isHost || room.phase !== 'lobby';
         startButton.disabled = !choosing || room.playing < 1 || room.ready !== room.playing || room.choosing > 0;
-        lobbyNotice.textContent = compatible && (game.backend === 'solo-media-v1' || ['marioparty', 'marioparty2'].includes(game.id)) ? '' : compatible ? 'Play solo or with friends. Mark ready, then start; spectators do not need a player seat.' : 'This room is using an older server version. Restart the Peak Decline app to enable player and spectator roles.';
+        lobbyNotice.textContent = !compatible ? 'This room is using an older server version. Restart the Peak Decline app to enable player and spectator roles.'
+            : room.phase !== 'lobby' ? '' : role !== 'player' ? (room.playing < room.maxPlayers ? 'You’re watching. Take an open seat to play.' : 'You’re watching. All seats are taken.')
+            : !me?.ready ? 'Ready up when you’re set.' : isHost ? (startButton.disabled ? 'Waiting for everyone to ready up.' : 'Everyone’s ready. Start when you like.')
+            : 'Waiting for the host to start.';
     }
     function enterRoom(room) {
         if (!room?.code) { notice('The room could not be opened. Try again.'); return; }
@@ -255,7 +285,34 @@
         browser.hidden = true; lobby.hidden = false; $('retro-back-rooms').hidden = false;
         $('retro-open-create').disabled = true;
         if (dialog.open) dialog.close(); createButton.disabled = false;
+        chatLog.replaceChildren(); chatSeen = 0;
+        for (const message of Array.isArray(room.chat) ? room.chat : []) addChat(message);
+        if (!chatLog.children.length) showEmptyChat();
         renderLobby(room);
+    }
+    const chatLog = $('retro-chat-log');
+    let chatSeen = 0;
+    function showEmptyChat() {
+        const empty = document.createElement('li'); empty.className = 'retro-chat-empty';
+        empty.textContent = 'No messages yet. Say hello while everyone gets ready.';
+        chatLog.replaceChildren(empty);
+    }
+    function addChat(message) {
+        if (!message || typeof message.text !== 'string' || !(message.id > chatSeen)) return;
+        chatSeen = message.id;
+        chatLog.querySelector('.retro-chat-empty')?.remove();
+        const pinned = chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 40;
+        const item = document.createElement('li');
+        const body = document.createElement('div');
+        const author = document.createElement('strong');
+        author.textContent = message.member === memberId ? 'You' : String(message.name || 'Player');
+        author.classList.toggle('is-host', message.member === hostId);
+        const text = document.createElement('p'); text.textContent = message.text;
+        body.append(author, text);
+        item.append(profileAvatar(message.avatar), body);
+        chatLog.append(item);
+        while (chatLog.children.length > 50) chatLog.firstElementChild.remove();
+        if (pinned || message.member === memberId) chatLog.scrollTop = chatLog.scrollHeight;
     }
 
 
@@ -391,6 +448,7 @@
             }
         });
         socket.on('room', enterRoom);
+        socket.on('chat', message => { if (code) addChat(message); });
         socket.on('room_update', room => {
             if (room.code !== code) return;
             currentRoom = room;
@@ -488,7 +546,15 @@
             container.append(label, select);
         }
     }
-    $('retro-game-select').addEventListener('change', () => renderSettings());
+    function previewCreate() {
+        const selected = catalog.find(entry => entry.id === $('retro-game-select').value);
+        if (!selected) return;
+        artwork($('retro-create-art'), selected);
+        $('retro-create-meta').textContent = selected.maxPlayers === 1 ? 'Single player. Friends can watch live.'
+            : `Up to ${selected.maxPlayers} players. Anyone else can watch.`;
+    }
+    $('retro-game-select').addEventListener('change', () => { renderSettings(); previewCreate(); });
+    previewCreate();
     $('retro-next-game').addEventListener('change', () => renderSettings('retro-next-game', 'retro-next-settings'));
     $('retro-change-game').addEventListener('submit', event => {
         event.preventDefault();
@@ -508,6 +574,17 @@
         createButton.disabled = true;
         const settings = Object.fromEntries(Array.from($('retro-match-settings').querySelectorAll('select'), field => [field.dataset.setting, Number(field.value)]));
         connect().emit('create', {name: $('retro-room-name').value.trim(), gameId: selected.id, compatibility: selected, settings});
+    });
+    $('retro-chat-form').addEventListener('submit', event => {
+        event.preventDefault();
+        const input = $('retro-chat-input'), text = input.value.trim();
+        if (!text || !code || !socket?.connected) return;
+        socket.emit('chat', {text});
+        input.value = '';
+    });
+    $('retro-ready').addEventListener('click', () => {
+        const me = currentRoom?.members?.find(member => member.id === memberId);
+        if (code && !started && role === 'player') socket.emit('ready', {ready: !me?.ready});
     });
     $('retro-choose-player').addEventListener('click', () => socket.emit('role', {role: 'player'}));
     $('retro-choose-spectator').addEventListener('click', () => socket.emit('role', {role: 'spectator'}));

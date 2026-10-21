@@ -62,7 +62,7 @@ assert.equal(new URL(base).hostname, '127.0.0.1');
         await watcher.locator('#retro-choose-player').click();
         await host.locator('#retro-next-game').selectOption(process.env.NEXT_GAME || 'fzerox');
         await host.locator('#retro-apply-game').click();
-        await watcher.waitForFunction(id => JSON.parse(document.getElementById('retro-catalog').textContent).find(g => g.id === id).title + ' lobby' === document.getElementById('retro-game-title').textContent, process.env.NEXT_GAME || 'fzerox');
+        await watcher.waitForFunction(id => JSON.parse(document.getElementById('retro-catalog').textContent).find(g => g.id === id).title === document.getElementById('retro-game-title').textContent, process.env.NEXT_GAME || 'fzerox');
         await player.locator('#retro-leave-room').click();
         for (const page of [host, watcher]) await page.locator('#retro-ready').click();
         await host.locator('#retro-start-race').click();
