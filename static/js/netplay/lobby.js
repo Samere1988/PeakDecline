@@ -433,7 +433,7 @@
             if(code && resumeToken && canRetain() && network && !network.failed) {
                 awaitingResume = retainedLockstep();
                 socket.emit('resume',{code,token:resumeToken,compatibility:game,retained:game.backend === 'mk64-server-authority-v1' ? false : !network.rebuilding,
-                    ...(retainedLockstep() ? {epoch:network.epoch,frame:network.frame - 1} : {})});
+                    ...(retainedLockstep() ? {epoch:network.epoch,frame:network.resumeFrame?.() ?? network.frame - 1} : {})});
             } else socket.emit('list');
             probeLatency();
         });

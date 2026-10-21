@@ -67,6 +67,8 @@ class Game:
         paths = [Path(app.instance_path) / self.build_dir / name for name in self.files]
         if self.backend == 'recomp-ring-lockstep-v1':
             paths += [Path(app.instance_path) / 'netplay/build' / name for name in ('netplay.js', 'netplay.wasm')]
+            if self.peer_inputs:
+                paths += [Path(app.static_folder) / 'js/netplay/rollback_transport.js']
         paths += [Path(app.instance_path if self.backend == 'devilution-native-v1' or self.private_data else app.static_folder) / self.rom]
         paths += [Path(app.static_folder) / name for name in self.scripts]
         paths += [Path(app.static_folder) / name for name in ('js/netplay/session.js', 'js/netplay/telemetry.js', 'js/account_sync.js', 'js/netplay/lobby.js', 'js/netplay/spectators.js', 'js/netplay/spectator_stream.js', 'js/netplay/game_audio.js')]
@@ -110,6 +112,9 @@ class Game:
                 descriptor['rollback']['hashInterval'] = self.rollback_hash_interval
             if self.peer_inputs:
                 descriptor['rollback']['peerInputs'] = True
+        if self.backend == 'recomp-ring-lockstep-v1' and self.peer_inputs:
+            # Optional RTC input copies; the relay journal stays authoritative.
+            descriptor['lockstep'] = dict(peerInputs=True)
         if self.backend == 'authoritative-host-v1':
             descriptor['authoritative'] = dict(historyTicks=self.tick_rate * 2, maxPending=64,
                 snapshotInterval=max(1, self.tick_rate // 20), interpolationTicks=max(1, self.tick_rate // 10),
@@ -145,7 +150,7 @@ GAMES = {'mk64': Game('mk64', 'Mario Kart 64', 'mk64/authority-graphics-20261017
          'fzerox': Game('fzerox', 'F-Zero X', 'fzerox/build', ('fzerox.js', 'fzerox.wasm', 'fzerox.data', 'licenses.txt'),
                         'roms/N64/F-ZERO X (U) [!].z64', 'fzerox', 'retro/fzerox_player.html',
                         ('js/mk64_gamepad.js', 'js/retro_controller.js', 'js/n64_touch.js', 'js/game_fullscreen.js', 'js/netplay/wasm_frame_adapter.js', 'js/netplay/fzerox_adapter.js'),
-                        tick_rate=60, runtime_template='retro/fzerox_runtime.html'),
+                        tick_rate=60, runtime_template='retro/fzerox_runtime.html', peer_inputs=True),
          'smash64': SMASH64}
 
 
@@ -208,7 +213,7 @@ GAMES['marioparty'] = Game('marioparty', 'Mario Party', 'marioparty/build',
     ('js/mk64_gamepad.js', 'js/retro_controller.js', 'js/n64_touch.js',
      'js/game_fullscreen.js', 'js/netplay/wasm_frame_adapter.js',
      'js/netplay/marioparty_runtime.js', 'js/netplay/marioparty_adapter.js'),
-    max_players=4, tick_rate=60, runtime_template='retro/marioparty_runtime.html')
+    max_players=4, tick_rate=60, runtime_template='retro/marioparty_runtime.html', peer_inputs=True)
 
 GAMES['marioparty2'] = Game('marioparty2', 'Mario Party 2', 'marioparty2/build',
     ('marioparty2.js', 'marioparty2.wasm', 'playable.json'),
@@ -216,7 +221,7 @@ GAMES['marioparty2'] = Game('marioparty2', 'Mario Party 2', 'marioparty2/build',
     ('js/mk64_gamepad.js', 'js/retro_controller.js', 'js/n64_touch.js',
      'js/game_fullscreen.js', 'js/netplay/wasm_frame_adapter.js',
      'js/netplay/marioparty_runtime.js', 'js/netplay/marioparty2_adapter.js'),
-    max_players=4, tick_rate=60, runtime_template='retro/marioparty2_runtime.html')
+    max_players=4, tick_rate=60, runtime_template='retro/marioparty2_runtime.html', peer_inputs=True)
 
 
 GAMES['cmr2'] = Game('cmr2', 'Colin McRae Rally 2.0', 'cmr2/build',

@@ -47,6 +47,120 @@ not the full native `rnet_session` implementation or a wire-compatible port of
 its UDP/ICE protocol. This backend does not implement rollback or FPS
 replication. Backend ID: `recomp-ring-lockstep-v1`.
 
+## Lockstep peer inputs (October 21, 2026)
+
+F-Zero X, Mario Party and Mario Party 2 opt in with `peer_inputs=True`; their
+room descriptor carries `lockstep: {peerInputs: true}`, which also enters the
+compatibility check and build fingerprint. Each player sends every input to the
+Socket.IO relay as before and also through the Smash `rollback-input-v2` data
+channel (`static/js/netplay/rollback_transport.js`: unordered, no retransmits,
+eight-frame redundancy, selective repair, reconnection generations). Signaling
+reuses `rollback_connect` / `rollback_signal` and the same authenticated
+seat/epoch checks. Spectators, unsupported browsers and failed channels keep
+the relay-only path.
+
+The session (`static/js/netplay/session.js`) consumes a frame when either the
+relay row or a complete set of peer copies (its own submitted input plus every
+remote seat's) is present. The relay journal stays authoritative:
+
+- A relay row replaces any unconsumed peer copies for that frame.
+- Rows consumed from peer copies are kept until their relay row arrives and
+  must match it exactly; a mismatch ends the match as a conflicting frame.
+- Checksums wait until the relay has confirmed their frame, so the server's
+  hash horizon and desync detection are unchanged.
+- Peer progress stops 120 frames beyond the last relay row; the relay accepts
+  128 future frames for these rooms (16 otherwise).
+- The input lead (four frames for these games) and frame pacing are unchanged.
+  No input is predicted and nothing is rolled back.
+
+Mario Party recovery keeps working with early rows. A retained reconnect reports
+`min(frame - 1, last relay row)`, receives history from there, verifies early
+rows against it and resends inputs the journal lacks. The server moves the
+reconnected socket's signaling seat to its new sid.
+
+A closing or reloading tab can lose its last Socket.IO inputs while their RTC
+copies were already consumed by other players (seen in the four-player reload
+browser check). So when the relay pauses a match, each connected player sends
+`lockstep_witness` with the rows it consumed early (at most 128, inside the
+input window). The server fills only missing inputs of absent seats
+(disconnected or rebuilding); a witnessed value that contradicts a stored input
+stops the match. A reloaded tab still rebuilds from the relay journal. With peer
+inputs the server keeps that seat's contiguous retained or witnessed inputs
+after the last completed row when the tab finishes replaying, and
+`party_live.inputsThrough` tells it to continue after them. The new tab joins
+the RTC mesh only once live; other players treat its announcement as a new
+remote instance. Unconsumed remote copies are dropped on pause, because the
+relay delivers every journal input again. Limits: a connected player could
+witness invented inputs for an absent seat (input hashes and simulation hashes
+detect problems but do not prevent cheating), and a witness that arrives after
+the replaced tab is live can only end the match with a conflict.
+
+Tests: `node tests/games/lockstep_peer_session.cjs` (Wasm core, scripted
+transport), `.venv/bin/python tests/games/lockstep_peer_test.py` (signaling,
+window, reconnect and reload with four seats; also reruns the Mario Party
+relay tests in peer mode) and the impaired-network comparison below.
+
+`tests/games/lockstep_peer_network_browser.cjs` compares the previous session
+(frozen at `.tmp/lockstep-peer-20261021/baseline/session.js`, SHA-256
+`cf51088e…51cb`) with the candidate. It uses Chromium 153.0.8010.12 with real
+local RTC, the installed Wasm input core and an in-page relay that applies the
+server's row order, input window, conflict and checksum rules. It runs three
+players: seat 0 hosts beside the relay (1 ms), and two friends are 35 ms one-way
+away. Each client/relay direction is an ordered stream. A lost message arrives
+after a fast-retransmit delay (link round trip plus three 60 Hz messages) and
+holds every later message on that stream (TCP head-of-line blocking). Loss is
+keyed by stream, message and frame, so both variants see the same relay loss
+schedule. RTC copies get the same per-link loss and, conservatively, the same
+one-way delay as the relay route (friend to friend: 70 ms). Each game attempts
+one frame per 60 Hz tick. Values are medians of three alternating 20-second
+runs (after a 2-second warm-up), for each scenario and game, averaged over
+players. A freeze is a run of consecutive ticks without a new frame.
+
+| Scenario (friends' link loss) | Stalled ticks, before → after | Freezes ≥100 ms per minute | Longest freeze | Frames per second | Rows from peer copies |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Clean | 16.8–16.9% → 16.7% | 0 → 0 | 33 → 17 ms | 49.9 → 50.0 | 0% |
+| 1% loss | 32.4–32.7% → 16.8–16.9% | 90 → 0 | 233–250 → 33 ms | 40.4–40.6 → 49.9 | 24–26% |
+| 3% loss | 43.6–43.8% → 18.4–18.6% | 151–153 → 0 | 267 → 33–50 ms | 33.7–33.9 → 48.9–49.0 | 43–45% |
+| 1%, browser without RTC | 29.0% → 29.0% | 70–73 → 70–73 | 150 → 150 ms | 42.6 → 42.6 | 0% |
+| 1%, every RTC packet lost | 32.8–33.1% → 31.9–32.0% | 94 → 94 | 233 → 233 ms | 40.1–40.3 → 40.8–40.9 | 0% |
+
+Ranges span F-Zero (direct row path) and Mario Party (retained row path); the
+two paths gave nearly identical results. Across 60 runs there were no session
+failures, checksum mismatches, relay conflicts, dropped inputs or out-of-horizon
+checksums, and every early row was confirmed by its relay row. The two fallback
+rows show relay-only behaviour when RTC is missing or useless. The clean ~50
+frames per second comes from the fixed four-frame input lead
+being shorter than the 70 ms friend-to-friend relay path, and is the same before
+and after; these games do not use the latency-based lead. These are local
+browser measurements with emulated impairments. They do not measure Internet
+routing, NAT traversal (there is no TURN server), game rendering or controller
+latency. Raw reports and logs, with source and harness hashes (candidate
+`session.js` `baa968b2…4599`), are in `.tmp/lockstep-peer-20261021/results-final/`.
+
+```
+node tests/games/lockstep_peer_session.cjs
+.venv/bin/python tests/games/lockstep_peer_test.py
+LOCKSTEP_NETWORK_EXPECT=1 node tests/games/lockstep_peer_network_browser.cjs
+LOCKSTEP_GAME=marioparty LOCKSTEP_NETWORK_EXPECT=1 node tests/games/lockstep_peer_network_browser.cjs
+```
+
+Real runtimes, through the disposable `marioparty_lobby_server.py` fixture with
+real RTC (default STUN settings, loopback host candidates):
+`marioparty_netplay_browser.cjs` passed for Mario Party and Mario Party 2, both
+1,800-frame runs (one seat's relay inputs delayed 35–95 ms with a 1.5-second
+burst, plus a 20-second host disconnect and reconnect) and `MP_RELOAD=1` (host
+reload, then guest tab close and reopen; three Mario Party runs). Every player
+had three open peers and no invalid packets; 89–99% of rows came from peer
+copies, and native checksums matched. The first reload run, before the witness
+rows above existed, failed with conflicting frames after the host reload; that
+failure is the reason for them. The F-Zero netplay browser test fails the same
+way on the base commit on this Linux machine (its hash hook never fires, and its
+emulated phone seat desynchronizes at frame 1559), so F-Zero was checked
+with desktop seats instead. Two players and a spectator ran 3,400 frames with
+server checksum checks and no desync; the guest consumed 1,063 rows from peer
+copies, and the host, beside the relay, used relay rows. Browser logs are in
+`.tmp/lockstep-peer-20261021/`.
+
 ## Optional rollback backend
 
 `static/js/netplay/rollback.js` registers `rollback-v1`. It is a separate
@@ -701,7 +815,9 @@ There is no reconnect-to-match, late join, automatic state repair, or host
 migration during play. A playing participant's disconnect ends the match.
 Rollback is opt-in and remains unvalidated for production game adapters.
 Spectators join before start and run the same simulation. Socket.IO's reliable
-transport can stall under loss; internet latency and mobile performance still
+transport can stall under loss; lockstep games and Smash reduce that with
+optional peer input copies, but there is no TURN relay, so players behind
+symmetric NATs stay relay-only. Internet latency and mobile performance still
 need testing. Input hashes and simulation hashes detect problems but do not
 prevent cheating. Browser frame throttling may stall all participants.
 

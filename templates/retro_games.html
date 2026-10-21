@@ -120,9 +120,9 @@
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='vendor/socket.io.min.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/netplay/session.js', v='1') }}" defer></script>
+<script src="{{ url_for('static', filename='js/netplay/session.js', v='peer-lockstep-v1') }}" defer></script>
 <script src="{{ url_for('static', filename='js/netplay/telemetry.js', v='frame-timing-v2') }}" defer></script>
-<script src="{{ url_for('static', filename='js/netplay/rollback_transport.js', v='recovery-v2') }}" defer></script>
+<script src="{{ url_for('static', filename='js/netplay/rollback_transport.js', v='peer-lockstep-v1') }}" defer></script>
 <script src="{{ url_for('static', filename='js/netplay/rollback.js', v='phase-input-v4') }}" defer></script>
 <script src="{{ url_for('static', filename='js/netplay/fps_input.js', v='1') }}" defer></script>
 <script src="{{ url_for('static', filename='js/netplay/authoritative.js', v='2') }}" defer></script>
@@ -136,5 +136,5 @@
 {% endif %}
 <script src="{{ url_for('static', filename='js/netplay/spectator_stream.js', v='1') }}" defer></script>
 <script src="{{ url_for('static', filename='js/netplay/spectators.js', v='2') }}" defer></script>
-<script src="{{ url_for('static', filename='js/netplay/lobby.js', v='lobby-redesign-v1') }}" defer></script>
+<script src="{{ url_for('static', filename='js/netplay/lobby.js', v='peer-lockstep-v1') }}" defer></script>
 {% endblock %}
