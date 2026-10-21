@@ -70,8 +70,9 @@ remote seat's) is present. The relay journal stays authoritative:
   hash horizon and desync detection are unchanged.
 - Peer progress stops 120 frames beyond the last relay row; the relay accepts
   128 future frames for these rooms (16 otherwise).
-- The input lead (four frames for these games) and frame pacing are unchanged.
-  No input is predicted and nothing is rolled back.
+- The input lead and frame pacing are unchanged: `lobby.js` still sets each
+  player's lead from its server round trip every two seconds. No input is
+  predicted and nothing is rolled back.
 
 Mario Party recovery keeps working with early rows. A retained reconnect reports
 `min(frame - 1, last relay row)`, receives history from there, verifies early
@@ -90,10 +91,9 @@ after the last completed row when the tab finishes replaying, and
 `party_live.inputsThrough` tells it to continue after them. The new tab joins
 the RTC mesh only once live; other players treat its announcement as a new
 remote instance. Unconsumed remote copies are dropped on pause, because the
-relay delivers every journal input again. Limits: a connected player could
-witness invented inputs for an absent seat (input hashes and simulation hashes
-detect problems but do not prevent cheating), and a witness that arrives after
-the replaced tab is live can only end the match with a conflict.
+relay delivers every journal input again. Witnesses are trusted, because
+rooms are for friends. A witness that arrives after the replaced tab is live
+can only end the match with a conflict.
 
 Tests: `node tests/games/lockstep_peer_session.cjs` (Wasm core, scripted
 transport), `.venv/bin/python tests/games/lockstep_peer_test.py` (signaling,
@@ -112,30 +112,45 @@ holds every later message on that stream (TCP head-of-line blocking). Loss is
 keyed by stream, message and frame, so both variants see the same relay loss
 schedule. RTC copies get the same per-link loss and, conservatively, the same
 one-way delay as the relay route (friend to friend: 70 ms). Each game attempts
-one frame per 60 Hz tick. Values are medians of three alternating 20-second
-runs (after a 2-second warm-up), for each scenario and game, averaged over
-players. A freeze is a run of consecutive ticks without a new frame.
+one frame per 60 Hz tick. Like `lobby.js`, every player probes its relay round
+trip every two seconds over its own ordered streams (so head-of-line blocking
+inflates probes too) and passes the worst of the last eight to `latency()`,
+which sets its input lead. Values are medians of three alternating 20-second
+runs (after a 5-second warm-up), for each scenario and game, averaged over
+players. A freeze is a run of consecutive ticks without a new frame. Lead is
+the mean input lead in frames (17 ms each).
 
-| Scenario (friends' link loss) | Stalled ticks, before → after | Freezes ≥100 ms per minute | Longest freeze | Frames per second | Rows from peer copies |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Clean | 16.8–16.9% → 16.7% | 0 → 0 | 33 → 17 ms | 49.9 → 50.0 | 0% |
-| 1% loss | 32.4–32.7% → 16.8–16.9% | 90 → 0 | 233–250 → 33 ms | 40.4–40.6 → 49.9 | 24–26% |
-| 3% loss | 43.6–43.8% → 18.4–18.6% | 151–153 → 0 | 267 → 33–50 ms | 33.7–33.9 → 48.9–49.0 | 43–45% |
-| 1%, browser without RTC | 29.0% → 29.0% | 70–73 → 70–73 | 150 → 150 ms | 42.6 → 42.6 | 0% |
-| 1%, every RTC packet lost | 32.8–33.1% → 31.9–32.0% | 94 → 94 | 233 → 233 ms | 40.1–40.3 → 40.8–40.9 | 0% |
+Friends 35 ms from the relay:
 
-Ranges span F-Zero (direct row path) and Mario Party (retained row path); the
-two paths gave nearly identical results. Across 60 runs there were no session
-failures, checksum mismatches, relay conflicts, dropped inputs or out-of-horizon
-checksums, and every early row was confirmed by its relay row. The two fallback
-rows show relay-only behaviour when RTC is missing or useless. The clean ~50
-frames per second comes from the fixed four-frame input lead
-being shorter than the 70 ms friend-to-friend relay path, and is the same before
-and after; these games do not use the latency-based lead. These are local
-browser measurements with emulated impairments. They do not measure Internet
-routing, NAT traversal (there is no TURN server), game rendering or controller
-latency. Raw reports and logs, with source and harness hashes (candidate
-`session.js` `baa968b2…4599`), are in `.tmp/lockstep-peer-20261021/results-final/`.
+| Scenario (friends' link loss) | Frames per second, before → after | Stalled ticks | Freezes ≥100 ms per minute | Longest freeze | Lead | Rows from peer copies |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Clean | 60 → 60 | 0% → 0% | 0 → 0 | 0 → 0 ms | 3.7–4.7 → 3.7–4.7 | 0% |
+| 1% loss | 48.4–50.3 → 59.7–60.0 | 16.2–19.4% → 0–0.5% | 64–87 → 0 | 133 → 0–17 ms | 4.0–5.0 → 4.5–5.5 | 17–20% |
+| 3% loss | 42.8–44.5 → 59.9–60.0 | 25.8–28.7% → 0–0.2% | 75–103 → 0 | 233–250 → 0–17 ms | 5.0–5.6 → 5.6–6.0 | 32% |
+| 1%, browser without RTC | 51.2–51.8 → 51.3–52.3 | 13.8–14.6% → 12.8–14.5% | 53–56 → 50–56 | 133–200 → 183–200 ms | 4.7–5.3 → 4.8–5.3 | 0% |
+| 1%, every RTC packet lost | 49.1–49.8 → 50.2–50.9 | 17.1–18.3% → 15.3–16.4% | 57–80 → 40–58 | 200 → 200 ms | 4.2–5.2 → 5.2 | 0% |
+
+Friends 60 ms from the relay (F-Zero; 120 ms friend-to-friend relay path):
+
+| Scenario | Frames per second, before → after | Stalled ticks | Freezes ≥100 ms per minute | Longest freeze | Lead | Rows from peer copies |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Clean | 60 → 60 | 0% → 0% | 0 → 0 | 0 → 0 ms | 6 → 6 | 0% |
+| 1% loss | 44.1 → 58.8 | 26.6% → 1.9% | 81 → 0 | 200 → 33 ms | 6 → 6 | 28% |
+| 3% loss | 36.1 → 56.9 | 39.9% → 5.3% | 125 → 0 | 333 → 50 ms | 6 → 6 | 51% |
+
+Ranges span F-Zero (direct row path) and Mario Party (retained row path). On
+clean links nothing changes: the ping-driven lead already covers the relay
+path, and relay rows arrive with the peer copies. Under loss, peer copies remove
+nearly every freeze and restore the frame rate; the ping-driven lead was at
+most 0.6 frames higher on average in those runs. The two fallback rows match
+relay-only play. Across 78 runs there were no session failures, checksum
+mismatches, relay conflicts, dropped inputs or out-of-horizon checksums, and
+every early row was confirmed by its relay row. These are local browser
+measurements with emulated impairments. They do not measure Internet routing,
+NAT traversal (there is no TURN server), game rendering or controller latency.
+Raw reports and logs, with source and harness hashes (candidate `session.js`
+`e5be1d40…`, harness `b5c155c8…`), are in
+`.tmp/lockstep-peer-20261021/results-probed/`.
 
 ```
 node tests/games/lockstep_peer_session.cjs

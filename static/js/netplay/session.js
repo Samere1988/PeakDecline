@@ -247,7 +247,7 @@
         }
         resumeFrame() { return Math.min(this.frame - 1, this.receivedThrough); }
         diagnostics() {
-            return {frame: this.frame, relayThrough: this.receivedThrough, peerRows: this.peerRows,
+            return {frame: this.frame, lead: this.lead, relayThrough: this.receivedThrough, peerRows: this.peerRows,
                 unconfirmed: this.unconfirmed.size, transport: this.transport?.diagnostics() ?? null};
         }
         suspendTransport() {
