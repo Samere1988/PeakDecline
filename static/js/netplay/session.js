@@ -174,7 +174,11 @@
         }
         suspendTransport() { this.transportSuspended = true; }
         resumeTransport(event) {
-            if (!this.recoverable || this.failed || event.epoch !== this.epoch) return;
+            if (this.failed || event.epoch !== this.epoch) return;
+            if (!this.recoverable) {
+                // Only a stall pause reaches these sessions; nothing was missed while paused.
+                this.transportSuspended = false; this.lastProgress = performance.now(); return;
+            }
             const completed = event.completed ?? event.through;
             if (event.frames !== undefined) {
                 if (!Array.isArray(event.frames) || event.frames.length > 1200 || !Number.isInteger(completed) || completed < this.frame - 1)

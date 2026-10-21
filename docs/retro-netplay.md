@@ -20,6 +20,17 @@ decompiled game logic compiled to WebAssembly, without emulation.
   inputs before advancing the game. No predicted inputs are used.
 - Bounded input/history windows, first-input-wins conflict detection, periodic
   game-state hashes, client stall timeout, and a server loading timeout.
+- Stalled seats in running lockstep matches (F-Zero X, Mario Party 1 and 2): when
+  the next frame has been waiting `STALL_SECONDS` (8) for one or more seats while
+  others have sent input, the relay sends `transport_paused` with
+  `reason: 'stalled'` to every other connected member and `transport_resumed`
+  once a frame completes. The stalled seat is never paused, so its next input
+  releases everyone. This keeps the 30-second client watchdog from ending a
+  match when a device freezes or sleeps, which the Engine.IO heartbeat (25 s +
+  20 s, left unchanged because game loads can block the page for ~22 s) takes
+  43–51 s to notice. A real disconnect still follows the existing pause/expiry
+  rules; F-Zero X, which cannot rejoin, still ends when the heartbeat drops a
+  player.
 - The MK64 adapter uses the game loader, controller/touch controls, audio and
   native menus. The current native build adds 60 FPS interpolated presentation,
   cooperative shutdown and expanded diagnostic hashes while retaining 30 Hz

@@ -507,7 +507,7 @@
         });
         socket.on('transport_paused',event=>{
             if(event.epoch!==network?.epoch)return;
-            if (!network.rebuilding) network.suspendTransport?.();$('retro-runtime-status').textContent=retainedLockstep()?'Waiting for a player to rejoin…':'Waiting for the host to reconnect…';
+            if (!network.rebuilding) network.suspendTransport?.();$('retro-runtime-status').textContent=event.reason==='stalled'?'A player’s game stopped responding. Paused until they’re back…':retainedLockstep()?'Waiting for a player to rejoin…':'Waiting for the host to reconnect…';
         });
         socket.on('transport_resumed',event=>{
             if(event.epoch!==network?.epoch)return;

@@ -32,6 +32,9 @@ MK64_RECONNECT_SECONDS = 15
 CHAT_HISTORY = 50
 CHAT_LENGTH = 300
 CHAT_BURST, CHAT_BURST_SECONDS = 5, 10
+# A lockstep seat silent this long pauses the others. Shorter than the 30 s client
+# watchdog and independent of the Engine.IO heartbeat, which game loads can block.
+STALL_SECONDS = 8
 
 
 def rollback_ice_servers(app):
@@ -100,7 +103,7 @@ def register(app, socketio):
         return dict(schemaVersion=1, code=code, name=room['name'], game=room['game'],
                     settings=room['settings'],
                     phase=room['phase'], epoch=room['epoch'], host=room['host'], seed=room.get('seed', 1),
-                    paused=bool(room['phase']=='running' and (lockstep_paused(room) or
+                    paused=bool(room['phase']=='running' and (lockstep_paused(room) or room.get('stall_paused') or
                                 (room['game']['backend']==AUTHORITY_BACKEND and room['sids']
                                  and not members[room['sids'][0]]['connected']))),
                     players=len(room['sids']), maxPlayers=room['game']['maxPlayers'],
@@ -266,6 +269,7 @@ def register(app, socketio):
             close_kart(room)
             record_diagnostics('desync' if 'desynchron' in str(message).lower() or 'no longer match' in str(message).lower() else 'ended',code,room,reason=str(message)[:240])
             room['phase'] = 'ended'
+            forget_stall(room)
             room['inputs'].clear()
             room['hashes'].clear()
             room.pop('frame_history', None)
@@ -518,6 +522,7 @@ def register(app, socketio):
             room['initialSave'] = read_account_save(app, owner, room['game']['id'])
         room['seed'] = secrets.randbelow(0xffffffff) + 1
         room.update(phase='loading', inputs={}, hashes={}, completed=0)
+        forget_stall(room)
         room.pop('frame_history', None)
         if room.get('party_history'):
             room.pop('party_history').close()
@@ -605,6 +610,9 @@ def register(app, socketio):
             publish(code)
             if room['game']['backend'] == SYNC_BACKEND:
                 socketio.start_background_task(sync_idle, code, room['epoch'])
+            if room['game']['backend'] == 'recomp-ring-lockstep-v1':
+                room['progress_at'] = monotonic()
+                socketio.start_background_task(stall_watch, code, room['epoch'])
 
     @socketio.on('loaded', namespace=NAMESPACE)
     def loaded(data):
@@ -776,6 +784,7 @@ def register(app, socketio):
             for key in ('lateSpectator', 'watchMode', 'mediaSent', 'mediaAck', 'resuming', 'diagnosticAt', 'recovering'):
                 person.pop(key, None)
         room.update(phase='lobby', epoch=room['epoch'] + 1, inputs={}, hashes={}, completed=0)
+        forget_stall(room)
         reseat(room)
         returned = state(code, room)
         if interruption is not None:
@@ -936,9 +945,59 @@ def register(app, socketio):
             socketio.emit('rollback_signal', event,
                           namespace=NAMESPACE, to=room['sids'][target])
 
+    stall_seconds = float(app.config.get('RETRO_STALL_SECONDS', STALL_SECONDS))
+
+    def forget_stall(room):
+        for key in ('stalled', 'stall_paused', 'progress_at'):
+            room.pop(key, None)
+
+    def clear_stall(code, room):
+        paused = room.pop('stall_paused', None)
+        room.pop('stalled', None)
+        room['progress_at'] = monotonic()
+        if paused is None:
+            return
+        record_diagnostics('stall_resumed', code, room)
+        for sid in paused:
+            if sid in room['members']:
+                socketio.emit('transport_resumed', dict(epoch=room['epoch']), namespace=NAMESPACE, to=sid)
+        publish(code)
+
+    def stall_watch(code, epoch):
+        # The relay knows whose input the next frame is waiting for. Pausing the
+        # others keeps their watchdogs from ending the match while that seat is stuck.
+        while True:
+            socketio.sleep(min(1, stall_seconds / 4))
+            with lock:
+                room = rooms.get(code)
+                if not room or room['phase'] != 'running' or room['epoch'] != epoch:
+                    return
+                now = monotonic()
+                if lockstep_paused(room):
+                    # A disconnect pause owns the room, and its resume releases everyone.
+                    room.pop('stalled', None); room.pop('stall_paused', None)
+                    room['progress_at'] = now
+                    continue
+                if room.get('stall_paused') is not None or now - room.setdefault('progress_at', now) < stall_seconds:
+                    continue
+                row = room['inputs'].get(room['completed'] + 1)
+                if not row or all(pad is None for pad in row):
+                    continue  # Everyone is idle; there is nobody waiting to tell.
+                stalled = [sid for slot, sid in enumerate(room['sids']) if row[slot] is None]
+                paused = [sid for sid, person in room['members'].items()
+                          if sid not in stalled and person['connected'] and person['loaded']]
+                room['stalled'], room['stall_paused'] = stalled, paused
+                record_diagnostics('stalled', code, room, frame=room['completed'] + 1,
+                                   seats=[room['sids'].index(sid) for sid in stalled])
+                for sid in paused:
+                    socketio.emit('transport_paused', dict(epoch=room['epoch'], reason='stalled'),
+                                  namespace=NAMESPACE, to=sid)
+                publish(code)
+
     def drain_inputs(code, room):
         if lockstep_paused(room):
             return
+        start = room['completed']
         while all(p is not None for p in room['inputs'].get(room['completed'] + 1, [None])):
             frame = room['completed'] + 1
             pads = room['inputs'].pop(frame)
@@ -955,6 +1014,8 @@ def register(app, socketio):
                 if len(history) > MK64_HISTORY:
                     del history[next(iter(history))]
             emit('frameset', packet, code)
+        if room['completed'] > start:
+            clear_stall(code, room)
 
     @socketio.on('input', namespace=NAMESPACE)
     def input_frame(data):

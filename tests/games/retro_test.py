@@ -166,6 +166,43 @@ class RetroTests(unittest.TestCase):
         self.assertEqual([m['id'] for m in history], [1, 2, 3, 4, 5, 6])
         self.assertNotIn('chat', self.events(late, 'rooms')[-1][0] if self.events(late, 'rooms') else {})
 
+    def test_stalled_lockstep_seat_pauses_and_resumes_the_others(self):
+        with patch('retro_package.rooms.STALL_SECONDS', 0.4):
+            self.app, self.sio = make_app(Path(self.tmp.name) / 'stall')
+        clients, code = self.room(count=2)
+        watcher = self.connect('stall-watcher')
+        self.emit(watcher, 'join', dict(code=code, compatibility=self.descriptor))
+        self.start(clients + [watcher])
+        received = lambda client, name: [e['args'][0] for e in client.get_received('/retro') if e['name'] == name]
+        # Nobody has sent input yet: there is no one waiting, so nothing pauses.
+        time.sleep(.9)
+        self.assertEqual(received(clients[0], 'transport_paused'), [])
+        pad = dict(buttons=0, x=0, y=0)
+        for client in clients:
+            self.emit(client, 'input', dict(epoch=0, frame=1, pad=pad))
+        for frame in (2, 3, 4):
+            self.emit(clients[0], 'input', dict(epoch=0, frame=frame, pad=pad))
+        paused, deadline = [], time.monotonic() + 3
+        while not paused and time.monotonic() < deadline:
+            time.sleep(.05)
+            paused = received(clients[0], 'transport_paused')
+        self.assertEqual(paused, [dict(epoch=0, reason='stalled')])
+        self.assertEqual(received(watcher, 'transport_paused'), [dict(epoch=0, reason='stalled')])
+        # The stuck seat is never told to pause, or it could not send the input that resumes everyone.
+        self.assertEqual(received(clients[1], 'transport_paused'), [])
+        outsider = self.connect('stall-outsider')
+        self.emit(outsider, 'list')
+        self.assertTrue(next(r for r in received(outsider, 'rooms')[-1] if r['code'] == code)['paused'])
+        time.sleep(.6)
+        self.assertEqual(received(clients[0], 'transport_paused'), [])
+        self.emit(clients[1], 'input', dict(epoch=0, frame=2, pad=pad))
+        events = clients[0].get_received('/retro')
+        self.assertIn(dict(epoch=0), [e['args'][0] for e in events if e['name'] == 'transport_resumed'])
+        self.assertEqual([e['args'][0]['frame'] for e in events if e['name'] == 'frameset'], [2])
+        self.assertEqual([e['args'][0] for e in watcher.get_received('/retro') if e['name'] == 'transport_resumed'], [dict(epoch=0)])
+        self.emit(outsider, 'list')
+        self.assertFalse(next(r for r in received(outsider, 'rooms')[-1] if r['code'] == code)['paused'])
+
     def test_nested_runtime_assets_remain_allowlisted(self):
         from dataclasses import replace
         nested = 'assets/custom/fonts/test.ttf'
