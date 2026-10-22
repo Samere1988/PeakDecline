@@ -29,7 +29,7 @@ COUNTRIES = {'us': 'US', 'usa': 'US', 'ca': 'CA', 'canada': 'CA', 'uk': 'GB',
              'sg': 'SG', 'in': 'IN', 'pe': 'PE', 'ae': 'AE', 'uy': 'UY'}
 CALL = re.compile(r'\b([kw][a-z]{2,3})(?:[- ]?(?:dt|d|ld|tv)[- ]?([1-9][0-9]*))?\b', re.I)
 NOT_CALLS = {'west', 'with', 'wild', 'kids', 'city', 'cook', 'club', 'cars', 'care', 'cool', 'crew', 'class', 'cave', 'wine', 'walk', 'work', 'will', 'war', 'cafe', 'cat'}
-NETWORK = re.compile(r'\b(abc|cbs|nbc|fox|pbs|cw|cnbc|cgtn|ctv|cbc|global|telemundo|univision|my(?:networktv|tv|net)?|mnt|tmo|ion(?: mystery)?|me ?tv|antenna(?: tv)?|rewind(?: tv)?|create|the florida channel)(?=\b|[0-9])', re.I)
+NETWORK = re.compile(r'\b(abc|cbs|nbc|fox|pbs|cw|cnbc|cgtn|ctv|cbc|global|telemundo|univision|my(?:networktv|network|tv|net)?|mnt|tmo|ion(?: mystery)?|me ?tv|antenna(?: tv)?|rewind(?: tv)?|create|the florida channel|movies|cozi|comet|dabl|grit|bounce|charge|laff|gettv|defy|heroes and icons)(?=\b|[0-9])', re.I)
 # These aliases refer to the same brand and feed; they do not erase +1, West,
 # language, station, or regional distinctions.
 ALIASES = {'aande.us': 'AandENetwork.us', 'historychannel.us': 'History.us',
@@ -41,7 +41,15 @@ ALIASES = {'aande.us': 'AandENetwork.us', 'historychannel.us': 'History.us',
            'smithsonianchannel.us': 'SmithsonianNetwork.us',
            'turnerclassicmovies.ca': 'TCM.ca',
            'nationalgeographiccanada.ca': 'NationalGeographic.ca',
-           'msnbc.us': 'MSNOW.us'}
+           'msnbc.us': 'MSNOW.us',
+           'oxygen - pacific feed': 'OxygenPacific.us',
+           'hallmarkmoviesmysteries.us': 'HallmarkMystery.us',
+           'buzzertv.us': 'BUZZR.us', 'cbssportsnetworkusa.us': 'CBSSportsNetwork.us',
+           'chsn.us': 'ChicagoSportsNetwork.us', 'altitudesport.us': 'AltitudeSports.us',
+           'espnnews.us': 'ESPNEWS.us', 'mavtv.us': 'RacerNetwork.us',
+           'newenglandsportsnetworkplus.us': 'NESNplus.us',
+           'goltvspanish.us': 'GOLTVespanol.us', 'tennischan.us': 'TennisChannel.us',
+           'foxsoccerp.us': 'FoxSoccerPlus.us', 'altitude2.us': 'AltitudeSports2.us'}
 
 
 def key(value):
@@ -73,23 +81,51 @@ def identifier_region(value):
     return COUNTRIES.get(match.group(1).casefold()) if match else None
 
 
-def calls(value, strict=False):
-    found = {(m.group(1).casefold(), m.group(2) or '1') for m in CALL.finditer(value or '')
+def calls(value, strict=False, implicit='1'):
+    found = {(m.group(1).casefold(), m.group(2) or implicit) for m in CALL.finditer(value or '')
              if m.group(1).casefold() not in NOT_CALLS and
              (not strict or m.group(1).isupper())}
     # A label may repeat the station before specifying its actual subchannel.
-    explicit = {base for base, sub in found if sub != '1'}
-    return {(base, sub) for base, sub in found if sub != '1' or base not in explicit}
+    explicit = {base for base, sub in found if sub != implicit}
+    return {(base, sub) for base, sub in found if sub != implicit or base not in explicit}
 
 
 def networks(value):
-    aliases = {'mnt': 'my', 'mynet': 'my', 'mytv': 'my', 'mynetworktv': 'my', 'tmo': 'telemundo',
+    aliases = {'mnt': 'my', 'mynet': 'my', 'mytv': 'my', 'mynetwork': 'my', 'mynetworktv': 'my', 'tmo': 'telemundo',
                'me tv': 'metv', 'antenna tv': 'antenna', 'rewind tv': 'rewind'}
     return {aliases.get(x.casefold(), x.casefold()) for x in NETWORK.findall(value)}
 
 
 def fingerprint(row):
     return hashlib.sha256(json.dumps(row, ensure_ascii=False).encode()).hexdigest()
+
+
+def regional_identity(value):
+    """A named city/feed can identify a region without a provider country prefix."""
+    value = key(value)
+    cities = ('toronto|vancouver|edmonton|montreal|stjohns|halifax|calgary|winnipeg|'
+              'ottawa|kingston|kitchener|lethbridge|london|atlantic|maritimes|saskatchewan')
+    if re.fullmatch(r'(?:cbc|ctv2?|citytv|global)(?:' + cities + r')(?:c[a-z]{3})?', value):
+        return 'CA'
+    if re.fullmatch(r'sportsnet(?:east|ontario|west|pacific|one|360|world)', value):
+        return 'CA'
+    if re.fullmatch(r'(?:ctv(?:news|comedy|drama|life|nature|wild|speed|scifi)(?:channel)?|cbcnewsnetwork|crave[1-4])', value):
+        return 'CA'
+    if re.fullmatch(r'nbcsports(?:bayarea|boston|california|philadelphia)(?:plus)?', value):
+        return 'US'
+    if re.fullmatch(r'spectrumsportsnet(?:la)?(?:lakers|dodgers)', value):
+        return 'US'
+    if re.fullmatch(r'news12(?:newjersey|hudsonvalley|brooklyn|westchester|bronx|longisland|connecticut)', value):
+        return 'US'
+    return None
+
+
+def compatible_feed(requested, guide_id, display):
+    """Do not discard time shifts or add an event-only 4K variant."""
+    requested = key(requested)
+    identity = key(guide_id.rsplit('.', 1)[0]) + key(display)
+    shifts = set(re.findall(r'\+[0-9]+', requested))
+    return shifts == set(re.findall(r'\+[0-9]+', identity)) and ('4k' in requested) == ('4k' in identity)
 
 
 class Catalog:
@@ -99,6 +135,7 @@ class Catalog:
         self.regions = collections.defaultdict(set)
         self.names = collections.defaultdict(set)
         self.stations = collections.defaultdict(set)
+        self.station_bases = collections.defaultdict(set)
         self.guide_calls = {}
         for country, rows in country_catalog.get('countries', {}).items():
             for gid in rows:
@@ -115,12 +152,17 @@ class Catalog:
             station_calls = calls(display)
             self.guide_calls[gid] = station_calls
             # Prefer station-specific IDs to alternate national relay IDs.
-            station_id = re.sub(r'^(?:ABC|CBS|NBC|FOX|PBS(?:Kids|Knowledge)?|CW|TV[0-9]+|MY|Telemundo|Univision)', '', gid.rsplit('.', 1)[0], flags=re.I)
-            is_station = re.fullmatch(r'(?:[kw][a-z]{2,3}|c[a-z]{3})(?:dt[0-9]+)?', station_id, re.I)
+            station_id = re.sub(r'^(?:ABC|CBS|NBC|FOX|PBS(?:Kids|Knowledge)?|CW|TV[0-9]+|MY|Telemundo|Univision|MeTV|AntennaTV|Create)', '', gid.rsplit('.', 1)[0], flags=re.I)
+            is_station = re.fullmatch(r'([kw][a-z]{2,3}|c[a-z]{3})(?:dt([0-9]+))?', station_id, re.I)
             is_canadian_station = gid.endswith('.ca') and re.search(r'-C[A-Z]{3}$', station_id, re.I)
             if (is_station or is_canadian_station) and gid.casefold().endswith(('.us', '.ca')) and '_' not in gid:
-                for call in station_calls:
+                # Descriptions can mention sister stations (KICU / KTVU Plus).
+                # The guide ID establishes which station owns this feed.
+                primary = {(is_station.group(1).casefold(), is_station.group(2) or '1')} if is_station else station_calls
+                self.guide_calls[gid] = primary
+                for call in primary:
                     self.stations[call].add(gid)
+                    self.station_bases[call[0]].add(gid)
 
     def choose(self, candidates, country):
         candidates = set(candidates)
@@ -160,25 +202,31 @@ class Catalog:
             return exact, 'exact_playlist_identifier', [exact]
         alias = self.ids.get(ALIASES.get((tvg_id or '').casefold(), '').casefold())
         if alias:
+            if country and country not in self.regions[alias]:
+                return None, 'conflicting_country_labels', [alias]
+            if not compatible_feed(plain, alias, self.guides[alias]):
+                return None, 'conflicting_feed_qualifier', [alias]
             return alias, 'explicit_identifier_alias', [alias]
         # Preserve provider event slots / movie loops / platform-specific feeds.
         if re.search(r'^(?:/7|PPV\b|NCAAF\b|RallyTV\b|DAZNCA\s*[0-9])|24/7|24x7|no event scheduled|replay available|\b(?:UFC|NFL|MLB|NBA|NHL|Tennis TV|FIFAWC)\s*\d', name, re.I):
             return None, 'event_or_loop_without_matching_identifier', []
         if re.search(r'^\(PLUTO|^Roku\b|\(RK\)|\(MAX ', name, re.I):
             return None, 'platform_feed_requires_exact_identifier', []
-        named_calls = calls(plain, strict=True) & set(self.stations)
-        raw_id_calls = calls(tvg_id) & set(self.stations)
+        named_calls = {(base, sub) for base, sub in calls(plain, strict=True, implicit=None) if base in self.station_bases}
+        raw_id_calls = {(base, sub) for base, sub in calls(tvg_id, implicit=None) if base in self.station_bases}
         if not named_calls and raw_id_calls and key(plain) in {'pbs', 'nbc', 'cbs', 'abc', 'fox', 'cw'}:
             named_calls = raw_id_calls
         if named_calls:
-            candidates = set().union(*(self.stations[c] for c in named_calls))
+            requested_networks = networks(plain)
+            candidates = set().union(*(self.station_bases[base] if sub is None and requested_networks
+                                       else self.stations[(base, sub or '1')] for base, sub in named_calls))
             if country:
                 candidates = {g for g in candidates if self.regions[g] == {country}}
             elif any(g.endswith('.us') for g in candidates):
                 candidates = {g for g in candidates if g.endswith('.us')}
-            requested_networks = networks(plain)
             if requested_networks:
                 candidates = {g for g in candidates if requested_networks & networks(self.guides[g])}
+            candidates = {g for g in candidates if compatible_feed(plain, g, self.guides[g])}
             city = re.search(r'\[([^]]+)\]', plain)
             if city:
                 city_words = {x for x in re.findall(r'[a-z]+', city.group(1).casefold()) if len(x) > 3}
@@ -212,6 +260,11 @@ class Catalog:
                 return None, 'unresolved_identifier_alias', sorted(candidates)
         chosen, choices = self.choose(candidates, country)
         if chosen:
+            if not compatible_feed(plain, chosen, self.guides[chosen]):
+                return None, 'conflicting_feed_qualifier', choices
+            region = regional_identity(plain)
+            if not country and region and self.regions[chosen] == {region}:
+                return chosen, 'explicit_regional_identity', choices
             return chosen, 'exact_name_with_country' if country else 'unique_name_and_country_in_catalog', choices
         return None, 'ambiguous_or_missing_guide', choices
 
@@ -247,7 +300,10 @@ def audit(channels_path, guide_path, catalog_path, output):
         guides = dict(guide.execute('SELECT guide_id,name FROM guide_channels'))
         overrides = {cid: (name, gid, reason) for cid, name, gid, reason in guide.execute('SELECT channel_id,channel_name,guide_id,reason FROM mapping_overrides')}
         now = time.time()
-        listings = dict(guide.execute('SELECT guide_id,count(*) FROM programmes WHERE stop>? AND start<? GROUP BY guide_id', (now, now + 86400)))
+        listings = dict(guide.execute('''SELECT guide_id,count(*) FROM programmes
+            WHERE stop>? AND start<? AND lower(trim(title)) NOT IN
+            ('channel no longer available','no data','no information','no programming information','to be announced')
+            AND trim(title) != '' GROUP BY guide_id''', (now, now + 86400)))
         current_titles = dict(guide.execute('SELECT guide_id,title FROM programmes WHERE start<=? AND stop>?', (now, now)))
     catalog = Catalog(guides, json.loads(catalog_path.read_text()), listings)
     rows = []

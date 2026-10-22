@@ -32,13 +32,14 @@ class IdentityTests(unittest.TestCase):
         self.assertIsNone(catalog.resolve('CNBC World', '')[0])
         self.assertIsNone(catalog.resolve('Classic Doctor Who', '')[0])
         self.assertIsNone(catalog.resolve('DAZNCA 16: Union Berlin vs. Koln', '')[0])
-        self.assertIsNone(catalog.resolve('MyTV (WBFF)', '')[0])
+        self.assertEqual(catalog.resolve('MyTV (WBFF)', '')[0], 'MYWBFFDT2.us')
 
     def test_explicit_subchannel_and_4k_are_preserved(self):
         from audit_guide_channels import calls, key
         self.assertEqual(calls('WBFF (WBFF D2)'), {('wbff', '2')})
         self.assertNotEqual(key('USA'), key('USA 4K'))
         self.assertIsNone(self.catalog.resolve('MeTV (WBFF)', '')[0])
+        self.assertIsNone(self.catalog.resolve('Movies! (WBFF)', '')[0])
 
     def test_country_collision_is_not_a_match(self):
         self.assertIsNone(self.catalog.resolve('HBO', '')[0])
@@ -54,9 +55,41 @@ class IdentityTests(unittest.TestCase):
         self.assertIsNone(self.catalog.resolve('UFC 02', '')[0])
 
     def test_network_and_subchannel_do_not_cross(self):
-        self.assertIsNone(self.catalog.resolve('MY 24 Baltimore (WBFF)', '')[0])
+        self.assertEqual(self.catalog.resolve('MY 24 Baltimore (WBFF)', '')[0], 'MYWBFFDT2.us')
         self.assertEqual(self.catalog.resolve('MY (WBFF-DT2)', '')[0], 'MYWBFFDT2.us')
         self.assertEqual(self.catalog.resolve('FOX (WBFF)', '')[0], 'FOXWBFF.us')
+        self.assertIsNone(self.catalog.resolve('FOX (WBFF-DT2)', '')[0])
+        self.assertIsNone(self.catalog.resolve('MY (WBFF-DT1)', '')[0])
+
+    def test_station_index_ignores_sister_station_mentions(self):
+        catalog = Catalog({'FOXKTVU.us': 'us - fox ktvu san francisco',
+                           'FOXKICU.us': 'us - fox kicu ktvu plus san francisco',
+                           'MYWBFFDT2.us': 'us - mynetwork wbff-dt2 baltimore'}, {}, {})
+        self.assertEqual(catalog.resolve('FOX (KTVU)', '')[0], 'FOXKTVU.us')
+        self.assertEqual(catalog.resolve('MY24 (WBFF)', '')[0], 'MYWBFFDT2.us')
+
+    def test_regional_name_establishes_country_only_for_named_feed(self):
+        catalog = Catalog({'CBCToronto-CBLT.ca': 'ca - cbc toronto',
+                           'SportsnetWest.ca': 'ca - sportsnet west',
+                           'NBCSportsBoston.us': 'us - nbc sports boston',
+                           'CTV.ca': 'ca - ctv'}, {}, {})
+        self.assertEqual(catalog.resolve('CBC TORONTO HD', '')[:2], ('CBCToronto-CBLT.ca', 'explicit_regional_identity'))
+        self.assertEqual(catalog.resolve('Sportsnet West', '')[:2], ('SportsnetWest.ca', 'explicit_regional_identity'))
+        self.assertEqual(catalog.resolve('NBC Sports Boston', '')[:2], ('NBCSportsBoston.us', 'explicit_regional_identity'))
+        self.assertIsNone(catalog.resolve('CTV', '')[0])
+
+    def test_fallback_preserves_time_shift_and_4k(self):
+        catalog = Catalog({'AnimalPlanetGB.uk': 'animal planet',
+                           'NBCSportsChicago4K.us': 'us - nbc sports chicago'}, {}, {})
+        self.assertIsNone(catalog.resolve('UK: Animal Planet +1', 'AnimalPlanetGB.uk_missing')[0])
+        self.assertIsNone(catalog.resolve('UK: Animal Planet +1', 'AnimalPlanet.uk')[0])
+        self.assertIsNone(catalog.resolve('NBC Sports Chicago', '')[0])
+
+    def test_alias_preserves_feed_and_country(self):
+        catalog = Catalog({'RacerNetwork.us': 'us - racer network'}, {}, {})
+        self.assertEqual(catalog.resolve('Racer Network', 'mavtv.us')[0], 'RacerNetwork.us')
+        self.assertIsNone(catalog.resolve('UK: Racer Network', 'mavtv.us')[0])
+        self.assertIsNone(catalog.resolve('Racer Network +1', 'mavtv.us')[0])
 
     def test_local_station_and_generic_network(self):
         self.assertEqual(self.catalog.resolve('CBS (WIVB Buffalo NY)', '')[0], 'CBSWIVB.us')
@@ -142,6 +175,13 @@ class AuditApplicationTests(unittest.TestCase):
         report['created']='2000-01-01T00:00:00+00:00'
         self.output.write_text(json.dumps(report))
         with self.assertRaises(ValueError):self.apply()
+
+    def test_placeholder_programmes_do_not_enable_new_mapping(self):
+        with sqlite3.connect(self.guide) as db:
+            db.execute("UPDATE programmes SET title='Channel No Longer Available' WHERE guide_id='CBSWIVB.us'")
+        row = self.make_report()['rows'][0]
+        self.assertEqual(row['action'], 'unchanged')
+        self.assertIsNone(row['proposed'])
 
 
 if __name__=='__main__':

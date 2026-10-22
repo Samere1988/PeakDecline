@@ -96,3 +96,42 @@ The searchable result is `channel-guide-audit.html` in the private audit folder.
 It includes every channel, applied changes, retained mappings, and suggestions
 left unapplied. Its totals and script syntax were checked, and the report
 contains no provider URLs or credentials.
+
+## Second pass: regional feeds and digital subchannels
+
+The October 22 follow-up finds 205 more unmapped entries and 52 existing
+assignments to update, for 3,974 mapped entries. Five additional assignments
+are confirmed. The isolated rehearsal preserves every previous mapping and
+override, including HBO HD, History, and the unresolved HBO block. All 30
+guide/audit tests pass.
+
+Station indexing now uses the call sign in the guide ID, avoiding sister-station
+mentions such as KICU / KTVU Plus. When the playlist does not specify a digital
+subchannel, an explicit network plus call sign can select a unique DT2/DT3 feed.
+Explicit subchannels remain binding. Network checks also reject mismatches such
+as Movies! versus FOX on the same transmitter.
+
+Named Canadian city feeds, regional US sports/news feeds, and a limited set of
+Canadian network identities can establish region without a country prefix.
+The selected guide must still match the complete label and feed. Supporting
+sources include [Sportsnet's channel list](https://www.sportsnet.ca/about/),
+[Bell's distribution grid](https://www.bellmts.ca/migration/find%20a%20channel),
+[Bell's channel updates](https://www.bell.ca/Bell_TV/channelupdates),
+[Crave's numbered channels](https://www.rogers.com/tv/channels/crave), and
+[News 12 Hudson Valley](https://hudsonvalley.news12.com/).
+
+Explicit old-ID aliases include the documented
+[MAVTV to RACER rebrand](https://racer.com/2025/03/27/mavtv-acquired-to-be-rebranded-racer)
+and [Hallmark Movies & Mysteries to Hallmark Mystery](https://www.directv.com/insider/hallmark-movies-and-mysteries/),
+plus spelling/abbreviation variants that retain country and feed. Time-shift
+and 4K conflicts are rejected during fallback matching. Placeholder-only
+listings, including “Channel No Longer Available,” do not enable a new mapping.
+
+UK sources with the same channel name sometimes have different schedules;
+these were not collapsed or chosen by listing count. Available Pluto records
+often repeat channel names instead of programme titles; those were not added.
+There are 533 remaining name-based suggestions, and 10,875 entries remain
+unmapped. None of these results constitutes visual playback verification.
+
+Private backups, the reviewed report, and rehearsal evidence are in
+`/home/samer/Documents/ChatGPT/migration/channel-audit-round2-20261022-182419/`.
