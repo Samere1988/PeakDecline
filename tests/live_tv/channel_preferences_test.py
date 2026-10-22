@@ -33,6 +33,7 @@ class ChannelPreferencesTest(unittest.TestCase):
         patch('app.routes.socketio.start_background_task').start()
         self.start = patch.object(streamer, 'start_stream', return_value=(True, 'Started')).start()
         patch.object(streamer, 'process', None).start()
+        patch.object(streamer, 'healthy', return_value=True).start()
 
     def tearDown(self):
         patch.stopall()
@@ -48,6 +49,7 @@ class ChannelPreferencesTest(unittest.TestCase):
             self.assertEqual(self.client.post('/api/play/2').status_code, 200)
         db.session.remove()
         channels = self.client.get('/api/channels').json
+        self.assertTrue(all('url' not in c for c in channels))
         self.assertEqual([(c['id'], c['play_count']) for c in channels], [(2, 2), (1, 0)])
         self.start.return_value = False, 'Unavailable'
         self.assertEqual(self.client.post('/api/play/1').status_code, 500)
@@ -71,6 +73,14 @@ class ChannelPreferencesTest(unittest.TestCase):
             self.assertEqual(self.client.post('/api/play/2').status_code, 200)
         self.start.assert_not_called()
         self.assertEqual(db.session.get(ChannelPlayCount, 2).play_count, 1)
+
+    def test_status_preserves_selection_between_death_and_watchdog_tick(self):
+        from unittest.mock import Mock
+        with patch.object(streamer, 'current_channel_id', 2), patch.object(streamer, 'source', (2, 'fixture', 'Beta')), patch.object(streamer, 'watchdog_token', 'selected'), patch.object(streamer, 'process', Mock(poll=lambda: 1)):
+            state = self.client.get('/api/status').json
+            self.assertTrue(state['is_streaming'])
+            self.assertTrue(state['stream_recovering'])
+            self.assertEqual(state['current_channel_id'], 2)
 
     def test_clock_fallback_reads_native_instead_of_master_playlist(self):
         from unittest.mock import Mock

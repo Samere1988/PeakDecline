@@ -2,6 +2,7 @@ import os
 import uuid
 import time
 import math
+import re
 import requests
 from datetime import datetime, timedelta
 from urllib.parse import urlencode, unquote
@@ -36,6 +37,7 @@ connected_sids = {}
 # Live TV page-specific presence
 live_tv_occupancy = {}  # sid -> username
 live_tv_empty_token = None
+live_tv_watchdog_token = None
 
 
 def _schedule_empty_live_tv_cleanup():
@@ -54,7 +56,7 @@ def _schedule_empty_live_tv_cleanup():
             if token != live_tv_empty_token or live_tv_occupancy:
                 return
             live_tv_empty_token = None
-            if streamer.process is None:
+            if streamer.process is None and not streamer.recovering:
                 return
             streamer.revision += 1
             try:
@@ -66,6 +68,42 @@ def _schedule_empty_live_tv_cleanup():
             socketio.emit('channel_changed', _live_status())
 
     socketio.start_background_task(stop_if_still_empty)
+
+def _ensure_live_watchdog():
+    """One supervisor for each explicit channel selection, never one per viewer."""
+    global live_tv_watchdog_token
+    token = streamer.watchdog_token
+    if not token or token == live_tv_watchdog_token:
+        return
+    live_tv_watchdog_token = token
+    app = current_app._get_current_object()
+
+    def monitor():
+        while True:
+            socketio.sleep(2)
+            with app.app_context(), streamer.lock:
+                try:
+                    result = streamer.watchdog_step(token)
+                    if result == 'stopped':
+                        return
+                    if result:
+                        Channel.query.update({Channel.is_playing: '0'})
+                        if streamer.current_channel_id:
+                            channel = db.session.get(Channel, streamer.current_channel_id)
+                            if channel:
+                                channel.is_playing = '1'
+                        db.session.commit()
+                        socketio.emit('channel_changed', _live_status())
+                        if result == 'failed':
+                            return
+                except Exception:
+                    db.session.rollback()
+                    # Keep supervising after a transient disk/DB failure. Do not
+                    # include source URLs or subprocess arguments in diagnostics.
+                    app.logger.warning('Live TV supervisor tick failed; retrying')
+
+    socketio.start_background_task(monitor)
+
 
 # Watch Together room-specific presence
 room_occupancy = {}  # room_id -> {sid: username}
@@ -357,6 +395,8 @@ def sio_connect():
 @socketio.on("join_live_tv")
 def handle_join_live_tv():
     global live_tv_empty_token
+    if not current_user.is_authenticated:
+        return
     join_room("live_tv")
 
     username = current_user.username if current_user.is_authenticated else "Guest"
@@ -554,7 +594,6 @@ def get_channels():
             'id': int(channel.id),
             'play_count': play_count or 0,
             'name': channel.name,
-            'url': channel.url,
             'Favorites': str(channel.favorites).lower() in ['1', 'true', 'yes'],
             'is_playing': str(channel.is_playing).lower() in ['1', 'true', 'yes'],
             'logo': channel.logo
@@ -583,7 +622,7 @@ def play_channel(channel_id):
     channel = Channel.query.get_or_404(channel_id)
     with streamer.lock:
         if (str(streamer.current_channel_id) == str(channel_id) and streamer.process
-                and streamer.process.poll() is None):
+                and not streamer.recovering and streamer.healthy()):
             success, msg = True, 'Channel already playing'
         else:
             success, msg = streamer.start_stream(channel_id, channel.url, channel.name)
@@ -598,6 +637,7 @@ def play_channel(channel_id):
         state = _live_status()
         socketio.emit('channel_changed', state)
         if success:
+            _ensure_live_watchdog()
             socketio.emit('channels_updated')
             if not live_tv_occupancy:
                 _schedule_empty_live_tv_cleanup()
@@ -637,7 +677,9 @@ def stop_live_stream():
 
 def _live_status():
     running = streamer.process is not None and streamer.process.poll() is None
-    active_channel = db.session.get(Channel, streamer.current_channel_id) if running and streamer.current_channel_id else None
+    recovering = streamer.recovering or bool(streamer.source and streamer.watchdog_token and not running)
+    channel_id = streamer.source[0] if recovering and streamer.source else streamer.current_channel_id
+    active_channel = db.session.get(Channel, channel_id) if (running or recovering) and channel_id else None
     return {
         "is_streaming": active_channel is not None,
         "current_channel_id": int(active_channel.id) if active_channel else None,
@@ -646,6 +688,7 @@ def _live_status():
         "stream_epoch": streamer.epoch,
         "stream_revision": streamer.revision,
         "stream_session": streamer.session_id,
+        "stream_recovering": recovering,
     }
 
 
@@ -670,6 +713,7 @@ def live_clock_state(channel_id):
         return jsonify(error='Stream clock unavailable', reason='unreadable_playlist'), 503
     except (ValueError, OverflowError):
         return jsonify(error='Stream clock unavailable', reason='invalid_timestamps'), 503
+    snapshot.update(stream_epoch=streamer.epoch, stream_session=streamer.session_id)
     response = jsonify(snapshot)
     response.headers['Cache-Control'] = 'no-store'
     return response
@@ -698,13 +742,37 @@ def get_online_users():
 
 
 # --- STATIC & STREAM SERVING ---
+_LIVE_MEDIA = re.compile(r"[0-9]+/(?:[012]/)?(?:index\.m3u8|seg_[a-f0-9]{8}_[0-9]+\.ts)\Z")
+
+
+@main_bp.before_app_request
+def protect_live_media():
+    # Covers Flask's built-in static route as well as the legacy /stream alias.
+    for prefix in ('/static/stream/', '/stream/'):
+        if request.path.startswith(prefix):
+            filename = request.path[len(prefix):]
+            if not _LIVE_MEDIA.fullmatch(filename):
+                return '', 404
+            if not current_user.is_authenticated:
+                return '', 401, {'Cache-Control': 'no-store'}
+            mimetype = 'application/vnd.apple.mpegurl' if filename.endswith('.m3u8') else 'video/mp2t'
+            response = send_from_directory(streamer.stream_root, filename, mimetype=mimetype, max_age=0)
+            response.headers.update({'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff'})
+            return response
+
+
+@main_bp.get('/api/live/media-auth')
+def live_media_auth():
+    # nginx uses an internal auth_request subrequest before serving media itself.
+    if not current_user.is_authenticated:
+        return '', 401, {'Cache-Control': 'no-store'}
+    return '', 204, {'Cache-Control': 'no-store'}
+
+
 @main_bp.route('/stream/<path:filename>')
 def serve_stream(filename):
-    stream_directory = os.path.join(current_app.root_path, 'static', 'stream')
-    mimetype = 'video/mp2t'
-    if filename.endswith('.m3u8'):
-        mimetype = 'application/vnd.apple.mpegurl'
-    return send_from_directory(stream_directory, filename, mimetype=mimetype, max_age=0)
+    # protect_live_media serves valid media before this handler is reached.
+    return '', 404
 
 
 @main_bp.route('/static/<path:filename>')

@@ -61,7 +61,7 @@ class SessionCleanupTest(ChannelPreferencesTest):
     def test_refresh_cancels_old_countdown_even_after_leaving_again(self):
         routes._schedule_empty_live_tv_cleanup()
         old_task = self.tasks[-1]
-        with self.app.test_request_context('/') as context, patch('app.routes.join_room'):
+        with self.app.test_request_context('/') as context, patch('app.routes.join_room'), patch('app.routes.current_user', Mock(is_authenticated=True, username='test')):
             context.request.sid = 'rejoined'
             routes.handle_join_live_tv()
             old_task()

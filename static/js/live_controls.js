@@ -26,7 +26,8 @@
     }
     function togglePlay() {
         if (!currentChannelId) return;
-        if (video.paused) safePlay(); else video.pause();
+        if (video.paused) safePlay();
+        else { locallyPaused = true; video.pause(); }
     }
     function toggleMute() {
         if (video.muted || video.volume === 0) { video.muted = false; if (!video.volume) video.volume = 1; }
@@ -50,7 +51,8 @@
         if (!currentChannelId) return;
         needsAlignment = true;
         lastCorrection = lastClockPoll = -Infinity;
-        if (recoveryNeeded) { initPlayer(); return; }
+        locallyPaused = false;
+        if (recoveryNeeded) { recoveryAttempts = 0; initPlayer(); return; }
         if (video.paused) safePlay();
         enforceLiveSync();
         reveal();

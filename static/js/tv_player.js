@@ -14,11 +14,23 @@ let chatInitialized = false;
 let liveSyncTimer = null;
 let generation = 0;
 let clockSample = null;
+let clockSamples = [];
 let clockRequest = null;
 let clockFailure = '';
 let lastClockPoll = -Infinity;
 let lastCorrection = -Infinity;
 let behindSince = null;
+let driftDirection = 0;
+let displayedFrame = null;
+let frameCallback = null;
+let bufferingSince = null;
+let bufferingEvents = [];
+let fallbackRequested = false;
+let recoveryAttempts = 0;
+let recoveryWindowStarted = 0;
+let locallyPaused = false;
+let telemetryAt = -Infinity;
+const liveMetrics = {seeks: 0, recoveries: 0, stalls: 0};
 let retryTimer = null;
 let needsAlignment = true;
 let startupPending = false;
@@ -134,6 +146,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Heartbeat
     setInterval(() => {
         fetch("/api/heartbeat", { method: "POST" }).catch(() => {});
+        // A periodic status check also heals missed WebSocket broadcasts.
+        refreshLiveStatus();
     }, 5000);
 });
 
@@ -157,8 +171,14 @@ function applyLiveState(data) {
     if (data.stream_epoch === streamEpoch && data.stream_revision < streamRevision) return;
     streamEpoch = data.stream_epoch;
     streamRevision = data.stream_revision;
+    if (data.stream_recovering) {
+        showPlayerStatus('buffering', 'Channel source interrupted. The server is reconnecting…');
+        return;
+    }
     const id = data.is_streaming ? data.current_channel_id : null;
     const changed = id !== currentChannelId || data.stream_session !== streamSession;
+    const sameChannel = id === currentChannelId;
+    if (!sameChannel) locallyPaused = false;
     currentChannelId = id;
     streamSession = data.stream_session;
     channelTitle.textContent = data.current_channel_name || 'Select a Channel';
@@ -168,7 +188,10 @@ function applyLiveState(data) {
         if (!id && pendingChannelId === null) showPlayerStatus('idle', 'No active stream. Select a channel to start.');
         return;
     }
-    if (id) initPlayer();
+    if (id) {
+        recoveryAttempts = 0;
+        initPlayer(sameChannel && locallyPaused);
+    }
     else {
         ++generation;
         clearTimeout(retryTimer);
@@ -185,7 +208,7 @@ function applyLiveState(data) {
     }
 }
 
-function initPlayer() {
+function initPlayer(preservePause = false) {
     if (!currentChannelId) return;
 
     const url = `/static/stream/${currentChannelId}/index.m3u8?t=${Date.now()}`;
@@ -198,16 +221,22 @@ function initPlayer() {
     clockRequest?.abort();
     clockRequest = null;
     clockSample = null;
+    clockSamples = [];
+    displayedFrame = null;
+    bufferingSince = null;
+    bufferingEvents = [];
+    fallbackRequested = false;
     updateLiveSyncDisplay(null, null);
     clockFailure = '';
     lastClockPoll = lastCorrection = -Infinity;
     needsAlignment = true;
-    startupPending = true;
+    startupPending = !preservePause;
     if (hls) { hls.destroy(); hls = null; }
     video.pause();
     video.muted = preferredMuted;
     video.volume = preferredVolume;
     video.autoplay = false;
+    startFrameTracking(token);
     showPlayerStatus('loading', `Loading ${channelTitle.textContent || 'channel'}…`);
 
     if (Hls.isSupported()) {
@@ -240,7 +269,8 @@ function initPlayer() {
             notifyLiveQualityLevels();
             // Begin playback as soon as the manifest is ready. The shared
             // clock aligns playback afterward; it must not gate autoplay.
-            safePlay(token);
+            if (!preservePause) safePlay(token);
+            else showPlayerStatus('paused', 'Paused. Press Play to return to live.');
             startLiveSyncMonitor();
         });
 
@@ -248,27 +278,99 @@ function initPlayer() {
 
         hls.on(Hls.Events.ERROR, (_, data) => {
             if (data.fatal && token === generation) {
-                recoveryNeeded = true;
-                showPlayerStatus('error', video.paused && !startupPending
-                    ? 'Playback interrupted. Press Play to reconnect.'
-                    : 'Playback interrupted. Reconnecting…');
-                console.warn("HLS error, retrying...");
-                clearTimeout(retryTimer);
-                retryTimer = setTimeout(() => {
-                    if (token === generation && (startupPending || !video.paused)) initPlayer();
-                }, 3000);
+                schedulePlayerRecovery(token);
             }
         });
     } else {
         video.src = url;
         notifyLiveQualityLevels();
         startLiveSyncMonitor();
-        safePlay(token);
+        if (!preservePause) safePlay(token);
+        else showPlayerStatus('paused', 'Paused. Press Play to return to live.');
+    }
+}
+
+function schedulePlayerRecovery(token = generation) {
+    if (token !== generation) return;
+    recoveryNeeded = true;
+    clearTimeout(retryTimer);
+    const now = performance.now();
+    if (now - recoveryWindowStarted > 60000) {
+        recoveryAttempts = 0;
+        recoveryWindowStarted = now;
+    }
+    if (locallyPaused || (video.paused && !startupPending)) {
+        showPlayerStatus('error', 'Playback interrupted. Press Play to reconnect.');
+        return;
+    }
+    if (recoveryAttempts >= 3) {
+        showPlayerStatus('error', 'Unable to reconnect. Press Play or choose another channel to retry.');
+        video.pause();
+        return;
+    }
+    recoveryAttempts++;
+    liveMetrics.recoveries++;
+    showPlayerStatus('error', 'Playback interrupted. Reconnecting…');
+    retryTimer = setTimeout(async () => {
+        if (token !== generation || locallyPaused) return;
+        await refreshLiveStatus();
+        if (token === generation && !locallyPaused && currentChannelId) initPlayer();
+    }, 1500 * 2 ** recoveryAttempts);
+}
+
+function startFrameTracking(token) {
+    if (frameCallback !== null && typeof video.cancelVideoFrameCallback === 'function') {
+        video.cancelVideoFrameCallback(frameCallback);
+    }
+    frameCallback = null;
+    if (typeof video.requestVideoFrameCallback !== 'function') return;
+    const track = (now, metadata) => {
+        if (token !== generation) return;
+        displayedFrame = {mediaTime: metadata.mediaTime, received: now, frames: metadata.presentedFrames};
+        frameCallback = video.requestVideoFrameCallback(track);
+    };
+    frameCallback = video.requestVideoFrameCallback(track);
+}
+
+function displayedMediaTime() {
+    return displayedFrame && !video.seeking ? displayedFrame.mediaTime : video.currentTime;
+}
+
+function recordLiveDiagnostics(offset, target) {
+    const now = performance.now();
+    if (typeof window === 'undefined' || now - telemetryAt < 1000) return;
+    telemetryAt = now;
+    window.liveTvDiagnostics = Object.freeze({
+        channelId: currentChannelId, session: streamSession, phase: playerPhase,
+        displayedDrift: Number.isFinite(offset) && Number.isFinite(target) ? target - offset - displayedMediaTime() : null,
+        clockAge: clockSample ? (now - clockSample.received) / 1000 : null,
+        clockRtt: clockSample?.rtt ?? null,
+        frameAge: displayedFrame ? (now - displayedFrame.received) / 1000 : null,
+        bufferedSeconds: Array.from({length: video.buffered?.length || 0}, (_, i) =>
+            video.currentTime >= video.buffered.start(i) && video.currentTime <= video.buffered.end(i)
+                ? video.buffered.end(i) - video.currentTime : 0).reduce((a, b) => Math.max(a, b), 0),
+        bufferingSeconds: bufferingSince === null ? 0 : (now - bufferingSince) / 1000,
+        playbackRate: video.playbackRate, ...liveMetrics
+    });
+}
+
+function checkBufferingFallback(now) {
+    if (video.paused || !hls || fallbackRequested) return;
+    bufferingEvents = bufferingEvents.filter(at => now - at < 30000);
+    if ((bufferingSince !== null && now - bufferingSince >= 5000) || bufferingEvents.length >= 3) {
+        fallbackRequested = true;
+        if (typeof window !== 'undefined' && typeof CustomEvent === 'function') {
+            window.dispatchEvent(new CustomEvent('live-quality-fallback'));
+        }
     }
 }
 
 function safePlay(token = generation) {
     if (token !== generation) return;
+    locallyPaused = false;
+    // A failed native media element may reject play() without firing "play".
+    // Rebuild it before attempting playback when the viewer explicitly retries.
+    if (recoveryNeeded) { recoveryAttempts = 0; initPlayer(); return; }
     video.muted = preferredMuted;
     video.play().catch(error => {
         if (token !== generation) return;
@@ -334,7 +436,26 @@ async function pollLiveClock() {
         if (![sample.target_pdt, sample.edge_pdt, sample.max_extrapolation].every(Number.isFinite)) {
             clockFailure = 'Server returned an invalid timeline'; return;
         }
-        clockSample = {...sample, received, rtt};
+        if ((streamSession && sample.session !== `seg_${streamSession}`) ||
+            (streamEpoch && sample.stream_epoch && sample.stream_epoch !== streamEpoch)) {
+            refreshLiveStatus();
+            return;
+        }
+        if (!sample.fresh) {
+            clockSamples = [];
+            clockSample = {...sample, received, rtt};
+        } else {
+            // Favor recent low-latency observations; a single queueing spike
+            // must not move every viewer's target. Never extend sample expiry.
+            clockSamples = clockSamples.filter(s => s.session === sample.session &&
+                (received - s.received) / 1000 < Math.min(s.max_extrapolation, 2));
+            const minimum = Math.min(...clockSamples.map(s => s.rtt));
+            if (!clockSamples.length || rtt <= Math.max(0.25, minimum * 3)) {
+                clockSamples.push({...sample, received, rtt});
+            }
+            clockSamples = clockSamples.slice(-8);
+            clockSample = clockSamples.reduce((best, s) => s.rtt <= best.rtt ? s : best);
+        }
         clockFailure = sample.fresh ? '' : 'Server is waiting for new chunks';
         enforceLiveSync();
     } catch (error) {
@@ -384,7 +505,7 @@ function updateLiveSyncDisplay(offset, targetPdt) {
     if (!server || !viewer || !difference) return;
     const valid = currentChannelId !== null && Number.isFinite(targetPdt);
     const viewerPdt = valid && Number.isFinite(offset) && Number.isFinite(video.currentTime)
-        ? offset + video.currentTime : null;
+        ? offset + displayedMediaTime() : null;
     const origin = clockSample?.stream_start_pdt;
     const format = seconds => {
         const elapsed = Math.max(0, seconds - origin);
@@ -414,6 +535,8 @@ function enforceLiveSync() {
     if (now - lastClockPoll >= 1000) pollLiveClock();
     const offset = programOffset(), targetPdt = sharedTarget();
     updateLiveSyncDisplay(offset, targetPdt);
+    recordLiveDiagnostics(offset, targetPdt);
+    checkBufferingFallback(now);
     if (video.paused && !startupPending) { behindSince = null; video.playbackRate = 1; return; }
     if (offset === null || targetPdt === null) {
         behindSince = null;
@@ -422,7 +545,7 @@ function enforceLiveSync() {
         return;
     }
     const target = targetPdt - offset, drift = target - video.currentTime;
-    showSyncStatus(Math.abs(drift) <= 1 ? 'LIVE' : 'Catching up to live…');
+    showSyncStatus(Math.abs(drift) <= 1 ? 'LIVE' : 'Aligning with live…');
     if (video.seeking) { behindSince = null; return; }
     let seekable = false;
     let buffered = false;
@@ -446,26 +569,34 @@ function enforceLiveSync() {
             // its buffer around an obsolete position and never reaches live.
             lastCorrection = now;
             video.currentTime = target;
+            displayedFrame = null;
+            liveMetrics.seeks++;
         }
         return;
     }
     // Startup/resume and an explicit Sync request may align immediately.
-    // During normal playback never rewind to chase a moving clock sample.
+    // Automatic corrections below require sustained drift and buffered media.
     if (needsAlignment && Math.abs(drift) <= 0.35) needsAlignment = false;
     if (needsAlignment && seekable && now - lastCorrection > (buffered ? 1000 : 4000)) {
         lastCorrection = now;
         video.currentTime = target;
+        displayedFrame = null;
+        liveMetrics.seeks++;
         video.playbackRate = 1;
         needsAlignment = false;
         behindSince = null;
         return;
     }
     // A transient target jump or stalled download must not trigger seek loops.
-    // Skip forward only after sustained, substantial lag, into buffered media.
-    if (drift > 4 && buffered && seekable && video.readyState >= 3) {
-        if (behindSince === null) behindSince = now;
+    // Firefox remains at 1x but corrects sustained drift over one second.
+    // Other browsers use gentle rates, with bounded seeks for larger offsets.
+    if (Math.abs(drift) > (firefoxStablePlayback ? 1 : 2) && buffered && seekable && video.readyState >= 3) {
+        if (behindSince === null || driftDirection !== Math.sign(drift)) behindSince = now;
+        driftDirection = Math.sign(drift);
         if (now - behindSince >= 3000 && now - lastCorrection >= 15000) {
             video.currentTime = target;
+            displayedFrame = null;
+            liveMetrics.seeks++;
             lastCorrection = now;
             behindSince = null;
             video.playbackRate = 1;
@@ -488,7 +619,8 @@ function startLiveSyncMonitor() {
 }
 
 video.addEventListener('play', () => {
-    if (recoveryNeeded) { initPlayer(); return; }
+    locallyPaused = false;
+    if (recoveryNeeded) { recoveryAttempts = 0; initPlayer(); return; }
     if (playerPhase === 'paused' || playerPhase === 'blocked') showPlayerStatus('loading', 'Joining live…');
     // A viewer may pause locally, but when they resume they rejoin the shared
     // live edge instead of replaying stale buffered content.
@@ -499,11 +631,19 @@ video.addEventListener('play', () => {
 video.addEventListener('pause', () => {
     video.playbackRate = 1;
     if (currentChannelId && !startupPending && playerPhase !== 'switching' && playerPhase !== 'error') {
+        locallyPaused = true;
+        bufferingSince = null;
         showPlayerStatus('paused', 'Paused. Press Play to return to live.');
     }
 });
 video.addEventListener('canplay', enforceLiveSync);
 video.addEventListener('playing', () => {
+    // Count completed stalls only when they lasted at least a second.
+    // Tiny waits during alignment/quality switches are not bandwidth failures.
+    if (bufferingSince !== null && performance.now() - bufferingSince >= 1000) {
+        bufferingEvents.push(performance.now());
+    }
+    bufferingSince = null;
     if (!currentChannelId || video.paused || recoveryNeeded) return;
     startupPending = false;
     if (playerPhase === 'switching' || playerPhase === 'error') return;
@@ -513,7 +653,13 @@ video.addEventListener('playing', () => {
     }
 });
 video.addEventListener('waiting', () => {
-    if (!video.paused && playerPhase === 'playing') showPlayerStatus('buffering', 'Buffering… Waiting for more video.');
+    if (!video.paused && !video.seeking) {
+        if (bufferingSince === null) {
+            bufferingSince = performance.now();
+            liveMetrics.stalls++;
+        }
+        if (playerPhase === 'playing') showPlayerStatus('buffering', 'Buffering… Waiting for more video.');
+    }
 });
 video.addEventListener('volumechange', () => {
     if (autoplayMuted && !video.muted) {
@@ -524,11 +670,11 @@ video.addEventListener('volumechange', () => {
 });
 video.addEventListener('ended', () => {
     if (currentChannelId && !startupPending && playerPhase !== 'switching') {
-        showPlayerStatus('error', 'Stream ended. Select a channel or refresh to retry.');
+        schedulePlayerRecovery();
     }
 });
 video.addEventListener('error', () => {
-    if (currentChannelId && !hls) showPlayerStatus('error', 'Unable to load this channel. Try another channel or refresh to retry.');
+    if (currentChannelId && !hls) schedulePlayerRecovery();
 });
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) { lastClockPoll = -Infinity; enforceLiveSync(); }

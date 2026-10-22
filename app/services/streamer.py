@@ -4,6 +4,7 @@ import uuid
 import time
 import glob
 from gevent import sleep
+from gevent import subprocess as cooperative_subprocess
 from gevent.lock import RLock
 
 
@@ -17,6 +18,15 @@ class StreamService:
         self.epoch = uuid.uuid4().hex
         self.revision = 0
         self.session_id = None
+        self.watchdog_token = None
+        self.source = None
+        self.recovering = False
+        self.recovery_attempts = 0
+        self.next_retry = 0
+        self.last_progress = 0
+        self.last_edge = None
+        self.healthy_since = 0
+        self.log_path = None
 
         # ─── Resolve project root safely ───────────────────────────────
         current_file = os.path.abspath(__file__)
@@ -27,6 +37,7 @@ class StreamService:
         # ─── STATIC STREAM ROOT ───────────────────────────────────────
         self.stream_root = os.path.join(project_root, "static", "stream")
         os.makedirs(self.stream_root, exist_ok=True)
+        self.log_root = os.path.join(project_root, 'instance', 'live-tv-logs')
 
         print(f"[STREAM] Root: {self.stream_root}")
 
@@ -63,6 +74,9 @@ class StreamService:
 
     def stop_stream(self):
         with self.lock:
+            self.watchdog_token = None
+            self.source = None
+            self.recovering = False
             return self._stop_stream()
 
     def _stop_stream(self):
@@ -99,11 +113,9 @@ class StreamService:
             return
 
         try:
-            for f in glob.glob(os.path.join(self.current_channel_dir, "**", "*.ts"), recursive=True):
-                if f.endswith(".ts") or f.endswith(".m3u8"):
-                    os.remove(f)
-            for f in glob.glob(os.path.join(self.current_channel_dir, "**", "*.m3u8"), recursive=True):
-                os.remove(f)
+            for pattern in ('*.ts', '*.m3u8', '*.ts.tmp', '*.m3u8.tmp'):
+                for filename in glob.glob(os.path.join(self.current_channel_dir, '**', pattern), recursive=True):
+                    os.remove(filename)
         except Exception as e:
             print(f"[STREAM] Cleanup warning: {e}")
 
@@ -111,14 +123,22 @@ class StreamService:
 
     def start_stream(self, channel_id, channel_url, channel_name):
         with self.lock:
+            self.watchdog_token = uuid.uuid4().hex
+            self.source = (channel_id, channel_url, channel_name)
+            self.recovering = False
+            self.recovery_attempts = 0
+            self.next_retry = 0
             self.revision += 1
             try:
-                return self._start_stream(channel_id, channel_url, channel_name)
+                success, message = self._start_stream(channel_id, channel_url, channel_name)
+                if not success:
+                    self.watchdog_token = self.source = None
+                return success, message
             finally:
                 self.revision += 1
 
     def _start_stream(self, channel_id, channel_url, channel_name):
-        self.stop_stream()
+        self._stop_stream()
 
         session_id = str(uuid.uuid4())[:8]
 
@@ -131,14 +151,18 @@ class StreamService:
         native_playlist_path = os.path.join(channel_dir, "0", "index.m3u8")
 
         print(f"[STREAM] Channel {channel_id}: {channel_name}")
-        print(f"[STREAM] URL: {channel_url}")
 
         ffmpeg = self.get_ffmpeg_path()
+        try:
+            has_audio = self._has_audio(channel_url)
+        except (OSError, RuntimeError, subprocess.TimeoutExpired):
+            self._stop_stream()
+            return False, 'Unable to inspect the channel source'
 
         cmd = [
             ffmpeg,
             "-hide_banner",
-            "-loglevel", "info",
+            "-loglevel", "warning", "-nostats", "-nostdin",
             "-user_agent", "VLC/3.0.20 LibVLC/3.0.20",
             "-i", channel_url,
 
@@ -155,6 +179,9 @@ class StreamService:
             # Keep the native rendition on libx264's prior CRF-based behavior;
             # the quality ladder should not make the default picture softer.
             "-c:v:0", "libx264", "-preset:v:0", "faster", "-tune:v:0", "zerolatency",
+            # Keep x264's default CRF while supplying HLS bandwidth metadata.
+            # Without it FFmpeg omits a video-only native variant entirely.
+            "-crf:v:0", "23", "-b:v:0", "8M",
             "-c:v:1", "libx264", "-preset:v:1", "superfast", "-tune:v:1", "zerolatency",
             "-b:v:1", "1.8M", "-maxrate:v:1", "2.2M", "-bufsize:v:1", "4M",
             "-c:v:2", "libx264", "-preset:v:2", "superfast", "-tune:v:2", "zerolatency",
@@ -174,27 +201,33 @@ class StreamService:
             # input frame rates. PDT maps them onto the shared server target.
             "-hls_time", "2",
             "-hls_list_size", "8",
-            "-hls_flags", "delete_segments+independent_segments+program_date_time",
+            "-hls_flags", "delete_segments+independent_segments+program_date_time+temp_file",
             "-hls_allow_cache", "0",
             "-master_pl_name", "index.m3u8",
-            "-var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2",
+            "-var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2" if has_audio else "v:0 v:1 v:2",
             "-hls_segment_filename", os.path.join(channel_dir, "%v", f"seg_{session_id}_%03d.ts"),
 
             "-y", os.path.join(channel_dir, "%v", "index.m3u8")
         ]
 
         try:
-            # 🔥 CRITICAL FIX: DO NOT PIPE STDERR
-            log_path = os.path.join(channel_dir, "ffmpeg_error.log")
-
-            with open(log_path, "w", encoding="utf-8", errors="replace") as log_file:
+            # A private, bounded log, never inside a web-served directory.
+            os.makedirs(self.log_root, mode=0o700, exist_ok=True)
+            self.log_path = os.path.join(self.log_root, f'{int(channel_id)}.log')
+            # Keep at most twenty channels' diagnostics, one file per channel.
+            old_logs = sorted(glob.glob(os.path.join(self.log_root, '*.log')), key=os.path.getmtime)
+            for old in old_logs[:-19]:
+                if old != self.log_path:
+                    os.remove(old)
+            fd = os.open(self.log_path, os.O_CREAT | os.O_WRONLY | os.O_APPEND, 0o600)
+            with os.fdopen(fd, 'a', encoding='utf-8', errors='replace') as log_file:
                 self.process = subprocess.Popen(cmd, stdout=log_file, stderr=log_file)
             # ─── Wait for playlist ─────────────────────────────────────
             for i in range(20):
                 sleep(0.5)
 
                 if self.process.poll() is not None:
-                    self.stop_stream()
+                    self._stop_stream()
                     return False, "FFmpeg exited during startup"
 
                 if (os.path.exists(playlist_path) and os.path.getsize(playlist_path) > 0
@@ -209,15 +242,80 @@ class StreamService:
                     self.current_channel_id = channel_id
                     self.session_id = session_id
                     self.clock_playlist_path = native_playlist_path
+                    self.last_progress = self.healthy_since = time.monotonic()
+                    self.last_edge = None
                     print(f"[STREAM] Ready in {i * 0.5:.1f}s")
                     return True, f"Playing {channel_name}"
 
-            self.stop_stream()
+            self._stop_stream()
             return False, "Timed out waiting for stream"
 
-        except Exception as e:
-            self.stop_stream()
-            return False, str(e)
+        except Exception:
+            self._stop_stream()
+            return False, 'Unable to start the channel encoder'
+
+
+    def _has_audio(self, source):
+        """Probe separately so video-only sources get a valid HLS variant map."""
+        ffmpeg = self.get_ffmpeg_path()
+        probe = os.path.join(os.path.dirname(ffmpeg), 'ffprobe.exe' if ffmpeg.endswith('.exe') else 'ffprobe')
+        result = cooperative_subprocess.run([
+            probe, '-v', 'error', '-user_agent', 'VLC/3.0.20 LibVLC/3.0.20',
+            '-select_streams', 'a:0', '-show_entries', 'stream=index',
+            '-of', 'csv=p=0', '-i', source,
+        ], capture_output=True, timeout=8)
+        if result.returncode:
+            # ffprobe stderr can include provider credentials; never return it.
+            raise RuntimeError('Source probe failed')
+        return bool(result.stdout.strip())
+
+    def healthy(self):
+        """Require advancing dated media, not merely a running FFmpeg process."""
+        if not self.process or self.process.poll() is not None:
+            return False
+        from .live_clock import live_clock
+        try:
+            sample = live_clock.snapshot(self.clock_playlist_path, self.current_channel_id)
+            if sample['edge_pdt'] != self.last_edge:
+                self.last_edge = sample['edge_pdt']
+                self.last_progress = time.monotonic()
+        except (OSError, TypeError, ValueError, OverflowError):
+            pass
+        return time.monotonic() - self.last_progress < 20
+
+    def watchdog_step(self, token):
+        """One cooperative watchdog tick; retries are scoped to the user's selection."""
+        with self.lock:
+            if token != self.watchdog_token or not self.source:
+                return 'stopped'
+            now = time.monotonic()
+            if self.log_path and os.path.exists(self.log_path) and os.path.getsize(self.log_path) > 4 * 1024 * 1024:
+                # FFmpeg's descriptor uses O_APPEND, so truncation cannot create holes.
+                with open(self.log_path, 'w'):
+                    pass
+            if not self.recovering and self.healthy():
+                if now - self.healthy_since >= 60:
+                    self.recovery_attempts = 0
+                return None
+            if now < self.next_retry:
+                return None
+            self.revision += 1
+            try:
+                if self.recovery_attempts >= 3:
+                    self.stop_stream()
+                    return 'failed'
+                self.recovering = True
+                self.recovery_attempts += 1
+                previous_session = self.session_id
+                success, _ = self._start_stream(*self.source)
+                if not success:
+                    # Keep Stop usable while retrying an unavailable source.
+                    self.session_id = previous_session
+                self.recovering = not success
+                self.next_retry = time.monotonic() + 2 ** self.recovery_attempts
+                return 'recovered' if success else 'recovering'
+            finally:
+                self.revision += 1
 
 
 # ─── Singleton ────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 /* Actual production page/clock/FFmpeg, real WebSockets, 15 throttled browsers. */
 const fs=require('node:fs'),path=require('node:path'),{spawn}=require('node:child_process'),crypto=require('node:crypto');
-const {chromium}=require(process.env.WATCH_PLAYWRIGHT||'C:/Users/Plex/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const {chromium}=require(process.env.WATCH_PLAYWRIGHT||'playwright');
 const root=path.resolve(__dirname,'../..'),fixtures=path.join(root,'tests/watch_together/fixtures');
 const base=`http://127.0.0.1:${process.env.LIVE_TEST_PORT||18767}`;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -65,13 +65,13 @@ function assess(label,ids){
  const first=rows[0]?.viewers,last=rows.at(-1)?.viewers;
  const advancing=ids.every(id=>{const a=first?.find(x=>x.id===id),b=last?.find(x=>x.id===id);return a&&b&&b.frames>a.frames;});
  record(label,rows.length>=5&&missing===0&&spread<=2&&maxError<=1.5&&stalls/count<=0.1&&advancing,{spread,maxError,stalledSamples:stalls,totalSamples:count,missing,advancing});
- fs.writeFileSync(path.join(__dirname,'synchronized-progress.json'),JSON.stringify({results,samples,events},null,2));
+ fs.writeFileSync(path.join(process.env.LIVE_TEST_RESULTS||__dirname,'synchronized-progress.json'),JSON.stringify({results,samples,events},null,2));
 }
 async function main(){
- server=spawn(path.join(root,'.venv/Scripts/python.exe'),[path.join(__dirname,'server.py')],{stdio:['ignore','pipe','pipe']});
+ server=spawn(process.env.WATCH_PYTHON||path.join(root,process.platform==='win32'?'.venv/Scripts/python.exe':'.venv/bin/python'),[path.join(__dirname,'server.py')],{stdio:['ignore','pipe','pipe']});
  server.stdout.on('data',d=>logs+=d);server.stderr.on('data',d=>logs+=d);
  for(let i=0;i<60;i++){try{await fetch(base+'/');break;}catch{await sleep(250);}}
- browser=await chromium.launch({headless:true,executablePath:process.env.WATCH_BROWSER||'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',args:['--autoplay-policy=no-user-gesture-required']});
+ browser=await chromium.launch({headless:true,executablePath:process.env.WATCH_BROWSER||undefined,args:['--autoplay-policy=no-user-gesture-required']});
  try{
   const nativeOnly=process.env.LIVE_TEST_NATIVE_ONLY==='1';
   const initialSpeeds=goodConnections?[100000,80000,60000,50000,40000]:nativeOnly?[30000,24000,18000,14000,11000]:null;
@@ -110,7 +110,8 @@ async function main(){
    await clickControl(14,'#live-go-live');await observe(10,'go live recovery');
    await observe(15,'go live aligned');assess('go live aligned',ids);
    const checked=samples.filter(s=>['15 mixed-speed viewers','three resumed aligned','refresh and rejoin aligned','go live aligned'].includes(s.phase));
-   record('all 15 decode native 1080p with automatic quality disabled',checked.every(s=>s.viewers.length===15&&s.viewers.every(v=>v.height===1080&&v.autoLevel===false)),{});
+   const expectedHeight=Number((process.env.LIVE_TEST_VIDEO||'320x180').split('x')[1]);
+   record(`all 15 decode native ${expectedHeight}p with automatic quality disabled`,checked.every(s=>s.viewers.length===15&&s.viewers.every(v=>v.height===expectedHeight&&v.autoLevel===false)),{});
    record('real WebSocket transport',checked.every(s=>s.viewers.every(v=>v.socket==='websocket')),{});
    record('no player exceptions',events.length===0,events);
    process.exitCode=results.some(x=>!x.pass)?1:0;return;
@@ -158,7 +159,7 @@ async function main(){
  }catch(e){record('harness completion',false,e.stack);console.log(logs.slice(-3000));}
  finally{
   if(browser)await browser.close();await api('/test/stop','POST').catch(()=>{});server.kill();
-  fs.writeFileSync(path.join(__dirname,goodConnections?'native-good-connections-results.json':'synchronized-results.json'),JSON.stringify({generatedAt:new Date().toISOString(),hashes,profile:goodConnections?{bandwidthMbps:[40,100],latencyMs:[10,80],source:'1920x1080 at 25fps',nativeOnly:true}:null,method:'Production Flask page/clock, actual WebSockets and production FFmpeg command with generated 25fps input; HLS.js 1.6.13 in Windows Edge; autoplay allowed by test browser flag',results,samples,events},null,2)+'\n');
+  fs.writeFileSync(path.join(process.env.LIVE_TEST_RESULTS||__dirname,goodConnections?'native-good-connections-results.json':'synchronized-results.json'),JSON.stringify({generatedAt:new Date().toISOString(),hashes,profile:goodConnections?{bandwidthMbps:[40,100],latencyMs:[10,80],source:`${process.env.LIVE_TEST_VIDEO||'320x180'} at 25fps`,nativeOnly:true}:null,method:'Production Flask page/clock, actual WebSockets and production FFmpeg command with generated 25fps input; HLS.js 1.6.13 in Playwright Chromium; autoplay allowed by test browser flag',results,samples,events},null,2)+'\n');
  }
  process.exitCode=results.some(x=>!x.pass)?1:0;
 }

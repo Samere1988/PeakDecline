@@ -1,5 +1,7 @@
 # Live TV shared-clock synchronization
 
+October 2026 hardening and deployment evidence: [HARDENING_VERIFICATION.md](HARDENING_VERIFICATION.md).
+
 Status behavior and coverage: [STATUS_VERIFICATION.md](STATUS_VERIFICATION.md).
 Run `status_integration.cjs` for actual network/media status transitions and
 `quality_status_test.cjs` for quality-menu feedback and callback races.
@@ -63,7 +65,8 @@ shared reference: late joins can use different media origins and lagged playlist
 server anchor advances smoothly between publications, approximately six seconds
 behind publication. It never targets unpublished media. Clients compensate for
 half the clock request round-trip and map the target through HLS program dates.
-Clock samples expire after three seconds; stalled encoder snapshots are marked
+Clients retain recent samples, prefer low RTT observations, reject latency spikes,
+and validate the stream session before applying a response. Clock samples expire after three seconds; stalled encoder snapshots are marked
 stale after eight seconds. Missing/stale clocks disable correction and display
 the clock status rather than driving a player using an invented target.
 When publication resumes after a stall, the clock re-anchors to restore its
@@ -76,24 +79,28 @@ Playback policy:
 - Use 0.98x/1.02x for small drift and return to 1x within 350 ms.
 - Gecko Firefox stays at 1x to avoid repeated audio time-stretching while
   investigating Firefox-only A/V drift. Buffered catch-up and explicit Sync
-  still work; small offsets may persist until alignment. Other browsers,
+  still work; drift above one second is corrected after three continuous seconds. Other browsers,
   including WebKit-based Firefox on iOS, retain rate correction. The unit suite
   simulates one hour of Firefox clock jitter; it does not validate real audio
   output or establish that rate correction caused the reported drift.
-- Normal playback never automatically rewinds. Skip forward only when more than
-  four seconds behind for three continuous seconds with a buffered, seekable
-  destination and ready media; automatic seeks have a fifteen-second cooldown.
+- Correct in either direction after three seconds of sustained drift (over one
+  second in Firefox, over two seconds elsewhere), into buffered, seekable media.
+  Automatic seeks have a fifteen-second cooldown; alternating jitter resets the
+  persistence window. Other small offsets use gentle playback-rate correction.
 - Local pause remains paused. Resume and explicit Sync request alignment;
   returning from the background only refreshes the clock. Reconnect rejoins
   presence and checks the current channel.
 - Startup retries are scoped to the current player generation. An autoplay
   rejection displays an explicit Play instruction.
-- HLS startup waits for media at the shared target to be buffered before Play.
+- A ready manifest starts playback; alignment then uses the shared timeline.
 
 FFmpeg forces keyframes every two seconds and emits program date timestamps.
 HLS.js is pinned to 1.6.13 for this page. This reduces uncertainty from segment
-lengths and from changing library defaults. There is still one stream rendition:
-connections slower than that rendition must buffer until bandwidth improves.
+lengths and from changing library defaults. The three renditions share segment boundaries. Native remains
+preferred; five seconds of continuous buffering or three stalls lasting at least
+one second in thirty seconds switches that viewer to Auto. Brief seek waits do
+not trigger fallback. The quality menu reports the fallback and allows a manual
+return to Native. Native HLS browsers retain their built-in adaptive selection.
 
 ## Reproduce
 
@@ -166,7 +173,7 @@ and per-client edge latency; it cannot verify the new endpoint.
 
 ## Deployment and limits
 
-These changes are local until explicitly deployed. Deploy the backend, player,
+See the current deployment state in HARDENING_VERIFICATION.md. Deploy the backend, player,
 and template together. Restart the app and active encoder so timestamps and
 forced keyframes are emitted; reload room pages to use the new player.
 
@@ -175,3 +182,21 @@ latency, geographic uplink capacity, high-resolution encoder capacity, or
 physical Safari/mobile behavior. Native HLS can map through `getStartDate`
 when supported; physical-device coverage is still required. A stale/missing
 mapping is reported rather than treating local seekable ranges as synchronized.
+
+The server checks both process liveness and advancing playlist timestamps. After
+20 seconds without progress it starts a new encoder session and broadcasts the
+replacement. Three failed recovery attempts stop retries; 60 seconds of healthy
+playback resets the budget. An explicit stop or channel switch invalidates the
+old supervisor. Client fatal retries are also bounded. Periodic status polling
+heals missed WebSocket broadcasts, and server recovery preserves local pause.
+
+Media is authenticated in both Flask and nginx. Only the generated playlist and
+segment filename layout is allowed. Provider URLs are omitted from channel API
+responses. Encoder logs are private under `instance/live-tv-logs`, limited to
+20 channel logs, with active logs truncated above 4 MiB during supervision.
+The deployment script moves legacy web-served logs into its private backup.
+
+`window.liveTvDiagnostics` exposes the current session, displayed-frame drift,
+clock age/RTT, frame age, buffered duration, stalls, seeks and recovery counts.
+It uses `requestVideoFrameCallback` where supported, falls back to currentTime
+otherwise, and sends no telemetry to an external service.

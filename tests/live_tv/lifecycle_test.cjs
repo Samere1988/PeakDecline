@@ -4,8 +4,8 @@ const flush=()=>new Promise(setImmediate);
 function state(id,revision){return{is_streaming:id!==null,current_channel_id:id,current_channel_name:'Channel '+id,stream_epoch:'test',stream_revision:revision,stream_session:id===null?null:'session-'+revision};}
 function fixture(){
  const socketHandlers={},domHandlers={},pending=[],loads=[],nodes=new Map();
- function element(){return{value:'',textContent:'',innerHTML:'',children:[],paused:true,playbackRate:1,
-  setAttribute(){},addEventListener(){},appendChild(child){this.children.push(child);},pause(){this.paused=true;},removeAttribute(){},load(){}};}
+ function element(){return{dataset:{},value:'',textContent:'',innerHTML:'',children:[],paused:true,playbackRate:1,
+  querySelectorAll(){return[];},classList:{toggle(){}},setAttribute(){},addEventListener(){},appendChild(child){this.children.push(child);},pause(){this.paused=true;},removeAttribute(){},load(){}};}
  const c=vm.createContext({console,loads,performance:{now:()=>100},AbortController,
   setTimeout:()=>1,clearTimeout(){},setInterval(){},clearInterval(){},
   io:()=>({on:(e,f)=>socketHandlers[e]=f,emit(){}}),

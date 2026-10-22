@@ -1,0 +1,272 @@
+{
+  "generatedAt": "2026-10-22T20:06:09.933857+00:00",
+  "releaseHashes": {
+    "app/routes.py": "30555ba377ab47a1dfa9557b91f6d10b8f6db261a6aa1ea34a1489a3e2c6fb6d",
+    "app/services/streamer.py": "da6086b03f9891e2f658375166436288ca1ad5cb8f49a9976e3196c90cff333d",
+    "static/js/tv_player.js": "8640954f66499563e6add716429d2cb607ca681b9a0de97561becc0c4ec5d37a",
+    "static/js/live_controls.js": "901881695ffee3beed66accdb6365789a9ed255ca1ae6ad53e72ba29372e82dc",
+    "static/js/live_quality.js": "99c35bdfca4c26eb4eb0a3600d5397ce266df8ef2a52b486c1fe4f5af4c24b51",
+    "templates/live_tv.html": "613cb268e61017afeea54624d133ca94fe883a3d9b5698032c4a769522469b77"
+  },
+  "runs": {
+    "native1080Churn": {
+      "generatedAt": "2026-10-22T20:05:20.522Z",
+      "hashes": {
+        "static/js/tv_player.js": "8513ef485b3c829d700a3b1b830ef43853b88ce30b6ebde064bfd2d83512ec8f",
+        "app/services/streamer.py": "da6086b03f9891e2f658375166436288ca1ad5cb8f49a9976e3196c90cff333d",
+        "app/services/live_clock.py": "b970201398faa784a495205d7d91309edaf93c9df0e87aaecae795bc6938f668",
+        "app/routes.py": "30555ba377ab47a1dfa9557b91f6d10b8f6db261a6aa1ea34a1489a3e2c6fb6d"
+      },
+      "profile": {
+        "bandwidthMbps": [
+          40,
+          100
+        ],
+        "latencyMs": [
+          10,
+          80
+        ],
+        "source": "1920x1080 at 25fps",
+        "nativeOnly": true
+      },
+      "method": "Production Flask page/clock, actual WebSockets and production FFmpeg command with generated 25fps input; HLS.js 1.6.13 in Playwright Chromium; autoplay allowed by test browser flag",
+      "results": [
+        {
+          "name": "15 mixed-speed viewers",
+          "pass": true,
+          "details": {
+            "spread": 0.503000020980835,
+            "maxError": 0.6112871170043945,
+            "stalledSamples": 0,
+            "totalSamples": 225,
+            "missing": 0,
+            "advancing": true
+          }
+        },
+        {
+          "name": "three intentional pauses preserved",
+          "pass": true,
+          "details": {}
+        },
+        {
+          "name": "three viewers locally paused",
+          "pass": true,
+          "details": {
+            "spread": 0.27300000190734863,
+            "maxError": 0.3870861530303955,
+            "stalledSamples": 0,
+            "totalSamples": 180,
+            "missing": 0,
+            "advancing": true
+          }
+        },
+        {
+          "name": "three resumed aligned",
+          "pass": true,
+          "details": {
+            "spread": 0.2780001163482666,
+            "maxError": 0.38312363624572754,
+            "stalledSamples": 0,
+            "totalSamples": 225,
+            "missing": 0,
+            "advancing": true
+          }
+        },
+        {
+          "name": "refresh and rejoin aligned",
+          "pass": true,
+          "details": {
+            "spread": 0.23799991607666016,
+            "maxError": 0.35628318786621094,
+            "stalledSamples": 0,
+            "totalSamples": 225,
+            "missing": 0,
+            "advancing": true
+          }
+        },
+        {
+          "name": "go live aligned",
+          "pass": true,
+          "details": {
+            "spread": 0.23799991607666016,
+            "maxError": 0.35750651359558105,
+            "stalledSamples": 0,
+            "totalSamples": 225,
+            "missing": 0,
+            "advancing": true
+          }
+        },
+        {
+          "name": "all 15 decode native 1080p with automatic quality disabled",
+          "pass": true,
+          "details": {}
+        },
+        {
+          "name": "real WebSocket transport",
+          "pass": true,
+          "details": {}
+        },
+        {
+          "name": "no player exceptions",
+          "pass": true,
+          "details": []
+        }
+      ],
+      "sampleCount": 177,
+      "allMeasuredViewersNative1080": true
+    },
+    "finalSource15ViewerSmoke": {
+      "generatedAt": "2026-10-22T20:04:37.667Z",
+      "hashes": {
+        "static/js/tv_player.js": "8640954f66499563e6add716429d2cb607ca681b9a0de97561becc0c4ec5d37a",
+        "app/services/streamer.py": "da6086b03f9891e2f658375166436288ca1ad5cb8f49a9976e3196c90cff333d",
+        "app/services/live_clock.py": "b970201398faa784a495205d7d91309edaf93c9df0e87aaecae795bc6938f668",
+        "app/routes.py": "30555ba377ab47a1dfa9557b91f6d10b8f6db261a6aa1ea34a1489a3e2c6fb6d"
+      },
+      "profile": {
+        "bandwidthMbps": [
+          40,
+          100
+        ],
+        "latencyMs": [
+          10,
+          80
+        ],
+        "source": "1920x1080 at 25fps",
+        "nativeOnly": true
+      },
+      "method": "Production Flask page/clock, actual WebSockets and production FFmpeg command with generated 25fps input; HLS.js 1.6.13 in Playwright Chromium; autoplay allowed by test browser flag",
+      "results": [
+        {
+          "name": "15 mixed-speed viewers",
+          "pass": true,
+          "details": {
+            "spread": 0.806999921798706,
+            "maxError": 0.7178001403808594,
+            "stalledSamples": 0,
+            "totalSamples": 225,
+            "missing": 0,
+            "advancing": true
+          }
+        }
+      ],
+      "sampleCount": 44,
+      "allMeasuredViewersNative1080": true
+    },
+    "backend": [
+      {
+        "name": "anonymous HLS blocked",
+        "passed": true
+      },
+      {
+        "name": "logs never served",
+        "passed": true
+      },
+      {
+        "name": "video-only source starts",
+        "passed": true
+      },
+      {
+        "name": "all three video-only variants published",
+        "passed": true
+      },
+      {
+        "name": "watchdog recovers exit",
+        "passed": true,
+        "seconds": 4.06
+      },
+      {
+        "name": "watchdog recovers freeze",
+        "passed": true,
+        "seconds": 27.16
+      },
+      {
+        "name": "explicit stop prevents resurrection",
+        "passed": true
+      }
+    ],
+    "chromiumFirefox": [
+      {
+        "name": "chromium decodes and aligns",
+        "passed": true,
+        "height": 180,
+        "rate": 1,
+        "frameTracking": true
+      },
+      {
+        "name": "chromium corrects lag",
+        "passed": true,
+        "drift": -0.3337500256652832,
+        "rate": 1
+      },
+      {
+        "name": "chromium corrects lead",
+        "passed": true,
+        "drift": -1.1915499542236327,
+        "rate": 0.98
+      },
+      {
+        "name": "firefox decodes and aligns",
+        "passed": true,
+        "height": 180,
+        "rate": 1,
+        "frameTracking": true
+      },
+      {
+        "name": "firefox corrects lag",
+        "passed": true,
+        "drift": -0.2719998567657471,
+        "rate": 1
+      },
+      {
+        "name": "firefox corrects lead",
+        "passed": true,
+        "drift": 0.0325167179107666,
+        "rate": 1
+      },
+      {
+        "name": "encoder death reconnects playing viewers and preserves Firefox pause",
+        "passed": true
+      },
+      {
+        "name": "sustained network buffering switches Native to Auto",
+        "passed": true,
+        "note": "Switched to Auto after buffering. Select Native to retry full quality."
+      },
+      {
+        "name": "playback recovers after bandwidth returns",
+        "passed": true
+      },
+      {
+        "name": "no browser exceptions",
+        "passed": true
+      }
+    ],
+    "nginx": [
+      [
+        "/static/stream/1/index.m3u8",
+        401
+      ],
+      [
+        "/static/stream/1/ffmpeg_error.log",
+        404
+      ],
+      [
+        "/_live_media_auth",
+        404
+      ],
+      [
+        "/static/stream/1/index.m3u8",
+        200
+      ],
+      [
+        "/static/stream/1/ffmpeg_error.log",
+        404
+      ]
+    ]
+  },
+  "notes": [
+    "The final Play retry guard was added after the full churn run and was verified by the final unit suite and final-source smoke run.",
+    "Native Safari/iOS devices and long-session audible A/V behavior were not tested."
+  ]
+}

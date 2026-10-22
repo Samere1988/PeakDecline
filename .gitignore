@@ -77,3 +77,6 @@ instance/
 static/stream/
 static/mk64-hd/
 static/img/channel-cache/
+
+# Pinned third-party browser test fixtures
+tests/watch_together/fixtures/

@@ -27,3 +27,12 @@ update({levels:[],supported:false});assert.equal(node('live-quality-select').val
 assert.match(node('live-quality-note').textContent,/used by this browser/);
 assert.ok(node('live-quality-select').options.filter(o=>o.value!=='auto').every(o=>o.disabled));
 console.log('PASS quality success, pending selection, paused selection, Auto, delayed change, old-player timer and native-browser feedback');
+
+update({levels:player.levels,supported:true});select('native');
+listeners['live-quality-fallback']();
+assert.equal(node('live-quality-select').value,'auto');
+assert.match(node('live-quality-note').textContent,/after buffering/);
+update({levels:player.levels,supported:true});
+assert.match(node('live-quality-note').textContent,/after buffering/);
+select('native');assert.doesNotMatch(node('live-quality-note').textContent,/after buffering/);
+console.log('PASS adaptive fallback feedback survives player replacement and clears on manual selection');

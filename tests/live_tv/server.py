@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import subprocess
+import signal
 import sys
 import tempfile
 import uuid
@@ -18,6 +19,10 @@ from app.services.streamer import streamer
 
 temporary = tempfile.TemporaryDirectory(prefix='peak-live-clock-')
 directory = Path(temporary.name)
+# Guide refresh must never read real sources or launch external downloads in tests.
+from app.services import guide
+guide.ROOT = directory
+guide.next_check = float('inf')
 app = Flask(__name__, template_folder=str(ROOT / 'templates'), static_folder=str(ROOT / 'static'))
 app.config.update(SECRET_KEY=uuid.uuid4().hex,
     SQLALCHEMY_DATABASE_URI='sqlite:///' + str(directory / 'users.db'),
@@ -28,19 +33,24 @@ socketio.init_app(app, async_mode='gevent')
 app.register_blueprint(main_bp)
 app.register_blueprint(auth_bp)
 streamer.stream_root = str(directory)
+streamer.log_root = str(directory / 'private-logs')
+real_probe = streamer._has_audio
+streamer._has_audio = lambda source: source != 'fixture-no-audio' if source.startswith('fixture') else real_probe(source)
 real_popen = subprocess.Popen
 
 
 def generated_input(args, **kwargs):
     args = list(args)
-    if '-i' in args and args[args.index('-i') + 1] == 'fixture':
+    if '-i' in args and args[args.index('-i') + 1].startswith('fixture'):
+        audio = args[args.index('-i') + 1] != 'fixture-no-audio'
         test_size = os.environ.get('LIVE_TEST_VIDEO', '320x180')
         args[args.index('-user_agent'):args.index('-filter_complex')] = [
             '-re', '-f', 'lavfi', '-i', f'testsrc2=size={test_size}:rate=25',
-            '-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=48000']
+            *(['-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=48000'] if audio else [])]
         # The synthetic harness uses separate lavfi video/audio inputs;
         # production channel URLs normally expose both on input 0.
-        args = ['1:a:0?' if value == '0:a:0?' else value for value in args]
+        if audio:
+            args = ['1:a:0?' if value == '0:a:0?' else value for value in args]
     return real_popen(args, **kwargs)
 
 
@@ -55,14 +65,6 @@ def login(identity):
         return '', 404
     login_user(db.session.get(User, str(identity)))
     return redirect('/live-tv')
-
-
-@app.before_request
-def isolate():
-    if request.path.startswith('/static/stream/'):
-        response = send_from_directory(directory, request.path.removeprefix('/static/stream/'), max_age=0)
-        response.headers['Cache-Control'] = 'no-store'
-        return response
 
 
 @app.get('/test/measure')
@@ -80,6 +82,17 @@ def start():
     # Test-only bootstrap calls the production route body; browser channel
     # selection below uses its normal authenticated HTTP endpoint.
     return play_channel.__wrapped__(1)
+
+
+@app.post('/test/fail/<mode>')
+def fail(mode):
+    if mode == 'exit':
+        streamer.process.terminate()
+    elif mode == 'freeze' and hasattr(signal, 'SIGSTOP'):
+        os.kill(streamer.process.pid, signal.SIGSTOP)
+    else:
+        return '', 400
+    return jsonify(session=streamer.session_id)
 
 
 @app.post('/test/stop')
@@ -100,6 +113,7 @@ with app.app_context():
         db.session.add(User(id=str(i), username=f'live-test-{i}', email=f'live{i}@example.invalid', is_verified=True))
     for i in [1, 2]:
         db.session.add(Channel(id=i, name=f'Synthetic live sports {i}', url='fixture', is_playing='0'))
+    db.session.add(Channel(id=4, name='Video only', url='fixture-no-audio', is_playing='0'))
     db.session.add(Channel(id=3, name='Unavailable test channel', url=str(directory / 'missing-input.ts'), is_playing='0'))
     db.session.commit()
 

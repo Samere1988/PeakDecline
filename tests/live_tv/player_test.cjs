@@ -16,8 +16,10 @@ function test(name,fn,userAgent='Mozilla/5.0 Chrome/140.0.0.0 Safari/537.36'){
 test('alternating clock jitter never seeks', (c,v,step)=>{
  for(let i=0;i<240;i++){step(250,i%2?1.2:-1.2);assert.equal(v.currentTime,50);assert.ok([.98,1.02].includes(v.playbackRate));}
 });
-test('ahead viewers never automatically rewind even with large persistent drift', (c,v,step)=>{
- for(let i=0;i<40;i++){step(1000,-8);assert.equal(v.currentTime,50);assert.equal(v.playbackRate,.98);}
+test('large persistent lead aligns backward after three seconds', (c,v,step)=>{
+ step(0,-8);step(2999,-8);assert.equal(v.currentTime,50);
+ step(1,-8);assert.equal(v.currentTime,42);assert.equal(v.playbackRate,1);
+ step(1000,-8);assert.equal(v.currentTime,42);
 });
 test('substantial lag must persist for three seconds and correction has a fifteen second cooldown', (c,v,step)=>{
  step(0,6);step(2999,6);assert.equal(v.currentTime,50);
@@ -71,6 +73,14 @@ test('Firefox retains sustained buffered catch-up and cooldown', (c,v,step)=>{
  step(1000,6);step(13000,6);assert.equal(v.currentTime,56);
  step(1000,6);assert.equal(v.currentTime,62);assert.equal(v.playbackRate,1);
 },firefoxUA);
+for (const drift of [-8, 3, -1.2]) test(`Firefox corrects sustained ${drift}s drift at 1x`, (c,v,step)=>{
+ step(0,drift);step(2999,drift);assert.equal(v.currentTime,50);
+ step(1,drift);assert.ok(Math.abs(v.currentTime-(50+drift)) < 1e-9);assert.equal(v.playbackRate,1);
+},firefoxUA);
+test('opposite drift directions cannot share a persistence timer',(c,v,step)=>{
+ step(0,5);step(2000,-5);step(2000,-5);assert.equal(v.currentTime,50);
+ step(1000,-5);assert.equal(v.currentTime,45);
+});
 test('Firefox retains explicit alignment, local pause, and stale-clock behavior', (c,v,step)=>{
  for(const time of [30,60]){v.currentTime=time;vm.runInContext('needsAlignment=true;lastCorrection=-Infinity;enforceLiveSync()',c);assert.equal(v.currentTime,50);}
  v.paused=true;step(4000,10);assert.equal(v.currentTime,50);assert.equal(v.playbackRate,1);

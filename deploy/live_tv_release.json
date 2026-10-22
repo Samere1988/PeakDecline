@@ -1,0 +1,29 @@
+{
+  "baseline_commit": "ef139d3f505332d5a6a4ffe6336ff839c9c2c7bc",
+  "files": {
+    "app/routes.py": {
+      "baseline": "10f64cba165700b175f8d24f027c38d2be127d731f85d9a78f2cfa0e14108e0e",
+      "release": "30555ba377ab47a1dfa9557b91f6d10b8f6db261a6aa1ea34a1489a3e2c6fb6d"
+    },
+    "app/services/streamer.py": {
+      "baseline": "dc84c99622035c02fd9c293bde0fd6ce76e5e17c72a47ce6ab153fbf412fd3c6",
+      "release": "da6086b03f9891e2f658375166436288ca1ad5cb8f49a9976e3196c90cff333d"
+    },
+    "static/js/tv_player.js": {
+      "baseline": "8180747bf4d7de766a596436309ae23644639d25ccbe80af983d7476a20da083",
+      "release": "8640954f66499563e6add716429d2cb607ca681b9a0de97561becc0c4ec5d37a"
+    },
+    "static/js/live_controls.js": {
+      "baseline": "77ddf05575b523f6ae1b94697f6bcd8d8c510444e1c067e71f8b0de1f5f7eece",
+      "release": "901881695ffee3beed66accdb6365789a9ed255ca1ae6ad53e72ba29372e82dc"
+    },
+    "static/js/live_quality.js": {
+      "baseline": "f8c952371644937abf806fd8bd5ea69b8764dea4cd0bf57a4762d4538d36b279",
+      "release": "99c35bdfca4c26eb4eb0a3600d5397ce266df8ef2a52b486c1fe4f5af4c24b51"
+    },
+    "templates/live_tv.html": {
+      "baseline": "e6a6c9ecb7fac81c0722df9ebc138896d15994411c81ea264a99815da66d3a00",
+      "release": "613cb268e61017afeea54624d133ca94fe883a3d9b5698032c4a769522469b77"
+    }
+  }
+}

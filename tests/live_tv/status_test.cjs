@@ -119,8 +119,8 @@ async function main() {
     const e=fixture();e.c.fetch=async()=>({ok:false});
     e.run('currentChannelId=null');await e.run('refreshLiveStatus()');
     assert.equal(e.text(),'Unable to check live TV. Refresh to try again.');
-    e.run('currentChannelId=1;hls=null');e.events.error();assert.match(e.text(),/Unable to load this channel/);
-    e.run("showPlayerStatus('playing','LIVE')");e.events.ended();assert.match(e.text(),/Stream ended/);
+    e.run('currentChannelId=1;hls=null');e.events.error();assert.match(e.text(),/Press Play to reconnect/);
+    e.run("showPlayerStatus('playing','LIVE')");e.events.ended();assert.match(e.text(),/Press Play to reconnect/);
     e.run("showPlayerStatus('loading','Loading');startupPending=true");e.events.playing();
     assert.equal(e.text(),'Loading','paused elements cannot report successful playback');
     // Fatal errors while actively playing report recovery; while paused they require Play.
@@ -128,10 +128,18 @@ async function main() {
     r.run('hls.handlers.error(null,{fatal:true})');assert.match(r.text(),/Reconnecting/);
     const d=fixture();d.video.paused=false;d.video.seeking=true;
     d.run("programOffset=()=>1000;sharedTarget=()=>1010;showPlayerStatus('playing','LIVE');enforceLiveSync()");
-    assert.equal(d.text(),'Catching up to live…');
+    assert.equal(d.text(),'Aligning with live…');
     d.video.currentTime=10;d.run('enforceLiveSync()');assert.equal(d.text(),'LIVE');
     d.run('sharedTarget=()=>null;enforceLiveSync()');assert.equal(d.text(),'Playing — live sync temporarily unavailable');
     d.run("showPlayerStatus('buffering','Buffering');enforceLiveSync()");assert.equal(d.text(),'Buffering');
+    const brief = fixture(); brief.video.paused = false;
+    brief.run('hls={}');
+    for (let i=0;i<5;i++) { brief.events.waiting(); brief.advance(100); brief.events.playing(); }
+    brief.run('checkBufferingFallback(performance.now())');
+    assert.equal(brief.run('fallbackRequested'), false, 'brief waits must retain Native');
+    for (let i=0;i<3;i++) { brief.events.waiting(); brief.advance(1100); brief.events.playing(); }
+    brief.run('checkBufferingFallback(performance.now())');
+    assert.equal(brief.run('fallbackRequested'), true, 'repeated substantial stalls should use Auto');
     console.log('PASS loading, slow startup, success, buffering, pause, autoplay, recovery, stale timer and switch failure statuses');
     console.log('PASS status timer versions, muted notice persistence, stale autoplay promises, aborted play, status fetch failure, native error and ended feedback');
 }
