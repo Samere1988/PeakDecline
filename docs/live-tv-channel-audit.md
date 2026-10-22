@@ -135,3 +135,12 @@ unmapped. None of these results constitutes visual playback verification.
 
 Private backups, the reviewed report, and rehearsal evidence are in
 `/home/samer/Documents/ChatGPT/migration/channel-audit-round2-20261022-182419/`.
+
+Applied at 18:32 EDT. Live database comparison matched all 257 planned changes
+and five confirmations exactly. All prior overrides and mapping entries were
+retained, SQLite integrity passed, and guide/identifier/programme table counts
+were unchanged. The production lookup function returned current and next
+programmes for sampled new channels, HBO HD, and History; unresolved HBO remained
+unmapped. There were 3,937 mapped entries with a current programme at verification.
+No website or encoder restart was performed. The searchable HTML report in the
+private folder contains all 14,849 entries and the second-pass results.
