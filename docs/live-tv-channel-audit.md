@@ -80,3 +80,19 @@ A fresh audit is appropriate after a playlist replacement or new provider guide.
 .venv/bin/python tests/live_tv/guide_mapping_test.py
 .venv/bin/python tests/live_tv/guide_audit_test.py
 ```
+
+## Live verification
+
+Applied at 16:57 EDT on October 22, 2026. Production database comparison matched
+all 2,843 planned changes exactly: 2,812 additions and 31 reassigned guides. No
+existing mappings were removed. The 348 confirmed assignments were persisted
+alongside the changes. SQLite integrity passed, the listings/identifiers tables
+were preserved, and 3,735 mapped entries had a current programme at verification.
+Sample production lookups returned titles for A&E, Smithsonian, PBS WNED, FOX
+WNYW, CTV 2 Vancouver, HBO HD, and History. Unverified HBO remained unmapped.
+No playback or website restart was performed.
+
+The searchable result is `channel-guide-audit.html` in the private audit folder.
+It includes every channel, applied changes, retained mappings, and suggestions
+left unapplied. Its totals and script syntax were checked, and the report
+contains no provider URLs or credentials.
