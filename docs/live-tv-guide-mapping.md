@@ -63,3 +63,30 @@ Coverage includes ambiguous names with unequal programme counts, missing and
 case-insensitive identifiers, override persistence through refresh/remap,
 missing feeds, explicit blocks, ID reuse, targeted changes, backup consistency,
 invalid override rejection, and the live lookup function's returned title.
+
+## History Channel and production verification
+
+History Channel (53) has playlist identifier `historychannel.us`, but the
+matching feed is `History.us`. The user reported *History's Greatest Picks With
+Mike Wolfe*, which that feed lists from 16:00–17:00 and 17:00–18:00
+America/Toronto on October 22. The verified assignment was saved with:
+
+```bash
+.venv/bin/python remap_guide_channels.py --channel-id 53 --guide-id History.us --reason 'Observed Historys Greatest Picks With Mike Wolfe matches History.us; playlist uses historychannel.us'
+```
+
+Deployed and checked at 16:37 EDT on October 22, 2026:
+
+- All nine regression tests passed, and the three installed Python modules
+  match the GitHub release files exactly.
+- Production's guide lookup returns *Evil Dead Burn* for HBO HD and *History's
+  Greatest Picks With Mike Wolfe* for History Channel, with the expected times.
+- HBO remains unmapped because no available schedule matches its observed movie.
+- Database comparison confirms only HBO HD and History Channel mappings changed;
+  all other assignments are unchanged. SQLite integrity check passed.
+- The website and encoder were not restarted; the encoder PID was unchanged
+  across the code deployment and HBO correction.
+- The original database and scripts are backed up in
+  `/home/samer/Documents/ChatGPT/migration/guide-before-hbo-fix-20261022-202946/`.
+  Each targeted assignment also created its own consistent database backup in
+  the production `instance` directory. No credentials or databases are committed.
