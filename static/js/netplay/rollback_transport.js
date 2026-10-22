@@ -55,15 +55,7 @@
                 rollback_peer: event => this.peerReady(event),
                 rollback_signal: event => this.signal(event),
                 frameset: event => {
-                    if (!this.validEvent(event) || !integer(event.frame, this.relayConfirmed + 1, this.sentThrough)) return;
-                    this.relayConfirmed = event.frame;
-                    // A received complete relay row also proves receipt of each
-                    // remote input. This lets late RTC connections ACK past the
-                    // beginning of the bounded repair history.
-                    for (const peer of this.peers.values()) {
-                        peer.receiveThrough = Math.max(peer.receiveThrough, event.frame);
-                        this.advanceReceipt(peer);
-                    }
+                    if (this.validEvent(event) && integer(event.frame, this.relayConfirmed + 1, this.sentThrough)) this.confirm(event.frame);
                 }
             };
             if (this.enabled) for (const [name, handler] of Object.entries(this.handlers)) socket.on(name, handler);
@@ -78,6 +70,19 @@
         active(peer) { return this.current(peer) && !peer.failed; }
         // Keep the reliable journal inside its bounded 128-frame acceptance horizon.
         canSend(frame) { return !this.enabled || frame <= this.relayConfirmed + 120; }
+        // Lockstep owners also confirm rows this instance never sent, such as
+        // replayed history after a reloaded tab rebuilds its match.
+        confirm(frame) {
+            if (!this.enabled || this.closed || !integer(frame, this.relayConfirmed + 1, 0x7fffffff)) return;
+            this.relayConfirmed = frame;
+            // A received complete relay row also proves receipt of each
+            // remote input. This lets late RTC connections ACK past the
+            // beginning of the bounded repair history.
+            for (const peer of this.peers.values()) {
+                peer.receiveThrough = Math.max(peer.receiveThrough, frame);
+                this.advanceReceipt(peer);
+            }
+        }
         configure(event) {
             if (!this.validEvent(event) || this.configured || event.slot !== this.slot || event.players !== this.players ||
                 !Array.isArray(event.peers) || !Array.isArray(event.iceServers)) return;
@@ -87,6 +92,11 @@
         }
         peerReady(event) {
             if (!this.validEvent(event) || !this.configured || !integer(event.slot, 0, this.players - 1) || event.slot === this.slot) return;
+            // The relay announces each seat connection once. Another announcement
+            // is a new remote instance (a reloaded tab): a new input stream that
+            // starts at the relay frontier, negotiated from generation zero.
+            const old = this.peers.get(event.slot);
+            if (old) { this.closeConnection(old); this.peers.delete(event.slot); }
             const peer = this.ensurePeer(event.slot);
             if (peer && this.slot < event.slot) this.offer(peer);
         }

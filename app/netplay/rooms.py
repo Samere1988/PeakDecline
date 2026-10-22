@@ -89,6 +89,9 @@ def register(app, socketio):
     def retained_lockstep(room):
         return room['game']['id'] in ('mk64', 'marioparty', 'marioparty2') and room['game']['backend'] == 'recomp-ring-lockstep-v1'
 
+    def peer_lockstep(room):
+        return room['game']['backend'] == 'recomp-ring-lockstep-v1' and room['game'].get('lockstep', {}).get('peerInputs') is True
+
     def lockstep_paused(room):
         return retained_lockstep(room) and any(not room['members'][sid]['connected'] or room['members'][sid].get('recovering') for sid in room['sids'])
 
@@ -127,7 +130,7 @@ def register(app, socketio):
     def compatible(data, game):
         return (isinstance(data, dict) and all(data.get(k) == game[k] for k in
                 ('id', 'protocol', 'build', 'inputSchema', 'backend')) and
-                data.get('rollback') == game.get('rollback') and
+                data.get('rollback') == game.get('rollback') and data.get('lockstep') == game.get('lockstep') and
                 data.get('authoritative') == game.get('authoritative') and game['available'])
 
     def member(role):
@@ -874,8 +877,10 @@ def register(app, socketio):
     def rollback_player(data):
         code = membership.get(request.sid)
         room = rooms.get(code)
-        if (not room or room['phase'] != 'running' or room['game']['backend'] != 'rollback-v1' or
-                room['game']['rollback'].get('peerInputs') is not True or request.sid not in room['sids'] or
+        peers = peer_lockstep(room) if room else False
+        if room and room['game']['backend'] == 'rollback-v1':
+            peers = room['game']['rollback'].get('peerInputs') is True
+        if (not room or room['phase'] != 'running' or not peers or request.sid not in room['sids'] or
                 not isinstance(data, dict) or type(data.get('epoch')) is not int or data['epoch'] != room['epoch']):
             return None
         return room
@@ -994,6 +999,38 @@ def register(app, socketio):
                                   namespace=NAMESPACE, to=sid)
                 publish(code)
 
+    @socketio.on('lockstep_witness', namespace=NAMESPACE)
+    def lockstep_witness(data):
+        """Rows a connected player consumed from peer copies before the relay.
+
+        A seat's tab can close before its last relay inputs are written while its
+        RTC copies already reached others. Only missing inputs of absent seats
+        (disconnected or rebuilding) are filled; any disagreement stops the match.
+        """
+        with lock:
+            code = membership.get(request.sid)
+            room = rooms.get(code)
+            if (not room or room['phase'] != 'running' or not peer_lockstep(room) or not retained_lockstep(room) or
+                    request.sid not in room['sids'] or room['members'][request.sid].get('recovering') or
+                    not lockstep_paused(room) or not isinstance(data, dict) or data.get('epoch') != room['epoch'] or
+                    not isinstance(data.get('rows'), list) or len(data['rows']) > 128):
+                return
+            game = GAMES[room['game']['id']]
+            for row in data['rows']:
+                frame, pads = (row.get('frame'), row.get('pads')) if isinstance(row, dict) else (None, None)
+                if (type(frame) is not int or not room['completed'] < frame <= room['completed'] + 128 or
+                        not isinstance(pads, list) or len(pads) != len(room['sids']) or not all(game.valid_input(p) for p in pads)):
+                    return
+            for row in data['rows']:
+                target = room['inputs'].setdefault(row['frame'], [None] * len(room['sids']))
+                for seat, pad in enumerate(row['pads']):
+                    person = room['members'][room['sids'][seat]]
+                    if target[seat] is None:
+                        if not person['connected'] or person.get('recovering'):
+                            target[seat] = dict(pad)
+                    elif target[seat] != pad:
+                        return stop(code, 'Conflicting controller inputs received. Return to lobbies.')
+
     def drain_inputs(code, room):
         if lockstep_paused(room):
             return
@@ -1034,7 +1071,7 @@ def register(app, socketio):
             window = (room['game']['rollback']['maxPrediction'] +
                       max(room['game']['rollback']['inputDelay'],
                           room['game']['rollback'].get('confirmedInputDelay', 0)) + 2) if rollback else WINDOW
-            if rollback and room['game']['rollback'].get('peerInputs') is True:
+            if (rollback and room['game']['rollback'].get('peerInputs') is True) or peer_lockstep(room):
                 # Peer inputs may advance before the TCP journal catches up.
                 # Clients cap that lead at 120, leaving eight frames of margin.
                 window = 128
@@ -1387,9 +1424,21 @@ def register(app, socketio):
                 detach(code, room, request.sid)
                 leave_room('retro:' + code)
                 return
+            live = dict(epoch=room['epoch'], completed=room['completed'])
+            if peer_lockstep(room):
+                # Keep the lost tab's contiguous inputs, received or witnessed by
+                # players who consumed them; the new tab continues after them.
+                seat, through = room['sids'].index(request.sid), room['completed']
+                for frame in sorted(room['inputs']):
+                    if frame == through + 1 and room['inputs'][frame][seat] is not None:
+                        through = frame
+                    else:
+                        room['inputs'][frame][seat] = None
+                if through != room['completed']:
+                    live['inputsThrough'] = through
             room['members'][request.sid].pop('recovering', None)
             room['party_recoveries'].pop(request.sid)
-            emit('party_live', dict(epoch=room['epoch'], completed=room['completed'], paused=lockstep_paused(room)))
+            emit('party_live', dict(live, paused=lockstep_paused(room)))
             if not lockstep_paused(room):
                 emit('transport_resumed', dict(epoch=room['epoch']), code)
                 drain_inputs(code, room)
@@ -1449,11 +1498,20 @@ def register(app, socketio):
                 for values in room['hashes'].values():
                     if old in values:
                         values[request.sid] = values.pop(old)
+                peers = room.get('rollback_peers', set())
+                if old in peers:
+                    # A retained tab keeps its RTC transport; a new tab reconnects as a new peer.
+                    peers.discard(old)
+                    if not fresh_party:
+                        peers.add(request.sid)
                 if fresh_party:
-                    # Future, uncommitted inputs from the lost tab may be discarded.
                     seat = room['sids'].index(request.sid)
-                    for row in room['inputs'].values():
-                        row[seat] = None
+                    if not peer_lockstep(room):
+                        # Future, uncommitted inputs from the lost tab may be discarded.
+                        for row in room['inputs'].values():
+                            row[seat] = None
+                    # With peer inputs, other players may already have consumed the
+                    # lost tab's inputs; party_replay_ready decides which to keep.
                     person.update(loaded=False, recovering=True)
                     checkpoints = [(f, next(iter(row.values()))) for f, row in room['hashes'].items()
                                    if row and len(set(row.values())) == 1 and f % 60 == 59 and f <= room['completed']]
