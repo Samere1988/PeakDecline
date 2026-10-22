@@ -7,12 +7,12 @@
   <a href="{{ url_for('main.index') }}">&larr; Home</a>
   <p class="preview-label">PRIVATE PREVIEW · YOUR ACCOUNT ONLY</p>
   <h1>Your Windows game collection</h1>
-  <p class="preview-intro">Your collection, ready to install on a Windows PC. This first test build includes three playable games and the game data for all eleven.</p>
+  <p class="preview-intro">Your collection, ready to install on a Windows PC. This test build includes three playable games and the game data for all eleven.</p>
   {% if release %}
   <section class="download-panel" aria-labelledby="download-title">
     <div><h2 id="download-title">Windows 10/11 · 64-bit</h2><p>{{ 'Setup EXE' if release.is_installer else 'Portable ZIP' }} · {{ release.size_label }} · {{ release.label }}</p></div>
     <a class="download-button" href="{{ url_for('launcher_downloads.download', release_id=release.id) }}">{{ 'Download Windows installer' if release.is_installer else 'Download Windows preview' }} <span aria-hidden="true">↓</span></a>
-    <p>No separate game-data setup. Your server saves and account credentials are not included.</p>
+    <p>No separate game-data setup. Your server saves, account password and browser cookies are not included.</p>
   </section>
   <section aria-labelledby="start-title"><h2 id="start-title">Start playing</h2>
     {% if release.is_installer %}
@@ -28,6 +28,12 @@
     {% endif %}
     <p class="preview-note">This is an unsigned development build. Windows may show a publisher warning. Physical controllers and Windows hardware still need testing; these builds have been exercised under Wine on Linux.</p>
   </section>
+  {% if release.get('updates', {}).get('enabled') %}
+  <section aria-labelledby="updates-title"><h2 id="updates-title">Future updates are built in</h2>
+    <p>Install this version once. The PeakDecline desktop shortcut checks for updates while you play and downloads only changed files. After you exit, choose to install and restart, or leave the update for later.</p>
+    <p>Your saves, records, unlocks and controller settings stay in place. You can keep playing offline. This private installer includes access to the preview update service; keep it private.</p>
+  </section>
+  {% endif %}
   <section aria-labelledby="games-title"><h2 id="games-title">Included in this download</h2>
     <div class="game-grid">{% for game in release.games %}<article class="game-card"><h3>{{ game.name }}</h3><p class="{{ 'ready' if game.playable else 'pending' }}">{{ 'Windows build included' if game.playable else 'Data included · Windows build pending' }}</p></article>{% endfor %}</div>
   </section>

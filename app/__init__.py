@@ -90,6 +90,9 @@ def create_app():
     from .launcher_downloads import register as register_launcher_downloads
     register_launcher_downloads(app)
 
+    from .launcher_updates import register as register_launcher_updates
+    register_launcher_updates(app)
+
     from .catan_online import register as register_catan
     register_catan(app, socketio)
     from .netplay import register as register_retro_netplay

@@ -119,6 +119,14 @@ class DownloadTests(unittest.TestCase):
         self.assertIn("preview.exe", response.headers["Content-Disposition"])
         response.close()
 
+    def test_update_enabled_release_explains_future_updates(self):
+        self.metadata['updates'] = {'enabled': True, 'sequence': 3}
+        self.save_metadata()
+        self.login('owner')
+        response = self.client.get('/launcher-preview/')
+        self.assertIn(b'Future updates are built in', response.data)
+        self.assertIn(b'downloads only changed files', response.data)
+
     def test_script_extensions_are_not_downloadable(self):
         self.login("owner")
         for extension in ("cmd", "ps1", "html", "exe.html"):
