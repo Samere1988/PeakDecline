@@ -15,6 +15,23 @@ canvas{display:block;width:100%;height:100%;object-fit:contain}#status{position:
         const audio = window.Module?.SDL2?.audioContext;
         if (audio?.state === 'suspended') audio.resume().catch(() => {});
     };
+    // The native loop ran one frame per 60 Hz timer tick and skipped the tick whenever
+    // the input row was late, never making that time up. Poll every 4 ms instead and let
+    // this clock decide when a frame is due, catching up at most three frames.
+    const paceFrames = () => {
+        if (typeof _emscripten_set_main_loop_timing !== 'function') return;
+        const bridge = window.peakGameBridge, ready = bridge.ready.bind(bridge), step = 1000 / 60;
+        let due;
+        bridge.ready = frame => {
+            const now = performance.now();
+            due = Math.max(due ?? now, now - 3 * step);
+            if (now < due) return 0;
+            const result = ready(frame);
+            if (result > 0) due += step;
+            return result;
+        };
+        _emscripten_set_main_loop_timing(0, 4);
+    };
     window.startPeakGame = () => {
         if (started || !window.peakGameBridge) return;
         started = true;
@@ -43,6 +60,7 @@ canvas{display:block;width:100%;height:100%;object-fit:contain}#status{position:
                     Module.FS.writeFile('/game.z64', bytes);
                     await PeakSaves.fs(Module,{game:'fzerox',paths:{'sram.bin':'/saves/fzerox.sav'},bridge:window.peakGameBridge});
                     Module.callMain([]);
+                    paceFrames();
                     document.getElementById('status').hidden = true;
                 } catch (error) { fail(error); }
             }

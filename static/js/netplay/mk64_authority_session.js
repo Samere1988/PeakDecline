@@ -77,7 +77,9 @@
        else {
         const input=this.adapter.input,pad={buttons:input.buttons,x:input.x,y:input.y};
         const command=this.client.tick(pad);
-        if(this.socket.connected)this.socket.volatile.emit('kart_input',command);
+        // Not volatile: Socket.IO drops a volatile emit made before the previous
+        // one flushes, which lost every extra frame stepped in the same render.
+        if(this.socket.connected)this.socket.emit('kart_input',command);
        }
       }
      }

@@ -44,6 +44,26 @@ decompiled game logic compiled to WebAssembly, without emulation.
   with a separate live spectator feed. See [the DevilutionX port](devilutionx-port.md)
   for full-game data, builds, saves, and browser checks.
 
+## Latency fixes (October 21, 2026)
+
+- `linux_server.py` serves with a `WebSocketHandler` subclass that sets
+  `TCP_NODELAY`. With Nagle's algorithm on, every server message waited for the
+  peer's next packet: a 60 Hz echo measured 16.1 ms median round trip on
+  loopback, 0.5 ms with it off, and 60 Hz server pushes arrived in pairs.
+- Mario Kart sends `kart_input` with a normal emit. Socket.IO 4.6 discards a
+  volatile emit made before the previous one flushes, so every extra frame
+  stepped in one render was lost: 342 of 602 inputs at 4x CPU throttling.
+- Mario Party (`marioparty_runtime.js`) keeps its schedule when a frame row is
+  late and re-polls every 4 ms instead of waiting for the next display frame,
+  so the lost time is made up (bounded to three frames). F-Zero X
+  (`retro/fzerox_runtime.html`) switches Emscripten's main loop to a 4 ms timer
+  and paces frames in JavaScript the same way, without a native rebuild. With
+  0–20 ms delivery jitter plus 1% 150 ms holds, Mario Party 2 rose from 44.9 to
+  54.6 fps and F-Zero X from about 47 to 51 fps (small window; this host's
+  software renderer caps F-Zero near 32 fps at normal size).
+- Known issue, unchanged: under uneven delivery F-Zero X sometimes desyncs at
+  frame 899, on both the old and new pacing.
+
 ## Exact upstream scope
 
 `ports/netplay/sources.json` pins recomp-net at

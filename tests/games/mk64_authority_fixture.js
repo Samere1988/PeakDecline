@@ -23,8 +23,8 @@
   const receive=s.receive;s.socket.off('kart_snapshot',receive);s.receive=p=>setTimeout(()=>receive(p),100);
   s.socket.on('kart_snapshot',s.receive);
   const latency=s.latency.bind(s);s.latency=ms=>latency(Math.max(200,ms));s.latency(200);
-  const emit=s.socket.volatile.emit.bind(s.socket.volatile);let sent=0;
-  s.socket.volatile.emit=(name,...args)=>{
+  const emit=s.socket.emit.bind(s.socket);let sent=0;
+  s.socket.emit=(name,...args)=>{
    if(name!=='kart_input')return emit(name,...args);
    if(++sent%10)setTimeout(()=>emit(name,...args),80+(sent%5)*10);
   };
