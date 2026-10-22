@@ -1,8 +1,10 @@
-const {chromium} = require('C:/Users/Plex/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const path = require('node:path');
+const {chromium} = require(process.env.PLAYWRIGHT_PATH || path.join(process.env.HOME, '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));
 (async () => {
-    const browser = await chromium.launch({headless:true, executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', args:['--enable-unsafe-swiftshader']});
+    const browser = await chromium.launch({headless:true, executablePath:process.env.BROWSER_PATH || path.join(process.env.HOME, '.cache/ms-playwright/chromium-1243/chrome-linux64/chrome'), args:['--enable-unsafe-swiftshader']});
+    fs.mkdirSync('.tmp/fzerox', {recursive:true});
     const pages = [], messages = [];
     const playerCount = Number(process.env.FZERO_PLAYERS || 2);
     try {
@@ -31,15 +33,35 @@ const fs = require('node:fs');
         for (const page of players.slice(1)) await page.locator('#retro-choose-player').click();
         for (const page of players) await page.locator('#retro-ready').click();
         await host.locator('#retro-start-race').click();
-        await Promise.all(pages.map(page=>page.waitForFunction(()=>window.testHashes?.[600],null,{timeout:120000})));
-        const hashes=await Promise.all(pages.map(page=>page.evaluate(()=>Object.fromEntries(Object.entries(testHashes).filter(([n])=>n<=600)))));
+        await Promise.all(players.map(page=>page.waitForFunction(()=>window.testHashes?.[600],null,{timeout:120000})));
+        const hashes=await Promise.all(players.map(page=>page.evaluate(()=>Object.fromEntries(Object.entries(testHashes).filter(([n])=>n<=600)))));
         for (const hash of hashes.slice(1)) assert.deepEqual(hashes[0], hash);
-        console.log(`600 synchronized frames: ${playerCount} players and spectator.`);
+        // Lockstep spectators watch a player's video feed instead of simulating.
+        async function spectatorPixels() {
+            await watcher.waitForFunction(()=>window.retroNetplay?.spectator && retroNetplay.frame>3,null,{timeout:30000});
+            assert.equal(await watcher.locator('#retro-spectator-area').isVisible(),true);
+            return watcher.evaluate(()=>{
+                const video=document.getElementById('retro-spectator-video');
+                const source=retroNetplay.streaming?video:document.getElementById('retro-spectator-canvas');
+                const c=document.createElement('canvas');c.width=160;c.height=120;
+                const context=c.getContext('2d');context.drawImage(source,0,0,c.width,c.height);
+                const p=context.getImageData(0,0,c.width,c.height).data;
+                const set=new Set();for(let i=0;i<p.length;i+=64)set.add(p[i]+','+p[i+1]+','+p[i+2]);return set.size;
+            });
+        }
+        console.log(`600 synchronized frames: ${playerCount} players; spectator video colors ${await spectatorPixels()}.`);
         async function advance(count) {
             const target = await host.evaluate(count=>retroNetplay.frame+count,count);
-            await host.waitForFunction(target=>retroNetplay.failed || retroNetplay.frame>=target,target,{timeout:90000});
-            assert.equal(await host.evaluate(()=>retroNetplay.failed),false,await host.locator('#retro-runtime-status').textContent());
+            await host.waitForFunction(target=>!window.retroNetplay || retroNetplay.failed || retroNetplay.frame>=target,target,{timeout:90000});
+            assert.equal(await host.evaluate(()=>!window.retroNetplay || retroNetplay.failed),false,await host.locator('#retro-runtime-status').textContent());
         }
+        // Idle through the attract demo and back to the title. Its transition reads the rendered
+        // frame back into game memory, which desynchronized players rendering at different sizes.
+        await advance(1200);
+        const titleFrame=await host.evaluate(()=>retroNetplay.frame-10);
+        const titleHashes=await Promise.all(players.map(page=>page.evaluate(end=>Object.fromEntries(Object.entries(testHashes).filter(([n])=>n<=end)),titleFrame)));
+        for (const hash of titleHashes.slice(1)) assert.deepEqual(titleHashes[0], hash);
+        console.log(`Attract demo stayed synchronized through frame ${titleFrame}.`);
         async function tap(key, targets=[host]) {
             for (const page of targets) await page.keyboard.down(key);
             await advance(10);
@@ -87,16 +109,18 @@ const fs = require('node:fs');
         console.log('Audio:',audio);
         assert.ok(audio.buffers>0 && audio.peak>0,'No PCM reached the browser audio output');
         const finalFrame=await host.evaluate(()=>retroNetplay.frame-10);
-        const raceHashes=await Promise.all(pages.map(page=>page.evaluate(end=>Object.fromEntries(Object.entries(testHashes).filter(([n])=>n<=end)),finalFrame)));
+        const raceHashes=await Promise.all(players.map(page=>page.evaluate(end=>Object.fromEntries(Object.entries(testHashes).filter(([n])=>n<=end)),finalFrame)));
         for(const hash of raceHashes.slice(1)) assert.deepEqual(raceHashes[0],hash);
         console.log(`VS racing stayed synchronized through frame ${finalFrame}, including 100 ms added input delay.`);
-        for(let i=0;i<pages.length;i++) await pages[i].locator('#fzerox-play-area').screenshot({path:`.tmp/fzerox/netplay-${playerCount}-${i}.png`});
-        assert.equal(await watcher.evaluate(()=>retroNetplay.sentThrough),0);
+        for(let i=0;i<players.length;i++) await players[i].locator('#fzerox-play-area').screenshot({path:`.tmp/fzerox/netplay-${playerCount}-${i}.png`});
+        assert.ok(await spectatorPixels()>10,'Spectator must receive rendered game pixels');
+        await watcher.locator('#retro-spectator-area').screenshot({path:`.tmp/fzerox/netplay-${playerCount}-spectator.png`});
         for(const page of players) await page.keyboard.up('KeyX');
         await guest.keyboard.up('ArrowRight');
         await host.locator('#fzerox-play-area [data-game-restart]').click();
-        await Promise.all(pages.map(page=>page.waitForFunction(()=>retroNetplay.epoch===1 && retroNetplay.frame>350,null,{timeout:120000})));
-        const restartHashes=await Promise.all(pages.map(page=>page.evaluate(()=>retroNetplay.adapter.hashForFrame(300))));
+        await Promise.all(players.map(page=>page.waitForFunction(()=>window.retroNetplay?.epoch===1 && retroNetplay.frame>350,null,{timeout:120000})));
+        await watcher.waitForFunction(()=>window.retroNetplay?.epoch===1,null,{timeout:30000});
+        const restartHashes=await Promise.all(players.map(page=>page.evaluate(()=>retroNetplay.adapter.hashForFrame(300))));
         assert.ok(restartHashes.every(hash=>hash===restartHashes[0]));
         const gamepadInput=await host.evaluate(()=>{
             const pad={id:'Fixture standard pad',index:0,mapping:'standard',connected:true,
@@ -117,7 +141,7 @@ const fs = require('node:fs');
         await watcher.locator('#retro-return').click();
         await advance(90);
         await guest.close();
-        await host.waitForFunction(()=>retroNetplay.failed);
+        await host.waitForFunction(()=>/player left/i.test(document.getElementById('retro-runtime-status')?.textContent));
         console.log('Restart, spectator departure, and player disconnect passed.');
     } catch(error) {
         for (let i=0;i<pages.length;i++) console.log(i, await pages[i].evaluate(()=>({status:document.getElementById('retro-runtime-status')?.textContent,failed:window.retroNetplay?.failed,frame:window.retroNetplay?.frame})).catch(()=>null));

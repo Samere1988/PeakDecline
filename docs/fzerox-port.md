@@ -59,6 +59,10 @@ the reverse proxy must preserve them.
 - `web_main.cpp` advances one 60 Hz VI tick only after a complete synchronized
   input row exists. All four controller slots are supplied together. Random
   seeds and the game clock are reproducible. Renderer interpolation is disabled.
+- The runtime page reports a fixed 960x720 canvas size and devicePixelRatio 1
+  to SDL, so every player renders at the same resolution. Transition wipes read
+  the rendered frame back into game memory; a different canvas size (phone touch
+  layout, small window, HiDPI) desynchronized the match after the attract demo.
 - `web_state.c` hashes pointer-free game state, RNG state, and racer physics.
   Renderer buffers, addresses, browser time, and local audio queues are excluded.
 - Save writes use the runtime's in-memory filesystem. Every launch or restart
@@ -109,9 +113,11 @@ $env:FZERO_PLAYERS='4'
 node tests/games/fzerox_netplay.cjs
 ```
 
-The fixture listens only on `127.0.0.1:8066`. Tests use installed Edge and
-Playwright from the workspace runtime. They drive the real menus into VS racing,
-compare completed-frame checksums between players and a spectator, introduce
+The fixture listens only on `127.0.0.1:8066`. Tests use Playwright from the
+workspace runtime and its Chromium build; set `PLAYWRIGHT_PATH`/`BROWSER_PATH`
+to override. Seat 0 is a phone-like context (mobile user agent, touch, 844x390),
+and the run idles through the attract demo before the menus. They drive the real menus into VS racing,
+compare completed-frame checksums between players, check the spectator video, introduce
 100 ms input delay, verify PCM reaches WebAudio after ordinary game input,
 restart the room, and exercise departures. They also check standard gamepad
 mapping and touch-button input. Screenshots and logs are written under

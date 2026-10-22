@@ -70,6 +70,21 @@ decompiled game logic compiled to WebAssembly, without emulation.
   samples from a separate buffer capped at 0.25 s, and SDL's real-time silence
   timer is stopped. Result: 0/8 desyncs with audio playing, sound unchanged
   (48 kHz, no underruns in a 10 s tap). No native rebuild.
+- F-Zero X desynced at frame 1559 (first divergence 1503, title screen after
+  the attract demo) whenever a player rendered at a different canvas size. SDL
+  sizes the drawing buffer from the canvas CSS size times devicePixelRatio, and
+  the attract demo's transition (tick 824) reads the rendered frame back into
+  game memory; the random seed diverged about 680 frames later. A phone seat
+  (mobile user agent turns on the touch layout; small viewport) rendered
+  580x443 or 796x597 against a desktop's 960x720. `retro/fzerox_runtime.html`
+  now reports a fixed 960x720 CSS size and devicePixelRatio 1 to SDL, and CSS
+  scales the canvas. Phone-like seats ran 2,400 idle frames with no desync
+  (desynced at 1559 every time before). No native rebuild. Pixels are still
+  read back from the GPU, so different GPUs could in principle still differ.
+- `tests/games/fzerox_netplay.cjs` runs on Linux (`PLAYWRIGHT_PATH`,
+  `BROWSER_PATH`), idles through the attract demo before the menus, compares
+  hashes among players only (lockstep spectators watch the media feed and do not
+  simulate), and checks the spectator's video pixels instead.
 
 ## Exact upstream scope
 
