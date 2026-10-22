@@ -11,6 +11,18 @@ canvas{display:block;width:100%;height:100%;object-fit:contain}#status{position:
 (() => {
     'use strict';
     let started = false;
+    // Transition wipes read the rendered frame back into game memory, so game state depended on
+    // the canvas size: a phone (touch layout, small viewport) rendered 796x597 against a
+    // desktop's 960x720, and after the attract demo's capture the random seed diverged on the
+    // title screen (frame 1503). SDL sizes its drawing buffer from the canvas CSS size times
+    // devicePixelRatio; report a fixed size so every player renders the same pixels, and let
+    // CSS scale the canvas to fit.
+    const renderWidth = 960, renderHeight = 720, canvas = document.getElementById('canvas');
+    Object.defineProperty(window, 'devicePixelRatio', {configurable: true, get: () => 1});
+    canvas.getBoundingClientRect = function() {
+        const rect = Element.prototype.getBoundingClientRect.call(this);
+        return new DOMRect(rect.left, rect.top, renderWidth, renderHeight);
+    };
     window.resumePeakGameAudio = () => {
         const audio = window.Module?.SDL2?.audioContext;
         if (audio?.state === 'suspended') audio.resume().catch(() => {});
