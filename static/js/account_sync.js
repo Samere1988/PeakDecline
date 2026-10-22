@@ -7,9 +7,11 @@ const canonical = files => JSON.stringify(Object.fromEntries(Object.keys(files).
 let dbPromise;
 function database(){return dbPromise ||= new Promise((resolve,reject)=>{const r=indexedDB.open('peak-account-sync-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('snapshots');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 async function local(key,value){const db=await database();return new Promise((resolve,reject)=>{const tx=db.transaction('snapshots',value===undefined?'readonly':'readwrite'), store=tx.objectStore('snapshots');const r=value===undefined?store.get(key):store.put(value,key);tx.oncomplete=()=>resolve(r.result);tx.onerror=tx.onabort=()=>reject(tx.error);});}
+// Routine progress stays silent; the box appears only when a save needs the player's attention.
+const routine=new Set(['Saving to your account…','Saved to your account.']);
 function status(message){
  let el=document.getElementById('account-save-status');
- if(!message){el?.remove();return;}
+ if(!message||routine.has(message)){el?.remove();return;}
  if(!el){el=document.createElement('div');el.id='account-save-status';el.setAttribute('role','status');el.style.cssText='position:fixed;right:12px;bottom:12px;z-index:20000;max-width:420px;background:#18212fee;color:#eef3ff;padding:8px 12px;border-radius:8px;font:13px system-ui';document.body.append(el);}
  el.textContent=message;
 }
