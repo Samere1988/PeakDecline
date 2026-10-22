@@ -1,7 +1,14 @@
 # Live TV hardening — October 22, 2026
 
-The code is implemented and tested locally. Deployment requires the system
-administrator command below; this document does not itself confirm deployment.
+Deployed on October 22, 2026 at 16:06:53 America/Toronto after the user ran the
+administrator deployment command. All six live runtime files match the tested
+release manifest. The website service is active. Both nginx and Flask return
+401 for anonymous media, nginx returns 404 for the internal auth location and
+legacy logs, and no legacy public `.log` files remain.
+
+The fresh private deployment backup is
+`/home/samer/Documents/ChatGPT/migration/live-tv-deploy-20261022-200653`.
+The deployed code commit is `5e28dae650ff4a584f008e5ce49a239f143f21f5`.
 
 The pre-change snapshot is commit `ef139d3f505332d5a6a4ffe6336ff839c9c2c7bc`
 on the existing repository's
@@ -82,7 +89,7 @@ On success it prints the exact rollback command, of this form:
 
 ```bash
 sudo python3 /home/samer/Documents/ChatGPT/live-tv-hardening/deploy/live_tv.py \
-  --rollback /home/samer/Documents/ChatGPT/migration/live-tv-deploy-TIMESTAMP
+  --rollback /home/samer/Documents/ChatGPT/migration/live-tv-deploy-20261022-200653
 ```
 
 Restarting interrupts the current encoder. Viewers should reload Live TV after

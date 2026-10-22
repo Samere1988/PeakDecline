@@ -268,5 +268,17 @@
   "notes": [
     "The final Play retry guard was added after the full churn run and was verified by the final unit suite and final-source smoke run.",
     "Native Safari/iOS devices and long-session audible A/V behavior were not tested."
-  ]
+  ],
+  "deployment": {
+    "verifiedAt": "2026-10-22T20:08:23.920493+00:00",
+    "codeCommit": "5e28dae650ff4a584f008e5ce49a239f143f21f5",
+    "allSixRuntimeHashesMatch": true,
+    "serviceActive": true,
+    "nginxAnonymousMediaStatus": 401,
+    "flaskAnonymousMediaStatus": 401,
+    "nginxInternalAuthStatus": 404,
+    "legacyPublicLogStatus": 404,
+    "legacyPublicLogFilesRemaining": 0,
+    "rollbackBackup": "live-tv-deploy-20261022-200653"
+  }
 }
