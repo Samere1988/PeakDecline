@@ -11,6 +11,7 @@ import tempfile
 import time
 import difflib
 import requests
+from guide_mapping import apply_overrides, ensure_overrides, match_channel, normalize
 try:
     from lxml import etree as ET
 except ImportError:
@@ -23,10 +24,6 @@ SOURCES = [
     'https://iptv-epg.org/files/epg-us.xml.gz',
     'https://iptv-epg.org/files/epg-ca.xml.gz',
 ]
-
-def normalize(value):
-    value = value or ''
-    return re.sub(r'\s+', ' ', re.sub(r'\b(?:HEVC|H\.?265|H\.?264|HD|FHD|UHD|4K|SD|1080P|720P)\b', '', value, flags=re.I)).strip().casefold()
 
 def timestamp(value):
     value = (value or '').strip()
@@ -128,6 +125,7 @@ def refresh(playlist=None):
         CREATE INDEX IF NOT EXISTS programme_time ON programmes(guide_id,start,stop);
         CREATE TABLE IF NOT EXISTS metadata(key TEXT PRIMARY KEY, value TEXT);
         CREATE TABLE IF NOT EXISTS identifiers(channel_id TEXT PRIMARY KEY, tvg_id TEXT);''')
+        ensure_overrides(db)
         with sqlite3.connect(ROOT / 'instance/channels.db') as channels:
             rows = channels.execute('SELECT id,name,url FROM channels').fetchall()
         if playlist:
@@ -184,23 +182,22 @@ def refresh(playlist=None):
                 print(f'Matching channels {index:,}/{len(rows):,}; found {len(mappings):,}', flush=True)
             if '/movie/' in (url or '') or '/series/' in (url or ''):
                 continue
-            gid = guide_ids.get(identifiers.get(str(cid), '').casefold())
-            # Only exact unique names after removing resolution labels; never fuzzy-match regions.
-            candidates = names.get(normalize(name or ''), set())
-            if not gid and len(candidates) == 1:
-                gid = next(iter(candidates))
-            if not gid:
+            tvg_id = identifiers.get(str(cid), '')
+            gid = match_channel(name, tvg_id, guide_ids, names)
+            # Fuzzy matching must not bypass an identifier or an ambiguous name.
+            if not gid and not tvg_id and not names.get(normalize(name)):
                 gid = close_name(name, guide_names, token_index)
             if gid:
-                mappings.append((cid, gid))
+                mappings.append((str(cid), gid))
         # Preserve previously working assignments when a provider temporarily
         # omits a channel; current source matches take precedence.
-        existing_mapping = dict(db.execute('SELECT channel_id, guide_id FROM mapping'))
-        merged_mapping = existing_mapping.copy()
-        merged_mapping.update(dict(mappings))
         with db:
-            db.execute('DELETE FROM mapping')
             db.execute('DELETE FROM guide_channels')
+            merged_mapping = dict(db.execute('SELECT channel_id, guide_id FROM mapping'))
+            merged_mapping.update(dict(mappings))
+            merged_mapping = apply_overrides(db, merged_mapping,
+                                            {str(cid): name for cid, name, _ in rows})
+            db.execute('DELETE FROM mapping')
             db.execute('DELETE FROM programmes')
             db.executemany('INSERT INTO mapping VALUES (?,?)', merged_mapping.items())
             db.executemany('INSERT INTO guide_channels VALUES (?,?)', guide_names.items())
