@@ -61,8 +61,15 @@ decompiled game logic compiled to WebAssembly, without emulation.
   0–20 ms delivery jitter plus 1% 150 ms holds, Mario Party 2 rose from 44.9 to
   54.6 fps and F-Zero X from about 47 to 51 fps (small window; this host's
   software renderer caps F-Zero near 32 fps at normal size).
-- Known issue, unchanged: under uneven delivery F-Zero X sometimes desyncs at
-  frame 899, on both the old and new pacing.
+- F-Zero X desynced at frame 899 (title screen) in about half of jittered
+  matches, on both pacings: its audio code reads how much of SDL's queue the
+  browser has played, and real-time playback differed between players whenever
+  frames stalled. Suspending audio removed it (0/5 vs 3/5). The runtime page now
+  creates its AudioContext at 48 kHz for everyone, keeps SDL's pull callback, and
+  calls it a fixed 800 samples per completed game frame; the browser plays those
+  samples from a separate buffer capped at 0.25 s, and SDL's real-time silence
+  timer is stopped. Result: 0/8 desyncs with audio playing, sound unchanged
+  (48 kHz, no underruns in a 10 s tap). No native rebuild.
 
 ## Exact upstream scope
 
