@@ -111,3 +111,21 @@ error; these are outside the save tests. Diablo's renamed native build was
 installed atomically for future launches. Production PID 7670 remained active
 with its original October 9 03:02:09 EDT start time; no reload was performed.
 
+
+## ROM extraction off the main thread (October 21, 2026)
+
+The first launch in a browser extracts the ROM into `oot.o2r` with the native
+extractor, which runs for about 20 seconds without yielding. The runtime iframe
+is same-origin, so on the page's thread this froze the room page and its
+Socket.IO heartbeat (the Engine.IO ping timeout is 20 seconds). The runtime now
+runs extraction in a dedicated worker with its own engine instance, fetching
+the ROM there and transferring the archive back; the extractor's per-asset
+output stays in the worker unless extraction fails. The page's engine loads
+only after extraction, so the two instances never overlap in memory. Later
+launches read the cached archive (`oot-assets-v1` Cache Storage) as before.
+No native rebuild or Python change is involved.
+
+`tests/games/oot_longtask_browser.cjs` boots cold and warm against the fixture
+and fails on any main-thread task of 2 seconds or more. Before: cold 21.9–22.5 s
+longest task and 8,427 console warnings. After: cold 567–590 ms and 6 warnings;
+warm loads were already about 560 ms.
