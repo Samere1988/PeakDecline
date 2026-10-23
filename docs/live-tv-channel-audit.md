@@ -221,3 +221,24 @@ The immediate pre-write backup is
 report is `broadcast-channel-audit.html`, with `identified-feeds.txt` listing
 all 262 additions. Report totals and JavaScript syntax were checked; provider
 stream URLs and credentials are excluded.
+
+## User-approved tentative matches
+
+At 22:02 EDT on October 22, the user approved all 313 tentative matches in the
+focused report. Each original channel fingerprint still matched production,
+and each proposed guide remained available. The exact approved set was applied
+as persistent overrides with the reason `user_approved_tentative_match`; the
+automatic matching rules were unchanged.
+
+Live verification confirmed 313 additions across 207 guide identities, raising
+coverage from 4,236 to 4,549 mapped entries. There are 8,584 unmapped entries in
+the 13,133-entry playlist. All 313 additions had current and upcoming listings.
+All 3,718 prior overrides and all prior mappings were preserved, including HBO
+HD, History, and the unresolved HBO block. Channel identities and the other
+guide table counts were unchanged; SQLite integrity passed.
+
+The immediate backup is `instance/guide-before-audit-20261023-020257-591751.db`.
+The approved subset, consistent database snapshots, and verification are in
+the private audit folder's `approved-tentative-20261023-020223/` subdirectory.
+The searchable tentative-match list now marks those entries as approved and
+applied. No application code or playback restart was required.
