@@ -91,6 +91,96 @@ class IdentityTests(unittest.TestCase):
         self.assertIsNone(catalog.resolve('UK: Racer Network', 'mavtv.us')[0])
         self.assertIsNone(catalog.resolve('Racer Network +1', 'mavtv.us')[0])
 
+    def test_provider_labels_keep_brand_and_feed_distinctions(self):
+        from audit_guide_channels import label, key
+        self.assertEqual(label('USA Network HD'), (None, 'USA Network HD'))
+        self.assertEqual(label('USA: History (S)'), ('US', 'History'))
+        self.assertEqual(label('NEW UKHD Sky History (SD)'), ('GB', 'Sky History'))
+        self.assertEqual(label('(US) (GT) MSG (Zone3) (FHD)'), ('US', 'MSG (Zone3)'))
+        self.assertEqual(label('(FR) France 24 (S)'), ('FR', 'France 24'))
+        self.assertEqual(label('(CA) (CITY) City TV Montreal (FHD)'), ('CA', 'City TV Montreal'))
+        self.assertEqual(key('Sportsnet Ontario (60FPS)'), key('Sportsnet Ontario'))
+        self.assertNotEqual(key('Sky Cinema +1'), key('Sky Cinema'))
+
+    def test_joined_station_suffixes_preserve_explicit_subchannel(self):
+        from audit_guide_channels import calls
+        self.assertEqual(calls('KDKADT', strict=True, implicit=None), {('kdka', None)})
+        self.assertEqual(calls('WOHL CD2', strict=True, implicit=None), {('wohl', '2')})
+        self.assertEqual(calls('KRQEDT2', strict=True, implicit=None), {('krqe', '2')})
+        self.assertIsNone(self.catalog.resolve('FOX (WBFFDT2)', '')[0])
+
+    def test_canadian_city_province_and_call_sign_must_agree(self):
+        catalog = Catalog({'CBCOttawa-CBOT.ca': 'ca - cbc ottawa',
+                           'CBCMontreal-CBMT.ca': 'ca - cbc montreal',
+                           'CBCPrinceEdwardIsland-CBCT.ca': 'ca - cbc charlottetown prince edward island'}, {}, {})
+        self.assertEqual(catalog.resolve('CBC Ottawa Ontario (CBOT DT) (D)', '')[0], 'CBCOttawa-CBOT.ca')
+        self.assertEqual(catalog.resolve('CBC Montréal QC (CBMT DT) (D)', '')[0], 'CBCMontreal-CBMT.ca')
+        self.assertEqual(catalog.resolve('CBC Ottawa', 'CBOT')[0], 'CBCOttawa-CBOT.ca')
+        self.assertEqual(catalog.resolve('CBC Charlottetown PE (D)', '')[0], 'CBCPrinceEdwardIsland-CBCT.ca')
+        self.assertIsNone(catalog.resolve('CBC Ottawa Alberta (D)', '')[0])
+        self.assertIsNone(catalog.resolve('CBC Ottawa (CBMT DT)', '')[0])
+        self.assertIsNone(catalog.resolve('CBC Ottawa (CBOT DT2)', '')[0])
+
+    def test_local_news_stream_does_not_become_broadcast_station(self):
+        catalog = Catalog({'GlobalMaritimes-CIHF.ca': 'ca - global halifax',
+                           'CBCToronto-CBLT.ca': 'ca - cbc toronto'}, {}, {})
+        self.assertIsNone(catalog.resolve('Global News Halifax', 'globalhalifaxcihf.ca')[0])
+        self.assertIsNone(catalog.resolve('Global Halifax News', 'globalhalifaxcihf.ca')[0])
+        self.assertIsNone(catalog.resolve('CBC News Toronto Channel', '')[0])
+
+    def test_french_category_can_contain_explicit_canadian_identity(self):
+        catalog = Catalog({'ReseaudesSports-RDS.ca': 'ca - rds', 'TSN1.ca': 'ca - tsn 1',
+                           'CTVComedyChannel.ca': 'ca - ctv comedy'}, {}, {})
+        self.assertEqual(catalog.resolve('FR: RDS', 'rds.ca')[0], 'ReseaudesSports-RDS.ca')
+        self.assertEqual(catalog.resolve('(FR) RDS1 (HD) (D)', '')[0], 'ReseaudesSports-RDS.ca')
+        self.assertEqual(catalog.resolve('TSN1 (FL)', '')[:2], ('TSN1.ca', 'explicit_regional_identity'))
+        self.assertIsNone(catalog.resolve('CTV Comedy West', 'ctvcomedyeast.ca')[0])
+
+    def test_west_city_name_is_not_a_west_coast_feed(self):
+        catalog = Catalog({'NBCWPTV.us': 'us - nbc wptv west palm beach fl',
+                           'TVLand.us': 'us - tv land', 'TVLandPacific.us': 'us - tv land west'}, {}, {})
+        self.assertEqual(catalog.resolve('NBC (WPTV)', '')[0], 'NBCWPTV.us')
+        self.assertIsNone(catalog.resolve('TV Land West', 'tvlandeast.us')[0])
+
+    def test_station_brand_digit_is_not_a_subchannel(self):
+        catalog = Catalog({'NBCKGW8.us': 'us - nbc kgw kgw8 portland or',
+                           'FOXWTVC2.us': 'us - fox wtvc2 chattanooga tn'}, {}, {})
+        self.assertEqual(catalog.resolve('NBC (KGW)', '')[0], 'NBCKGW8.us')
+        self.assertIsNone(catalog.resolve('NBC (KGW DT8)', '')[0])
+        self.assertEqual(catalog.resolve('FOX (WTVC DT2)', '')[0], 'FOXWTVC2.us')
+        self.assertIsNone(catalog.resolve('FOX (WTVC DT1)', '')[0])
+
+    def test_network_and_city_match_a_unique_station(self):
+        catalog = Catalog({'CBSWCBS.us': 'us - cbs wcbs new york ny',
+                           'FOXWUTV.us': 'us - fox wutv buffalo ny'}, {}, {})
+        self.assertEqual(catalog.resolve('CBS (New York)', '')[:2], ('CBSWCBS.us', 'station_network_and_city'))
+        self.assertEqual(catalog.resolve('FOX Buffalo', '')[0], 'FOXWUTV.us')
+        self.assertIsNone(catalog.resolve('FOX 29 Buffalo', '')[0])
+        self.assertIsNone(catalog.resolve('FOX NY', '')[0])
+        self.assertIsNone(catalog.resolve('CBS News New York', '')[0])
+        self.assertIsNone(catalog.resolve('CBS (New York)', 'unknown.us')[0])
+        self.assertIsNone(catalog.resolve('UK: CBS New York', '')[0])
+
+    def test_city_does_not_choose_between_stations_or_subchannels(self):
+        catalog = Catalog({'PBSOne.us': 'us - pbs one',
+                           'PBSWNED.us': 'us - pbs wned buffalo ny',
+                           'PBSWBUF.us': 'us - pbs wbuf buffalo ny'}, {}, {})
+        self.assertIsNone(catalog.resolve('PBS Buffalo', '')[0])
+        self.assertIsNone(catalog.resolve('PBS (WNED DT2) Buffalo', '')[0])
+
+    def test_partial_city_or_state_is_not_a_station_identity(self):
+        catalog = Catalog({'FOXWDAF.us': 'us - fox wdaf kansas city mo',
+                           'FOXWVBT.us': 'us - fox wvbt virginia beach portsmouth norfolk hampton roads va',
+                           'CBSKTVT.us': 'us - cbs ktvt dallas fort worth tx'}, {}, {})
+        self.assertIsNone(catalog.resolve('Fox Kansas', '')[0])
+        self.assertIsNone(catalog.resolve('Fox Virginia', '')[0])
+        self.assertIsNone(catalog.resolve('CBS Dallas', '')[0])
+        self.assertEqual(catalog.resolve('FOX Kansas City', '')[0], 'FOXWDAF.us')
+
+    def test_numbered_station_brand_is_not_discarded_for_city(self):
+        catalog = Catalog({'PBSKRMA.us': 'us - pbs krma denver co'}, {}, {})
+        self.assertIsNone(catalog.resolve('(US) (H) [Denver] PBS12', '')[0])
+
     def test_local_station_and_generic_network(self):
         self.assertEqual(self.catalog.resolve('CBS (WIVB Buffalo NY)', '')[0], 'CBSWIVB.us')
         self.assertEqual(self.catalog.resolve('PBS', 'WNED')[0], 'PBSWNED.us')
@@ -182,6 +272,24 @@ class AuditApplicationTests(unittest.TestCase):
         row = self.make_report()['rows'][0]
         self.assertEqual(row['action'], 'unchanged')
         self.assertIsNone(row['proposed'])
+
+    def test_scope_only_audits_requested_entries(self):
+        scope = self.root / 'scope.json'
+        scope.write_text(json.dumps([{'id':'2', 'name':'Local News'}]))
+        with contextlib.redirect_stdout(io.StringIO()):
+            report = audit(self.channels,self.guide,self.catalog,self.output,scope)
+        self.assertEqual(report['channels'], 1)
+        self.assertEqual(report['playlist_channels'], 3)
+        self.assertEqual([r['channel_id'] for r in report['rows']], ['2'])
+        self.apply()
+        with sqlite3.connect(self.guide) as db:
+            self.assertEqual(db.execute('SELECT count(*) FROM mapping').fetchone()[0], 0)
+
+    def test_changed_scope_identity_is_rejected(self):
+        scope = self.root / 'scope.json'
+        scope.write_text(json.dumps([{'id':'1', 'name':'Different channel'}]))
+        with self.assertRaises(ValueError):
+            audit(self.channels,self.guide,self.catalog,self.output,scope)
 
 
 if __name__=='__main__':

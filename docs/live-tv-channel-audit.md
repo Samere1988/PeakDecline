@@ -144,3 +144,64 @@ programmes for sampled new channels, HBO HD, and History; unresolved HBO remaine
 unmapped. There were 3,937 mapped entries with a current programme at verification.
 No website or encoder restart was performed. The searchable HTML report in the
 private folder contains all 14,849 entries and the second-pass results.
+
+## Focused broadcast-feed pass after loop removal
+
+After removal of the separately reviewed 1,551 loop entries and 165 movie
+collections, the live playlist contains 13,133 entries. This pass reviews only
+the 3,890 previously unmapped entries whose labels resemble broadcast/cable
+feeds. The classification is a shortlist, not proof that every stream is a
+traditional broadcast feed. Alternate qualities and provider copies count as
+separate entries.
+
+The reviewed plan adds 262 guide mappings. Another 313 name-based suggestions
+remain unapplied. Existing assignments are preserved, including HBO HD and
+History; the unknown regional HBO feed remains explicitly blocked. Expected
+coverage after application is 4,236 mapped entries and 8,897 unmapped entries
+across the entire remaining playlist.
+
+The parser now handles additional provider transport tags, joined digital call
+signs, technical frame-rate labels, and accented city names. Canadian city and
+province aliases must identify the same complete station. Specific Canadian
+network identities and documented spelling variants can establish a region;
+French-language playlist categories do not override a known Canadian identity.
+Local CBC/Global/City news streams remain distinct from their broadcast stations.
+West/Pacific, explicit subchannels, +1 and 4K qualifiers remain binding.
+
+Network-and-city matching requires a unique station and the full catalog
+location, with optional state abbreviations. A state or partial city label
+such as Fox Kansas or Fox Virginia cannot select a local station. Numbered
+brands such as PBS12 require stronger identity evidence. Unknown identifiers,
+conflicting call signs, and unresolved multi-city markets remain unchanged.
+
+Supporting network/provider sources include
+[Bell's Canadian channel grid](https://www.bellmts.ca/migration/find%20a%20channel),
+[CTV Sci-Fi's owner](https://www.bellmedia.ca/the-lede/tv/ctv-sci-fi/),
+[TSN's five feeds](https://www.shawdirect.ca/english/promotions/tv-apps/tsn-go/),
+[NESN's network information](https://nesn.com/press-room), and the
+[C-SPAN viewer guide](https://static.c-span.org/assets/documents/C-SPANViewersGuide.pdf).
+[CBC News Explore](https://solutionsmedia.cbcrc.ca/en/platforms/cbc-news-explore)
+is an example of a separate news streaming service; a shared parent brand does
+not justify substituting a broadcast station's schedule.
+
+Three short visual samples illustrate the remaining uncertainty. The WJTV
+entry returned a provider unavailable screen. The WSPA-labelled stream showed
+CBS branding while its candidate guide listed CW programming. HBO showed its
+logo during credits but supplied no regional identity. All three remain
+unresolved. The other accepted matches rely on playlist/catalog identities;
+they are not claims of visual playback verification.
+
+All 43 guide/audit regression tests pass. An isolated application rehearsal
+verified exactly 262 additions, preservation of all 3,974 prior mappings and
+3,456 prior overrides, unchanged guide/identifier/programme table counts, and
+SQLite integrity. A fresh audit against production matched the reviewed plan
+and all channel fingerprints.
+
+The optional `--scope /private/path/focus.json` argument accepts reviewed
+`id`/`name` pairs, rejects changed identities or duplicate IDs, and leaves
+entries outside that scope out of the report. Application retains its existing
+snapshot checks and consistent pre-write database backup.
+
+Private evidence and backups are under
+`/home/samer/Documents/ChatGPT/migration/broadcast-channel-audit-20261022-205406/`.
+Only the audit script, regression tests, and this documentation are committed.

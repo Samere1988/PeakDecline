@@ -17,6 +17,7 @@ import pathlib
 import re
 import sqlite3
 import time
+import unicodedata
 
 from guide_mapping import apply_overrides, ensure_overrides, set_override
 
@@ -26,8 +27,8 @@ COUNTRIES = {'us': 'US', 'usa': 'US', 'ca': 'CA', 'canada': 'CA', 'uk': 'GB',
              'mx': 'MX', 'mex': 'MX', 'au': 'AU', 'australia': 'AU', 'br': 'BR',
              'brazil': 'BR', 'it': 'IT', 'italy': 'IT', 'es': 'ES', 'spain': 'ES',
              'se': 'SE', 'sweden': 'SE', 'nz': 'NZ', 'ru': 'RU', 'ph': 'PH',
-             'sg': 'SG', 'in': 'IN', 'pe': 'PE', 'ae': 'AE', 'uy': 'UY'}
-CALL = re.compile(r'\b([kw][a-z]{2,3})(?:[- ]?(?:dt|d|ld|tv)[- ]?([1-9][0-9]*))?\b', re.I)
+             'sg': 'SG', 'in': 'IN', 'pe': 'PE', 'ae': 'AE', 'uy': 'UY', 'ie': 'IE', 'ire': 'IE', 'pt': 'PT'}
+CALL = re.compile(r'\b([kw][a-z]{2,3})(?:[- ]?(?:dt|ld|cd|tv|d|c)[- ]?([1-9][0-9]*)?)?\b', re.I)
 NOT_CALLS = {'west', 'with', 'wild', 'kids', 'city', 'cook', 'club', 'cars', 'care', 'cool', 'crew', 'class', 'cave', 'wine', 'walk', 'work', 'will', 'war', 'cafe', 'cat'}
 NETWORK = re.compile(r'\b(abc|cbs|nbc|fox|pbs|cw|cnbc|cgtn|ctv|cbc|global|telemundo|univision|my(?:networktv|network|tv|net)?|mnt|tmo|ion(?: mystery)?|me ?tv|antenna(?: tv)?|rewind(?: tv)?|create|the florida channel|movies|cozi|comet|dabl|grit|bounce|charge|laff|gettv|defy|heroes and icons)(?=\b|[0-9])', re.I)
 # These aliases refer to the same brand and feed; they do not erase +1, West,
@@ -49,13 +50,59 @@ ALIASES = {'aande.us': 'AandENetwork.us', 'historychannel.us': 'History.us',
            'espnnews.us': 'ESPNEWS.us', 'mavtv.us': 'RacerNetwork.us',
            'newenglandsportsnetworkplus.us': 'NESNplus.us',
            'goltvspanish.us': 'GOLTVespanol.us', 'tennischan.us': 'TennisChannel.us',
-           'foxsoccerp.us': 'FoxSoccerPlus.us', 'altitude2.us': 'AltitudeSports2.us'}
+           'foxsoccerp.us': 'FoxSoccerPlus.us', 'altitude2.us': 'AltitudeSports2.us',
+           'oprahwinfreynetwork.us': 'OWN.us', 'newenglandsportsnetwork.us': 'NESN.us',
+           'world.fishing.network.hd.(us).us2': 'WorldFishingNetwork.us',
+           'bbcworldnewsnorthamerica.us': 'BBCWorldNews.us', 'bbcworld.us': 'BBCWorldNews.us',
+           'ctvcomedyeast.ca': 'CTVComedyChannel.ca', 'ctv2atlanticregion.ca': 'CTV2Atlantic-ASN.ca',
+           'rds.ca': 'ReseaudesSports-RDS.ca', 'rdsinfo.ca': 'ReseaudesSportsInfo-RDSI.ca',
+           'cbcmontreal.ca': 'CBCMontreal-CBMT.ca', 'cbccharlottetown.ca': 'CBCPrinceEdwardIsland-CBCT.ca',
+           'cbcwindsor.ca': 'CBCWindsor-CBET.ca', 'global.bc.hd.ca2': 'GlobalBC-CHAN.ca',
+           'crimeinvestigation.ca': 'CrimePlusInvestigation.ca', 'rdinews.ca': 'ICI-RDI.ca'}
+
+CANADIAN_CITIES = {
+    'Toronto': ('ON', 'Ontario'), 'Ottawa': ('ON', 'Ontario'),
+    'Windsor': ('ON', 'Ontario'), 'London': ('ON', 'Ontario'),
+    'Kitchener': ('ON', 'Ontario'), 'Barrie': ('ON', 'Ontario'),
+    'Kingston': ('ON', 'Ontario'), 'Peterborough': ('ON', 'Ontario'),
+    'Durham': ('ON', 'Ontario'), 'Sudbury': ('ON', 'Ontario'),
+    'North Bay': ('ON', 'Ontario'), 'Sault St Marie': ('ON', 'Ontario'),
+    'Timmins': ('ON', 'Ontario'), 'Thunder Bay': ('ON', 'Ontario'),
+    'Montreal': ('QC', 'Quebec'), 'Vancouver': ('BC', 'British Columbia'),
+    'Calgary': ('AB', 'Alberta'), 'Edmonton': ('AB', 'Alberta'),
+    'Lethbridge': ('AB', 'Alberta'), 'Regina': ('SK', 'Saskatchewan'),
+    'Saskatoon': ('SK', 'Saskatchewan'), 'Yorkton': ('SK', 'Saskatchewan'),
+    'Prince Albert': ('SK', 'Saskatchewan'), 'Winnipeg': ('MB', 'Manitoba'),
+    'Halifax': ('NS', 'Nova Scotia'), 'Sydney': ('NS', 'Nova Scotia'),
+    'Moncton': ('NB', 'New Brunswick'), 'Fredericton': ('NB', 'New Brunswick'),
+    'Charlottetown': ('PE', 'PEI', 'Prince Edward Island'),
+    'St Johns': ('NL', 'Newfoundland', 'Newfoundland and Labrador'),
+    'Yellowknife': ('NT', 'Northwest Territories'),
+}
+# The catalog sometimes uses a regional or concatenated label for these feeds.
+CANADIAN_LABELS = {
+    'CTV2Barrie-CKVR.ca': ['CTV 2 Barrie', 'CTV 2 Toronto'],
+    'CTV2Alberta-ACCNET.ca': ['CTV 2 Alberta'],
+    'CTV2VancouverVictoria-CIVI.ca': ['CTV 2 Vancouver Island', 'CTV 2 Victoria'],
+    'GlobalBC-CHAN.ca': ['Global BC'],
+    'CTVSciFiChannel.ca': ['CTV Sci-Fi', 'CTV Sci-Fi Channel'],
+    'CTVComedyChannel.ca': ['CTV Comedy East', 'CTV Comedy Channel East'],
+    'ReseaudesSports-RDS.ca': ['RDS', 'RDS 1'],
+    'ReseaudesSportsInfo-RDSI.ca': ['RDS Info'],
+}
+STATION_ID_EXCEPTIONS = {
+    'FOXWTVC2.us': ('wtvc', '2'),
+    'NBCKGW8.us': ('kgw', '1'),  # KGW8 is the station brand, not subchannel 8.
+}
 
 
 def key(value):
     # A 4K-branded guide can be a separate event feed, not a simulcast.
+    value = re.sub(r'\(\s*(?:HD\s*@\s*)?[0-9]+(?:\.[0-9]+)?(?:p[0-9]+)?\s*(?:Mbps|FPS|@).*?\)', '', value or '', flags=re.I)
+    value = re.sub(r'\b(?:[0-9]+FPS|1080p[0-9]+|720p[0-9]+|360p[0-9]+)\b', '', value, flags=re.I)
     value = re.sub(r'\b(?:HEVC|H\.?265|H\.?264|HD|FHD|UHD|SD|1080P|720P)\b', '', value or '', flags=re.I).casefold().replace('&', 'and')
     value = re.sub(r'\b(?:fhd|uhd|hevc|vip)\b', '', value)
+    value = ''.join(c for c in unicodedata.normalize('NFKD', value) if not unicodedata.combining(c))
     return re.sub(r'[^a-z0-9+]', '', value)
 
 
@@ -63,15 +110,17 @@ def label(value):
     """Return country and unadorned label, keeping every feed qualifier."""
     value = (value or '').strip()
     value = re.sub(r'^\(SP2\)\s*', '', value, flags=re.I)
-    match = re.match(r'^\((US|CA|FR|UK|DE)\)\s*', value, re.I)
+    value = re.sub(r'^NEW\s+(?=UK)', '', value, flags=re.I)
+    match = re.match(r'^(?:\((US|CA|FR|UK|DE|IT|ES|PT|IE)\)|\[(UK|US|CA)\])\s*', value, re.I)
     if not match:
-        match = re.match(r'^(USA|US|CA|UK|GB|FR|DE|MEX)(?:HD|SD|FHD)?\s*[:\s]\s*', value, re.I)
-    country = COUNTRIES.get(match.group(1).casefold()) if match else None
+        # USA Network is a channel brand. Only a colon makes bare USA a prefix.
+        match = re.match(r'^(USA(?=\s*:)|US|CA|UK|GB|FR|DE|MEX|IRE)(?:FHD|HD|SD)?\s*[:\s]\s*', value, re.I)
+    country = COUNTRIES.get(next(group for group in match.groups() if group).casefold()) if match else None
     if match:
         value = value[match.end():]
     # Provider transport tiers do not change a schedule. Bracketed city names do.
-    value = re.sub(r'^\((?:H|A|D|RK|GLB)\)\s*', '', value, flags=re.I)
-    value = re.sub(r'\s*\((?:H|A|D|F)\)\s*$', '', value, flags=re.I)
+    value = re.sub(r'^\((?:H|A|D|RK|GLB|S|E|F|FL|HX|P|STV|Prime|GT|DZ|CITY|CBC)\)\s*', '', value, flags=re.I)
+    value = re.sub(r'(?:\s*\((?:H|A|D|F|S|E|FL|HX|P|STV|L|HQ|FHD|HD|SD)\))+\s*$', '', value, flags=re.I)
     value = re.sub(r'\[vip\]', '', value, flags=re.I).strip()
     return country, value
 
@@ -82,7 +131,8 @@ def identifier_region(value):
 
 
 def calls(value, strict=False, implicit='1'):
-    found = {(m.group(1).casefold(), m.group(2) or implicit) for m in CALL.finditer(value or '')
+    value = (value or '').replace('–', '-').replace('—', '-')
+    found = {(m.group(1).casefold(), m.group(2) or implicit) for m in CALL.finditer(value)
              if m.group(1).casefold() not in NOT_CALLS and
              (not strict or m.group(1).isupper())}
     # A label may repeat the station before specifying its actual subchannel.
@@ -100,6 +150,28 @@ def fingerprint(row):
     return hashlib.sha256(json.dumps(row, ensure_ascii=False).encode()).hexdigest()
 
 
+def canadian_labels(gid, display):
+    """Expand only a complete known station/city identity, preserving news feeds."""
+    if not gid.endswith('.ca'):
+        return set()
+    result = set(CANADIAN_LABELS.get(gid, []))
+    for network in ['CBC', 'CTV', 'CTV 2', 'Global', 'City', 'City TV']:
+        for city, provinces in CANADIAN_CITIES.items():
+            locations = {city, *(f'{city} {province}' for province in provinces),
+                         *(f'{province} {city}' for province in provinces)}
+            names = {f'{network} {location}' for location in locations}
+            if key(display) in {key(name) for name in names}:
+                # City, City TV, and Citytv with the same city identify one feed.
+                networks_for_city = ['City', 'City TV', 'Citytv'] if network.startswith('City') else [network]
+                result.update(f'{brand} {location}' for brand in networks_for_city for location in locations)
+    # Exact call signs can corroborate a regional name, but never erase a
+    # contradictory province or a different explicit subchannel.
+    call = re.search(r'-(C[A-Z]{2,3})$', gid.rsplit('.', 1)[0], re.I)
+    if call:
+        result.update(f'{name} ({call[1]}{suffix})' for name in list(result) for suffix in ['', ' DT', ' DT1'])
+    return {key(name) for name in result}
+
+
 def regional_identity(value):
     """A named city/feed can identify a region without a provider country prefix."""
     value = key(value)
@@ -109,6 +181,8 @@ def regional_identity(value):
         return 'CA'
     if re.fullmatch(r'sportsnet(?:east|ontario|west|pacific|one|360|world)', value):
         return 'CA'
+    if re.fullmatch(r'tsn[1-5]|rds(?:1|2|info)?|(?:ici)?rdi|cp24|bnnbloomberg', value):
+        return 'CA'
     if re.fullmatch(r'(?:ctv(?:news|comedy|drama|life|nature|wild|speed|scifi)(?:channel)?|cbcnewsnetwork|crave[1-4])', value):
         return 'CA'
     if re.fullmatch(r'nbcsports(?:bayarea|boston|california|philadelphia)(?:plus)?', value):
@@ -117,6 +191,8 @@ def regional_identity(value):
         return 'US'
     if re.fullmatch(r'news12(?:newjersey|hudsonvalley|brooklyn|westchester|bronx|longisland|connecticut)', value):
         return 'US'
+    if re.fullmatch(r'cspan[123]?|nesn(?:plus)?', value):
+        return 'US'
     return None
 
 
@@ -124,6 +200,16 @@ def compatible_feed(requested, guide_id, display):
     """Do not discard time shifts or add an event-only 4K variant."""
     requested = key(requested)
     identity = key(guide_id.rsplit('.', 1)[0]) + key(display)
+    if requested.startswith(('globalnews', 'cbcnews', 'citynews')) or re.fullmatch(r'global[a-z]+news', requested):
+        if 'news' not in identity:
+            return False
+    # West/Pacific is a distinct feed; an omitted east label can be the default
+    # east guide, but an explicit west label cannot be lost through an alias.
+    west = bool(re.search(r'(?:west|pacific)(?:feed)?$', requested))
+    guide_west = bool(re.search(r'(?:west|pacific)$', key(guide_id.rsplit('.', 1)[0])) or
+                      re.search(r'\b(?:west|pacific)(?:\s+feed)?\s*$', display, re.I))
+    if west != guide_west:
+        return False
     shifts = set(re.findall(r'\+[0-9]+', requested))
     return shifts == set(re.findall(r'\+[0-9]+', identity)) and ('4k' in requested) == ('4k' in identity)
 
@@ -137,6 +223,8 @@ class Catalog:
         self.stations = collections.defaultdict(set)
         self.station_bases = collections.defaultdict(set)
         self.guide_calls = {}
+        self.regional_names = collections.defaultdict(set)
+        self.station_places = {}
         for country, rows in country_catalog.get('countries', {}).items():
             for gid in rows:
                 if gid in guides:
@@ -146,6 +234,10 @@ class Catalog:
             if country:
                 self.regions[gid].add(country)
             display = re.sub(r'^(?:us|ca)\s*-\s*', '', name, flags=re.I)
+            if gid.endswith('.ca'):
+                for station_name in canadian_labels(gid, display):
+                    self.names[station_name].add(gid)
+                    self.regional_names[station_name].add(gid)
             self.names[key(display)].add(gid)
             if country:
                 self.names[key(gid.rsplit('.', 1)[0])].add(gid)
@@ -155,14 +247,46 @@ class Catalog:
             station_id = re.sub(r'^(?:ABC|CBS|NBC|FOX|PBS(?:Kids|Knowledge)?|CW|TV[0-9]+|MY|Telemundo|Univision|MeTV|AntennaTV|Create)', '', gid.rsplit('.', 1)[0], flags=re.I)
             is_station = re.fullmatch(r'([kw][a-z]{2,3}|c[a-z]{3})(?:dt([0-9]+))?', station_id, re.I)
             is_canadian_station = gid.endswith('.ca') and re.search(r'-C[A-Z]{3}$', station_id, re.I)
-            if (is_station or is_canadian_station) and gid.casefold().endswith(('.us', '.ca')) and '_' not in gid:
+            if (is_station or is_canadian_station or gid in STATION_ID_EXCEPTIONS) and gid.casefold().endswith(('.us', '.ca')) and '_' not in gid:
                 # Descriptions can mention sister stations (KICU / KTVU Plus).
                 # The guide ID establishes which station owns this feed.
                 primary = {(is_station.group(1).casefold(), is_station.group(2) or '1')} if is_station else station_calls
+                if gid in STATION_ID_EXCEPTIONS:
+                    primary = {STATION_ID_EXCEPTIONS[gid]}
                 self.guide_calls[gid] = primary
                 for call in primary:
                     self.stations[call].add(gid)
                     self.station_bases[call[0]].add(gid)
+                if gid.endswith('.us'):
+                    place = NETWORK.sub(' ', display)
+                    for base, _ in primary:
+                        place = re.sub(r'\b' + re.escape(base) + r'(?:[- ]?(?:dt|ld|cd|tv))?\d*\b', ' ', place, flags=re.I)
+                    self.station_places[gid] = set(re.findall(r'[a-z]+', place.casefold())) - {'us', 'tv', 'channel'}
+
+    def geographic_station(self, plain, country):
+        """A full network/city label can identify a unique local station."""
+        requested_networks = networks(plain)
+        if not requested_networks or (country and country != 'US'):
+            return None, []
+        place = NETWORK.sub(' ', plain)
+        place = re.sub(r'^REG\s*:', '', place, flags=re.I)
+        place = re.sub(r'\b(?:HD|FHD|SD|UHD|HEVC|1080p|720p)\b', '', place, flags=re.I)
+        if re.search(r'\d', place):
+            # PBS12 and PBS6 may share a city but identify different stations.
+            return None, []
+        words = set(re.findall(r'[a-z]+', place.casefold())) - {'tv', 'channel'}
+        # Require the complete catalog location, allowing omitted two-letter
+        # state abbreviations. A fragment such as Kansas or Virginia cannot
+        # identify Kansas City or Virginia Beach. Multi-city markets stay
+        # unresolved if the provider supplies only one of their cities.
+        if not any(len(word) >= 4 for word in words):
+            return None, []
+        candidates = {gid for gid, location in self.station_places.items()
+                      if {word for word in words if len(word) > 2} ==
+                         {word for word in location if len(word) > 2}
+                      and words <= location and requested_networks & networks(self.guides[gid])
+                      and compatible_feed(plain, gid, self.guides[gid])}
+        return self.choose(candidates, 'US')
 
     def choose(self, candidates, country):
         candidates = set(candidates)
@@ -183,6 +307,14 @@ class Catalog:
         name = name or ''
         country, plain = label(name)
         id_country = identifier_region(tvg_id)
+        known_region = regional_identity(plain)
+        if self.regional_names.get(key(plain)):
+            known_region = 'CA'
+        # FR is also the playlist's French-language category. Only a specific
+        # Canadian brand/city or a known Canadian identifier alias can resolve it.
+        if country == 'FR' and (known_region == 'CA' or
+                                identifier_region(ALIASES.get((tvg_id or '').casefold(), '')) == 'CA'):
+            country = 'CA'
         if country and id_country and country != id_country:
             # FR and MEX also occur as language/category labels for Canadian
             # French and US Spanish stations; their exact IDs take precedence.
@@ -238,6 +370,12 @@ class Catalog:
             if chosen:
                 return chosen, 'station_call_sign_and_network', choices
             return None, 'ambiguous_station', choices
+        if not tvg_id and not calls(plain, strict=True):
+            chosen, choices = self.geographic_station(plain, country)
+            if chosen:
+                return chosen, 'station_network_and_city', choices
+            if choices:
+                return None, 'ambiguous_station_city', choices
         if not country and key(plain) in {'network', 'entertainment', 'movies', 'nature', 'family', 'news', 'sports', 'pbs', 'nbc', 'cbs', 'abc', 'fox', 'cw', 'ctv', 'cbc', 'hbo', 'history'}:
             return None, 'generic_name_without_region', []
         candidates = set(self.names.get(key(plain), ()))
@@ -257,12 +395,19 @@ class Catalog:
         elif tvg_id and not tvg_id.isdigit() and candidates:
             # Unqualified station IDs or opaque IDs can contradict the label.
             if key(tvg_id) != key(plain):
-                return None, 'unresolved_identifier_alias', sorted(candidates)
+                by_call = {gid for gid in candidates if gid.endswith('.ca') and
+                           gid.rsplit('.', 1)[0].casefold().endswith('-' + tvg_id.casefold())}
+                if by_call and key(plain) in self.regional_names:
+                    candidates &= by_call
+                else:
+                    return None, 'unresolved_identifier_alias', sorted(candidates)
         chosen, choices = self.choose(candidates, country)
         if chosen:
             if not compatible_feed(plain, chosen, self.guides[chosen]):
                 return None, 'conflicting_feed_qualifier', choices
             region = regional_identity(plain)
+            if chosen in self.regional_names.get(key(plain), set()):
+                region = 'CA'
             if not country and region and self.regions[chosen] == {region}:
                 return chosen, 'explicit_regional_identity', choices
             return chosen, 'exact_name_with_country' if country else 'unique_name_and_country_in_catalog', choices
@@ -292,7 +437,7 @@ def fetch_catalog(output):
     output.write_text(json.dumps({'fetched': time.time(), 'source': 'https://epg.pw/xmltv.html?lang=en', 'countries': countries}))
 
 
-def audit(channels_path, guide_path, catalog_path, output):
+def audit(channels_path, guide_path, catalog_path, output, scope_path=None):
     with sqlite3.connect(f'file:{channels_path}?mode=ro', uri=True) as channels, sqlite3.connect(f'file:{guide_path}?mode=ro', uri=True) as guide:
         channels_rows = channels.execute('SELECT id,name,url FROM channels').fetchall()
         mappings = dict(guide.execute('SELECT channel_id,guide_id FROM mapping'))
@@ -305,6 +450,16 @@ def audit(channels_path, guide_path, catalog_path, output):
             ('channel no longer available','no data','no information','no programming information','to be announced')
             AND trim(title) != '' GROUP BY guide_id''', (now, now + 86400)))
         current_titles = dict(guide.execute('SELECT guide_id,title FROM programmes WHERE start<=? AND stop>?', (now, now)))
+    playlist_channels = len(channels_rows)
+    if scope_path is not None:
+        scope = json.loads(scope_path.read_text())
+        expected = {str(row['id']): row['name'] for row in scope}
+        if len(expected) != len(scope):
+            raise ValueError('Duplicate channel IDs in scope')
+        current = {str(cid): name for cid, name, _ in channels_rows}
+        if any(cid not in current or current[cid] != name for cid, name in expected.items()):
+            raise ValueError('A scoped channel changed; refresh the scope before auditing')
+        channels_rows = [row for row in channels_rows if str(row[0]) in expected]
     catalog = Catalog(guides, json.loads(catalog_path.read_text()), listings)
     rows = []
     for cid, name, url in channels_rows:
@@ -335,6 +490,7 @@ def audit(channels_path, guide_path, catalog_path, output):
                      'candidates': candidates, 'current_title': current_titles.get(chosen),
                      'snapshot': fingerprint([cid, name, url, tvg_id, old, overrides.get(cid)])})
     result = {'created': dt.datetime.now(dt.timezone.utc).isoformat(), 'channels': len(rows),
+              'playlist_channels': playlist_channels, 'scoped': scope_path is not None,
               'actions': dict(collections.Counter(r['action'] for r in rows)),
               'methods': dict(collections.Counter(r['method'] for r in rows)), 'rows': rows}
     output.write_text(json.dumps(result, ensure_ascii=False, indent=2))
@@ -388,6 +544,7 @@ if __name__ == '__main__':
     parser.add_argument('--catalog', type=pathlib.Path)
     parser.add_argument('--fetch-catalog', type=pathlib.Path, help='Download country/channel headers to this file')
     parser.add_argument('--output', type=pathlib.Path)
+    parser.add_argument('--scope', type=pathlib.Path, help='Optional reviewed JSON list of channel id/name pairs')
     parser.add_argument('--apply', type=pathlib.Path, help='Apply an inspected report with snapshot checks and backup')
     args = parser.parse_args()
     if args.fetch_catalog:
@@ -395,6 +552,6 @@ if __name__ == '__main__':
     elif args.apply:
         apply_report(args.channels, args.guide, args.apply)
     elif args.catalog and args.output:
-        audit(args.channels, args.guide, args.catalog, args.output)
+        audit(args.channels, args.guide, args.catalog, args.output, args.scope)
     else:
         parser.error('Use --catalog and --output, or --apply')
