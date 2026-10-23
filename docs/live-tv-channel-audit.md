@@ -242,3 +242,33 @@ The approved subset, consistent database snapshots, and verification are in
 the private audit folder's `approved-tentative-20261023-020223/` subdirectory.
 The searchable tentative-match list now marks those entries as approved and
 applied. No application code or playback restart was required.
+
+## User-approved best-match assumptions
+
+At 22:19 EDT on October 22, the user approved all 882 proposed matches in the
+subsequent assumptions report, including its 59 high-, 188 medium-, and 635
+low-confidence identity guesses. All original channel fingerprints and guide
+IDs were checked against production before applying exactly that set. Entries
+without a proposed guide were excluded. Approval is recorded in each persistent
+override as `user_approved_best_guess_high`, `_medium`, or `_low`; the automatic
+matcher was unchanged.
+
+Live verification confirmed 882 additions across 392 guide identities, raising
+coverage from 4,549 to 5,431 mapped entries, with 7,702 entries still unmapped.
+Of the additions, 862 have usable listings in the next 24 hours; 20 selected
+guides lack usable schedule data. These 20 were applied as approved and may
+still display blank or placeholder schedules. Raw programme records existed
+for 876 current and 874 upcoming entries, including placeholders; those counts
+are not evidence of useful schedule coverage or matching video playback.
+
+All prior mappings and 4,031 prior overrides were preserved. Channel identities
+and other guide table counts were unchanged, SQLite integrity passed, and the
+1,716 removed entries remain absent. The unresolved HBO block and the unnamed
+entry 9114 were untouched. Sample production lookups returned programme data.
+
+The immediate backup is `instance/guide-before-audit-20261023-021906-807037.db`.
+Private reviewed artifacts, snapshots, the exact approved subset, and live
+verification are in the broadcast audit folder under
+`remaining-best-guesses-20261023-020619/approved-20261023-021906/`.
+The report now marks all 882 proposals as applied. No application code or
+playback restart was required.
