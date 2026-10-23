@@ -205,3 +205,19 @@ snapshot checks and consistent pre-write database backup.
 Private evidence and backups are under
 `/home/samer/Documents/ChatGPT/migration/broadcast-channel-audit-20261022-205406/`.
 Only the audit script, regression tests, and this documentation are committed.
+
+Applied at 21:16 EDT on October 22. Live comparison verified exactly 262
+additions covering 137 distinct guide identities: 165 Canadian entries, 62 US
+entries, and 35 other entries. There are now 4,236 mapped and 8,897 unmapped
+entries. Of the focused 3,890, 3,628 remain unmapped. All prior mapping/override
+records were retained, all 1,716 deleted entries remain absent, channel
+identities were unchanged, and SQLite integrity passed. At verification,
+4,194 mapped entries had a current programme. Production lookups returned
+current and next programmes for sampled new matches, HBO HD, and History;
+unresolved HBO remained empty. No playback or website restart was performed.
+
+The immediate pre-write backup is
+`instance/guide-before-audit-20261023-011638-653101.db`. The private searchable
+report is `broadcast-channel-audit.html`, with `identified-feeds.txt` listing
+all 262 additions. Report totals and JavaScript syntax were checked; provider
+stream URLs and credentials are excluded.
